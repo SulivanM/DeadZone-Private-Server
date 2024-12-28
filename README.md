@@ -29,7 +29,7 @@ For more about Con Artist Games and their current projects, visit their official
 - Document key elements necessary to recreate the game experience.
 
 ### 2. Server Development
-- Build a basic server structure to host game data.
+- Build a basic server structure to host game data with python.
 - Develop APIs to mimic the original game's server communication.
 - Test server stability and performance.
 
