@@ -1,0 +1,241 @@
+html, body {
+	background-color: transparent;
+	font-family: "Helvetica", "Lucida Grande", Arial, sans-serif;
+}
+
+h2 {
+	color:#95290C;
+	font-size: 1.8em;
+	font-weight: bold;
+}
+
+p {
+	margin: 10px 0 10px 0;
+}
+
+em {
+	font-style: italic;
+}
+
+a {
+	color:#95290C;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+strong {
+	font-weight: bold;
+}
+
+sup {
+	vertical-align: super;
+	font-size: 0.8em;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+#wrapper {
+	width:960px;
+	margin: 0 auto 40px;
+}
+
+
+/* Content area */
+#content {
+	background:#000;
+	color:#fff;
+	height: 804px;
+}
+
+#loading {
+	background: url(../imgs/loader.gif) no-repeat top center;
+	color: #666;
+	margin: auto;
+	position: relative;
+	top: 200px;
+	text-align: center;
+	font-size: 0.8em;
+	padding-top:50px;
+}
+
+#loading img {
+	margin-bottom: 20px;
+}
+#noflash {
+	display: none; /* hidden by default */
+	background: url(../imgs/maintenance-zombie.jpg) no-repeat top center;
+}
+#generic_error {
+	display: none; /* hidden by default */
+	background: url(../imgs/maintenance-zombie.jpg) no-repeat top center;
+}
+
+#downloadFlash {
+	margin: 20px 0 0 20px;
+}
+
+.header_message {
+	padding: 8px 8px 10px 8px;
+}
+
+.header_message a {
+	color: #d8d2cc;
+	text-decoration: underline;
+}
+
+.header_message_bar {
+	background: #4e1709;
+	color: #d8d2cc;
+	font-size: 0.7em;
+	font-weight: bold;
+	height: 30px;
+	border-top: 1px solid #631e0b;
+}
+
+.header_message_bar .close {
+	background: url(../imgs/cross.gif) no-repeat center top;
+	width: 15px;
+	height: 12px;
+	margin: 9px 6px 0 6px;
+	float: left;
+	cursor: pointer;
+}
+
+.header_message_bar .loader {
+	background: url(../imgs/mini-loader.gif) no-repeat center top;
+	width: 16px;
+	height: 16px;
+	margin: 6px 6px 0 6px;
+	float: left;
+}
+
+#messagebox {
+	position: relative;
+	background: url(../imgs/messagebox.gif) no-repeat top center;
+	top:100px;
+	width: 320px;
+	height: 540px;
+	margin: auto;
+	text-shadow: 0em 0em 0.2em black;
+}
+
+#messagebox .header {
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 18px;
+	position: relative;
+	top:21px;
+	left: 12px;
+}
+
+#messagebox .msg {
+	font-size: 0.8em;
+	position: relative;
+	width: 90%;
+	top: 42px;
+	left: 12px;
+	line-height: 1.4em;
+}
+
+#messagebox .btn {
+	font-size: 0.75em;
+	position: relative;
+	text-align: center;
+	top: 74px;
+	cursor: pointer;
+}
+
+.error {
+	padding: 370px 0;
+	margin: auto;
+	width: 80%;
+	color: #D8D2CC;
+	line-height: 1.6em;
+	font-size: 0.8em;
+	text-align: center;
+}
+
+/*****/
+
+#header {
+	background: #1a1a1a;
+	color: #d8d2cc;
+	font-size: 0.7em;
+	font-weight: bold;
+	height: 12px;
+	border-top: 1px solid #3c3c3c;
+	padding: 6px 10px 6px 10px;
+}
+
+#header a {
+	color: #8c8680;
+}
+
+#header a:hover {
+	color: #FFFFFF;
+	text-decoration: none;
+}
+
+#header li {
+	display: inline;
+}
+
+#header li.divider {
+	border-right: 1px solid #3c3c3c;
+	margin: 0 8px;
+}
+
+#header li.fuel {
+	background: url(../imgs/fuel-small-icon.gif) no-repeat left top;
+	padding-left: 16px;	
+}
+
+#nav_ul_left {
+	float: left;
+}
+
+#nav_ul_right {
+	float: right;
+}
+
+
+/*****/
+
+#footer {
+	margin-top:20px;
+	color:#666666;
+	font-size:10px;
+}
+
+#footer a{
+	color:#666666;
+	font-size:10px;
+}
+
+#conArtistLogo{
+	float: right;
+	margin-top:-25px;
+	margin-right:10px;
+}
+	
+#userID{
+	margin-top:-10px;
+	margin-left:10px;
+	float:left;
+	color:#666666;
+	font-size:10px;
+}
+
+.clear {
+	clear: both;
+}
+
+/** OPTIONAL STYLES **/
+
+h1 {
+	padding:200px 50px;
+	text-align:center;
+}	
+/** END OPTIONAL STYLES **/
