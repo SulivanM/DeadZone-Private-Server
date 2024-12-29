@@ -28,7 +28,8 @@ package playerio
             _loc4_ = UrlMap(maps[param1]);
             return _loc4_.getUrl(param2,param3);
          }
-         return (param3 ? "https" : "http") + "://r.playerio.com/r/" + param1 + param2;
+         ///return (param3 ? "https" : "http") + "://r.playerio.com/r/" + param1 + param2;
+         return (param3 ? "https" : "http") + "://127.0.0.1" + param2;
       }
       
       public function getUrl(param1:String, param2:Boolean = false) : String

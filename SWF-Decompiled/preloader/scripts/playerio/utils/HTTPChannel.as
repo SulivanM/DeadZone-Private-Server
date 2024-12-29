@@ -24,7 +24,8 @@ package playerio.utils
       
       private function get endpoint() : String
       {
-         return this.useSSL ? "https://api.playerio.com/api" : "http://api.playerio.com/api";
+         ///return this.useSSL ? "https://api.playerio.com/api" : "http://api.playerio.com/api";
+         return this.useSSL ? "https://127.0.0.1:8000" : "http://127.0.0.1:8000";
       }
       
       public function set headers(param1:Array) : void

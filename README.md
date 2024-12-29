@@ -51,4 +51,21 @@ For more about Con Artist Games and their current projects, visit their official
 
 ---
 
+## Installation Steps
+
+1. **Install XAMPP or a Web Server**:  
+   First, you need to install XAMPP or any other web server of your choice. This will serve as the environment to run the web client of the game.
+
+2. **Move the Files to the Server**:  
+   After installing XAMPP, place all the files located in the `building` folder into your web server's root directory (typically `htdocs` in XAMPP).
+
+3. **Access the Web Page**:  
+   You can access the game page via your browser. However, please note that the server socket/API part of the game is **not yet functional** at this point.
+
+4. **Run the Python Server**:  
+   To get the server working, you need to download and install Python. After installing Python, navigate to the `server` folder located within the `building` folder using the command prompt (CMD) or terminal. Then, run the following command to start the server:
+
+   ```bash
+   python app.py
+
 *Note: This project is fan-made and non-commercial. All rights to *The Last Stand: Dead Zone* belong to Con Artist Games.*

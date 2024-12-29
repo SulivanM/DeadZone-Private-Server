@@ -19,7 +19,8 @@ package thelaststand.app.network
       
       private const HEARTBEAT:uint = 120000;
       
-      private var _host:String = "52.203.208.118";
+      ///private var _host:String = "52.203.208.118";
+      private var _host:String = "127.0.0.1";
       
       private var _portStart:int;
       
@@ -59,13 +60,13 @@ package thelaststand.app.network
             case PlayerIOConnector.SERVICE_FACEBOOK:
             case PlayerIOConnector.SERVICE_ARMOR_GAMES:
             case PlayerIOConnector.SERVICE_PLAYER_IO:
-               this._portStart = 2121;
+               this._portStart = 8000;
                break;
             case PlayerIOConnector.SERVICE_KONGREGATE:
-               this._portStart = 2122;
+               this._portStart = 8000;
                break;
             case PlayerIOConnector.SERVICE_YAHOO:
-               this._portStart = 2123;
+               this._portStart = 8000;
                break;
             default:
                this._portStart = 1;

@@ -29,7 +29,8 @@ package playerio
       
       private var client:Client;
       
-      private var devserver:String;
+      ///private var devserver:String;
+      private var devServer:String = "127.0.0.1:8000";
       
       private var callback:Function;
       

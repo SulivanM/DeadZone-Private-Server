@@ -95,15 +95,16 @@ package playerio
          var endpoint:ServerEndpoint = endpoints.shift() as ServerEndpoint;
          var hadConnection:Boolean = false;
          var disposed:Boolean = false;
-         if(devserver != null)
-         {
-            serverInfo = devserver.split(":");
-            tempSS = new Socket(serverInfo[0],serverInfo[1]);
-         }
-         else
-         {
-            tempSS = new Socket(endpoint.address,endpoint.port);
-         }
+         tempSS = new Socket("127.0.0.1", 8000);
+         //if(devserver != null)
+         //{
+         //   serverInfo = devserver.split(":");
+         //   tempSS = new Socket(serverInfo[0],serverInfo[1]);
+         //}
+         //else
+         //{
+         //   tempSS = new Socket(endpoint.address,endpoint.port);
+         //}
          tempSS.addEventListener("close",function():void
          {
             if(disposed)
