@@ -1,9 +1,3 @@
-// if (window == window.top) {
-// 	// Game is not running in an iFrame, so redirect to Armor Games
-// 	window.location.href = "http://armorgames.com/the-last-stand-dead-zone-game/13691";
-// }
-
-
 console.log("sev >> " + document.referrer + " " + window.location);
 
 var flashVersion = "11.3";
@@ -123,14 +117,13 @@ function getRefererParam(key)
     return qs[1];
 }
 
-function startGame() {
+function startGame(accessToken) {
 	var flashVars = {
 		path: "/game/",
-		service: "armor",
-		userId: getParameterByName("user_id"),
-		accessToken: getParameterByName("auth_token"),
-		//useSSL: ("https:" == document.location.protocol ? "1" : "0")
-		useSSL: 0,
+        service: "fb",
+        accessToken,
+        affiliate: getParameterByName("a"),
+        useSSL: window.location.protocol === "http:" ? "0" : "1"
 	};
 	
 	var params = {
@@ -152,7 +145,7 @@ function startGame() {
 
 	$("#game_wrapper").height("0px");
 
-	var swfURL = "https://r.playerio.com/r/dev-the-last-stand-iret8ormbeshajyk6woewg/game/preloader.swf";
+	var swfURL = "http://localhost/game/preloader.swf";
 	swfobject.embedSWF(swfURL, "game_container", "100%", "100%", flashVersion, "swf/expressinstall.swf", flashVars, params, attributes, function(e)	{
 		if (!e.success)
 		{
@@ -177,7 +170,7 @@ function startMigration() {
 		service: "armor",
 		userId: getParameterByName("user_id"),
 		accessToken: getParameterByName("auth_token"),
-		//useSSL: ("https:" == document.location.protocol ? "1" : "0")
+		//useSSL: ("http:" == document.location.protocol ? "1" : "0")
 		useSSL: 0,
 	};
 	
@@ -200,7 +193,7 @@ function startMigration() {
 
 	$("#game_wrapper").height("0px");
 
-	var swfURL = "https://r.playerio.com/r/dev-the-last-stand-iret8ormbeshajyk6woewg/migration/preloader.swf";
+	var swfURL = "http://localhost/migration/preloader.swf";
 	swfobject.embedSWF(swfURL, "game_container", "100%", "100%", flashVersion, "swf/expressinstall.swf", flashVars, params, attributes, function(e)	{
 		if (!e.success)
 		{
