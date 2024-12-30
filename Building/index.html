@@ -1,30 +1,64 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TLSDZ Simple Page</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-        #swf-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div id="swf-container">
-        <object type="application/x-shockwave-flash" data="http://localhost/game/preloader.swf?service=fb&userId=d19c0209316959d2ce1f6a011cc132c2&accessToken=GGQVlhMkZA1elJKdFVicVprRTVzWjVWN016RzZAhWE5BOU5YTThIUzkxNkswM0hoa1Jvb1IwcHN6a0NLeEtjT2xuX3RkY19kVHE1UDdBTHBPUUNYWkVFVzVmZAE9jYmhXX0twYTU5c3QtMjRzQ0ZA4OTVxSVZARMUMzRlVJZATl2OWxFLXlCTHFiZAzdJUUNrbnRQa0YzWF9lLWlaa0tSRFZAVaHRjMmZAFckZAuNWNualdLRmI5WjluZAGJEdUpqaFJBQ0JBR0R3VWV3aV9wUUkzREtfb1c0ZA1FnRzIyMk5PeHJwLTZAGQlRqNEF6NlpwekpVUEJKQVo2U0JhRGpSMEYwUkQxOEE0NlVtZAHE4N1Y3UDYwbWJIYkZAIeEpBSnRlLTNWVnJCclFDcEhaRGdpcHBuWklTTmdoaXhZAeVJjbkdpenNWWVNzMGdBd3E2aC1mVFBjaHVDa3l2UHFTeGFpdzQZD&path=/game/" width="960" height="920">
-        <param name="quality" value="high" />
+
+<body class="bg-black">
+    <div id="swf-container" class="flex justify-center items-center w-full h-screen">
+        <div id="game_container" class="w-full h-full"></div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js"></script>
+    <script>
+        function getParameterByName(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+
+        function startGame(accessToken) {
+            const flashVars = {
+                path: "/game/",
+                service: "fb",
+                accessToken,
+                affiliate: getParameterByName("a"),
+                useSSL: window.location.protocol === "https:" ? "1" : "0"
+            };
+
+            const params = {
+                allowScriptAccess: "always",
+                allowFullScreen: "true",
+                allowFullScreenInteractive: "true",
+                allowNetworking: "all",
+                menu: "false",
+                scale: "noScale",
+                salign: "tl",
+                wmode: "direct",
+                bgColor: "#000000"
+            };
+
+            const attributes = {
+                id: "game",
+                name: "game"
+            };
+
+            const swfURL = "http://localhost/game/preloader.swf";
+
+            swfobject.embedSWF(swfURL, "game_container", "100%", "100%", "11.0.0", "swf/expressinstall.swf", flashVars, params, attributes, function(e) {
+                if (e.success) {
+                    console.log("The game has been successfully loaded.");
+                } else {
+                    console.log("Error loading the game.");
+                }
+            });
+        }
+
+        startGame("");
+    </script>
 </body>
+
 </html>
