@@ -1,0 +1,17 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-SMG.daeanim
+framerate	30
+
+		
+SMG-idle-crouching			3	5				
+SMG-idle-standing			6	8				
+SMG-run					9	38	15	footL	30	footR				
+SMG-threat-standing			70	80				
+SMG-fire-crouching			40	59				
+SMG-fire-standing			61	80				
+SMG-reload-crouching			82	126	86	magOut	108	magIn
+SMG-reload-standing			128	172	132	magOut	154	magIn

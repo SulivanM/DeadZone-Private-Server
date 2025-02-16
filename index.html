@@ -1,0 +1,87 @@
+
+<!DOCTYPE PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>The Last Stand: Dead Zone</title>
+	
+	<meta property="og:title" content="The Last Stand: Dead Zone" />
+	<meta property="og:type" content="game" />
+	<meta property="og:url" content="https://apps.facebook.com/laststand-deadzone/" />
+	<meta property="og:image" content="" />
+	<meta property="og:site_name" content="The Last Stand: Dead Zone" />
+	<meta property="og:description" content="Build, fight, scavenge and survive against infected and humans alike in this action strategy RPG." />
+	
+	<link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+	<link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
+	
+	<link href="assets/css/reset.css" rel="stylesheet" type="text/css" />
+	<link href="assets/css/screen.css" rel="stylesheet" type="text/css" />
+	
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script type="text/javascript" src="assets/js/main.js"></script>
+	<script type="text/javascript">
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-29984267-1']);
+		_gaq.push(['_setDomainName', 'deadzonegame.com']);
+		_gaq.push(['_setDetectTitle', false]);
+		_gaq.push(['_trackPageview']);
+		(function() {
+			var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+			var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+</head>
+
+<body>
+	<div id="fb-root"></div>
+	<div id="wrapper">
+		<a name="top"></a>
+		<div id="header">
+			<a id="logo" href="#" onclick="refresh()"><img src="assets/images/logo.png" alt="TLS" /></a>
+			<div id="nav">
+				<ul id="nav_ul" class="play">
+					<li id="play"><a href="#top" onclick="updateNavClass('play')">Play</a></li>
+					<li id="fan_page"><a href="http://www.facebook.com/LastStandDeadZone" target="_blank" onclick="updateNavClass('fan_page')">Fan Page</a></li>
+					<li id="get_more"><a href="#top" onclick="openGetMoreDialogue()">Get More</a></li>
+					<li id="help"><a href="http://deadzonegame.com/help" onclick="updateNavClass('help')" target="_blank">Help</a></li>
+					<li id="history"><a href="https://getsatisfaction.com/deadzone" onclick="updateNavClass('history')" target="_blank">Feedback</a></li>
+				</ul>
+        	</div>
+			<div id="fb_likes">
+				<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.facebook.com%2FLastStandDeadZone&amp;send=false&amp; layout=button_count&amp; width=200&amp; show_faces=true&amp; action=like&amp; colorscheme=dark&amp; font&amp; height=21&amp; appId=319734431374018" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:100px; height:21px;" allowTransparency="true"></iframe>
+			</div>
+		</div>
+		<div id="warning_container">
+		</div>
+		<div id="message_container"></div>
+		<div id="content">
+			<div id="game_wrapper">
+				<div id="game_container">
+					<div id="noflash" class="error">
+						<p><h2>Flash Player Required</h2></p>
+						<p>The Last Stand: Dead Zone requires the latest version of Flash Player to run (version 11.1.102.55).<br/>It's free, and only takes a small amount of time to download.</p>
+						<div id="downloadFlash">
+							<p><a href="http://get.adobe.com/flashplayer/" title="Download Flash Player"><strong>Download Flash Player</strong></a></p>
+							<p><a href="?detectflash=false" title="I already have the latest Flash Player">I already have the latest Flash Player</a></p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="loading">Connecting to Facebook...</div>
+			<div id="generic_error" class="error"></div>
+		</div>
+		<div id="footer" align="center">
+			 <a href="http://deadzonegame.com/terms" target="_blank">Terms</a> | <a href="http://deadzonegame.com/privacy" target="_blank">Privacy Policy</a> | <a href="http://alternativaplatform.com/" target="_blank">Powered by AlternativaPlatform</a> | &copy; 2012 - Con Artist Games Pty Ltd.</div>
+			 <div id="userID">Connecting...</div>
+			 <div id="conArtistLogo"><a href="http://conartistgames.com" title="Con Artist Games" target="_blank"><img src="assets/images/conartistlogo.gif" alt="Con Artist Games"></div>
+		</div>
+	</div>
+	<script>
+		addMessage("maintenance", "The Last Stand: Dead Zone is down for maintenance. ETA 30 minutes.")
+	</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	
+	<!-- XML -->
+	<res>resources_secondary.xml</res>
+	<res>resources_mission.xml</res>
+	<res gz="1">xml/config.xml</res>
+	
+	<!-- Packages -->
+	<res>pak1.zip</res>
+	
+</resources>

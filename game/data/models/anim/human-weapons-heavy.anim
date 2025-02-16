@@ -1,0 +1,18 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-heavy.daeanim
+framerate	30
+
+
+heavy-idle-crouching			3	5						
+heavy-idle-standing			6	8						
+heavy-run				9	38	15	footL	30	footR						
+heavy-threat-standing			49	59						
+heavy-fire-standing			40	59						
+heavy-reload-crouching			61	105	65	magOut	87	magIn		
+heavy-reload-standing			107	151	111	magOut	133	magIn		
+heavy-swingSwipe			153	195	173	swingStart	177	hit	181	swingEnd
+heavy-swingThrust			197	239	202	swingStart	210	hit	235	swingEnd

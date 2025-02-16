@@ -1,0 +1,31 @@
+//
+// Zombie animation data
+//
+
+anim		models/anim/zombie.daeanim
+framerate	30
+
+portrait			2	2						
+idle-01				4	63						
+idle-02				65	124						
+walking				126	164						
+walking-slow			166	195						
+walking-fast			197	224						
+walking-fat			226	268						
+run				270	292						
+attack-punching-01		294	346	314	swingStart	326	hit	330	swingEnd
+attack-punching-02		348	402	368	swingStart	380	hit	384	swingEnd
+attack-punching-03		404	458	424	swingStart	436	hit	440	swingEnd
+attack-stomp			460	512	470	swingStart	485	hit	490	swingEnd
+attack-kick			514	568	521	swingStart	532	hit	544	swingEnd	
+knockback-01			570	617
+hurt-01				619	628
+hurt-02				630	639
+
+//
+anim		models/anim/human-knockback.daeanim
+framerate	30
+
+knockdown-rise-back		100	159
+knockdown-rise-side		161	220
+					

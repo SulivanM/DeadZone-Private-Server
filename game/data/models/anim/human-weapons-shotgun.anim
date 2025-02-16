@@ -1,0 +1,20 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-shotgun.daeanim
+framerate	30
+	
+shotgun-threat-standing			22	32				
+shotgun-fire-standing			3	32				
+shotgun-reload-crouching		34	128	38	magOut	60	magIn
+shotgun-reload-standing			130	224	134	magOut	156	magIn
+
+//
+anim		models/anim/human-weapons-rifle.daeanim
+framerate	30
+
+shotgun-idle-crouching			3	5
+shotgun-idle-standing			6	8
+shotgun-run				9	38	15	footL	30	footR

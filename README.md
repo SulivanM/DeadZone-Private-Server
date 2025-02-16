@@ -57,7 +57,7 @@ For more about Con Artist Games and their current projects, visit their official
    First, you need to install XAMPP or any other web server of your choice. This will serve as the environment to run the web client of the game.
 
 2. **Move the Files to the Server**:  
-   After installing XAMPP, place all the files located in the `building` folder into your web server's root directory (typically `htdocs` in XAMPP).
+   After installing XAMPP, place all the files located in (typically `htdocs` in XAMPP).
 
 3. **Access the Web Page**:  
    You can access the game page via your browser. However, please note that the server socket/API part of the game is **not yet functional** at this point.

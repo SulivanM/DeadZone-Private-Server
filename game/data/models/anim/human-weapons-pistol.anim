@@ -1,0 +1,19 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-pistol.daeanim
+framerate	30
+
+
+pistol-idle-crouching			3	5				
+pistol-idle-standing			6	8				
+pistol-run				9	38	15	footL	30	footR				
+pistol-threat-standing			70	80				
+pistol-fire-crouching			40	59				
+pistol-fire-standing			61	80				
+pistol-reload-crouching			82	126	86	magOut	108	magIn
+pistol-reload-standing			128	172	132	magOut	154	magIn
+revolver-reload-crouching		174	244	178	magOut	200	magIn
+revolver-reload-standing		246	316	250	magOut	272	magIn

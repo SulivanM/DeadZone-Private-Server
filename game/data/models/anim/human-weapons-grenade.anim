@@ -1,0 +1,11 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-grenade.daeanim
+framerate	30
+
+		
+grenade-fire-standing			2	56	32	magOut
+grenade-fire-close			58	112	95	magOut
