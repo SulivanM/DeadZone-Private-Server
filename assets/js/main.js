@@ -16,7 +16,7 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
     var unloadMessage = "";
     var mt = "";
     var simulatedUserId = "930437541626936";
-    var simulatedAccessToken = "GGQVlZAQXRabWliWU9pMGdwa2dKdmpRTkN2Q2dPMmhKeWFfYklLSmd1QVRPeHhVb2RQelhOaDBPSWRCeEtoM0VQY3ZAIX0F0SkVYNGhZATE1yNVBsazViek9pSGVvbTI4MjdfV2hrSHNRVmZABaFJ5NklXQzNNNDVDMTBsMzVjUG9wdU1NbjBYUU4xcElyR3hqWlBnSmRKUkFzNHF2QUhMN1JfbwZDZD";
+    var simulatedAccessToken = "GGQVliSTFPU2NqUldJRXp6RmpFMTQwVXlGMEZABYnJUMTlYMzlnR1Y4WkhhN2t6UzM4NVFGekdQQ01pdGNpc3JqN1FRYzdPaEc0VkcyaXhwNWxENXF5MDRsZA1BlVXQ5QU9Ielg4RF94VXVjaFF3UFYxOFU3eEtGMzZAHc25OTkNKdzBpLUxKcmxoamUxenZAIMFE2aGdiTDlVd0dNTzR5azFWNgZDZD";
 
     var userAgent = navigator.userAgent.toLowerCase();
     $.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
