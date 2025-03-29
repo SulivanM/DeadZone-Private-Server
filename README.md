@@ -69,3 +69,39 @@ For more about Con Artist Games and their current projects, visit their official
    python app.py
 
 *Note: This project is fan-made and non-commercial. All rights to *The Last Stand: Dead Zone* belong to Con Artist Games.*
+
+### Example: Using VSCode Live Server as Web Server
+
+#### Running the Web Server
+
+1. Download & Install [Visual Studio Code](https://code.visualstudio.com/).
+2. Install the [Live Server extension](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer).
+3. Download this repository (Code > Download ZIP) and extract it on a folder.
+4. On your browser, install Ruffle extension ([Firefox](https://addons.mozilla.org/en-US/firefox/addon/ruffle_rs/), [Chrome](https://chromewebstore.google.com/detail/ruffle-flash-emulator/donbcfbmhbcapadipfkeojnmajbakjdc?hl=en)). Make sure to enable running flash content using Ruffle. This step can be skipped if your browser supports flash (e.g., [Basilisk](https://archive.org/details/basilisk-portable-with-flash_202502)).
+5. On VSCode, File > Open Folder, then select the extracted folder.
+6. Right click on index.html, then select "Open with Live Server".
+
+#### Running the Socket Server
+
+1. Download & Install [Python](https://www.python.org/downloads/). During the installation, make sure that pip is also installed and `python.exe` as well as pip are added to the PATH environment variable.
+2. Open command line on VSCode (default shortcut `Ctrl+\`\`) and run the server by typing:
+   
+	```bash
+   python server_socket/app.py
+
+#### Running the API Server
+
+1. Download & Install [Python](https://www.python.org/downloads/). During the installation, make sure that `python.exe` is added to PATH and pip is also installed.
+2. Open command line on administrator mode. Install Flask by typing:
+   
+	```bash
+    pip install flask
+
+4. Open command line on VSCode (make a second terminal if you are running this with the socket server). Run the server by typing:
+   
+	```bash
+   python server_api/app.py
+
+> [!NOTE]
+> Currently, the game is still stuck on the loading screen as the server part isn't working yet. Therefore, running the socket and API server is not necessary to follow.
+
