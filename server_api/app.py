@@ -1,8 +1,9 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_from_directory
 from handlers.rpc_handler import process_request
 from handlers.error_handler import create_error_response
 import logging
 import struct
+import os
 
 app = Flask(__name__)
 
@@ -29,7 +30,8 @@ def api_handler(rpc_method):
         response.headers.add(
             "Access-Control-Allow-Headers", "Content-Type,Authorization"
         )
-        response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+        response.headers.add(
+            "Access-Control-Allow-Methods", "GET,POST,OPTIONS")
         return response
 
     data = request.get_data() if request.method == "POST" else b""
@@ -56,6 +58,12 @@ def api_handler(rpc_method):
     logging.info(f"Sending response (hex): {response_data.hex()}")
 
     return response_data, 200, {"Content-Type": "application/octet-stream"}
+
+
+@app.route('/game/<path:filename>')
+def serve_game_files(filename):
+    game_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "game")
+    return send_from_directory(game_folder, filename)
 
 
 def validate_token(token):
