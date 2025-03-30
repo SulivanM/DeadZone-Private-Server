@@ -1,0 +1,16 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-bow.daeanim
+framerate	30
+
+		
+bow-idle-crouching			3	5				
+bow-idle-standing			6	8				
+bow-run					9	38	15	footL	30	footR
+bow-threat-standing			40	41				
+bow-fire-standing			40	59			
+bow-reload-crouching			61	105
+bow-reload-standing			107	151

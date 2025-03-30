@@ -100,7 +100,7 @@ For more about Con Artist Games and their current projects, visit their official
 4. Open command line on VSCode (make a second terminal if you are running this with the socket server). Run the server by typing:
    
 	```bash
-   python server_api/app.py
+   python server_api/serverlet.py
 
 > [!NOTE]
 > Currently, the game is still stuck on the loading screen as the server part isn't working yet. Therefore, running the socket and API server is not necessary to follow.

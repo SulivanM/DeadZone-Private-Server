@@ -1,0 +1,23 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-bullpup.daeanim
+framerate	30
+
+		
+bullpup-idle-crouching			3	5				
+
+bullpup-idle-standing			6	8				
+
+bullpup-run				9	38	15	footL	30	footR	
+footR
+bullpup-threat-standing		70	150				
+
+bullpup-fire-crouching			40	59				
+
+bullpup-fire-standing			61	80				
+
+bullpup-reload-crouching		82	126	86	magOut	108	magIn
+bullpup-reload-standing			128	172	132	magOut	154	magIn

@@ -16,7 +16,7 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
     var unloadMessage = "";
     var mt = "";
     var simulatedUserId = "930437541626936";
-    var simulatedAccessToken = "GGQVliSTFPU2NqUldJRXp6RmpFMTQwVXlGMEZABYnJUMTlYMzlnR1Y4WkhhN2t6UzM4NVFGekdQQ01pdGNpc3JqN1FRYzdPaEc0VkcyaXhwNWxENXF5MDRsZA1BlVXQ5QU9Ielg4RF94VXVjaFF3UFYxOFU3eEtGMzZAHc25OTkNKdzBpLUxKcmxoamUxenZAIMFE2aGdiTDlVd0dNTzR5azFWNgZDZD";
+    var simulatedAccessToken = "GGQVlhTGlHSU5lcVBmMzRVMDQ0ODlUUWFEZADI3b05yQUh1VkNIcElTaTY3WUllYlU0cEFjV2poOW9NQS1iRFFIcmlYbG1WOVBNQWJRR2Q1bXpvWHJrQ3laUURSSnVnTU9SSGNPNVAwXzNUbVdsUUNwdFVpSlA2b0hqLTlPSW9RNHVKMXE2OFNVWnVEZAUxhM3B6SURGOTNzbDhzU1o1bXZAOXzJB";
 
     var userAgent = navigator.userAgent.toLowerCase();
     $.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
@@ -44,7 +44,7 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
             url: "bridge.php",
             type: "GET",
             data: {
-                service: "fb"
+                service: "pio"
             },
             dataType: "json",
             timeout: 5000,
@@ -182,7 +182,7 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
     function startGame(accessToken) {
         var flashVars = {
             path: "/game/",
-            service: "fb",
+            service: "pio",
             accessToken: accessToken,
             affiliate: getParameterByName("a"),
             useSSL: ("https:" == document.location.protocol ? "1" : "0")
@@ -225,7 +225,7 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
             path: "/migration/",
             core: "importClient.swf",
             migration: migrationStr,
-            service: "fb",
+            service: "pio",
             accessToken: accessToken,
             affiliate: getParameterByName("a"),
             useSSL: ("https:" == document.location.protocol ? "1" : "0"),

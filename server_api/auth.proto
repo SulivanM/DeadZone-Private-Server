@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message AuthenticateOutput {
+  int32 success = 1;
+  string token = 2;
+  string userId = 3;
+}

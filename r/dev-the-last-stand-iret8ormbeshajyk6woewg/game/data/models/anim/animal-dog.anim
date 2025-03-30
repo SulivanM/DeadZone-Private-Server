@@ -1,0 +1,16 @@
+//
+// Dog animation data
+//
+
+anim		models/anim/animal-dog.daeanim
+framerate	30
+
+portrait			2	2		
+idle				4	63		
+trot				66	88		
+run				91	102		
+death-static			104	128		
+death-motion			131	165		
+alert-01			166	186		
+attack-bite-01			187	214	199	hit
+attack-bite-02			216	243	228	hit
