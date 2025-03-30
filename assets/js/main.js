@@ -185,7 +185,8 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
             service: "pio",
             accessToken: accessToken,
             affiliate: getParameterByName("a"),
-            useSSL: ("https:" == document.location.protocol ? "1" : "0")
+            useSSL: ("https:" == document.location.protocol ? "1" : "0"),
+            publishingnetworklogin: "auto"
         };
 
         var params = {

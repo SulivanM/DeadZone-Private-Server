@@ -6,17 +6,10 @@
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
-# from google.protobuf import runtime_version as _runtime_version
+from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
-# _runtime_version.ValidateProtobufRuntimeVersion(
-#     _runtime_version.Domain.PUBLIC,
-#     5,
-#     29,
-#     4,
-#     '',
-#     'auth.proto'
-# )
+
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -24,13 +17,19 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nauth.proto\"D\n\x12\x41uthenticateOutput\x12\x0f\n\x07success\x18\x01 \x01(\x05\x12\r\n\x05token\x18\x02 \x01(\t\x12\x0e\n\x06userId\x18\x03 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nauth.proto\x12\x1bplayerio.generated.messages\"\x88\x02\n\x10\x41uthenticateArgs\x12\x0e\n\x06gameId\x18\x01 \x01(\t\x12\x14\n\x0c\x63onnectionId\x18\x02 \x01(\t\x12J\n\x17\x61uthenticationArguments\x18\x03 \x03(\x0b\x32).playerio.generated.messages.KeyValuePair\x12\x1d\n\x15playerInsightSegments\x18\x04 \x03(\t\x12\x11\n\tclientAPI\x18\x05 \x01(\t\x12=\n\nclientInfo\x18\x06 \x03(\x0b\x32).playerio.generated.messages.KeyValuePair\x12\x11\n\tplayCodes\x18\x07 \x03(\t\"\xe9\x02\n\x12\x41uthenticateOutput\x12\r\n\x05token\x18\x01 \x01(\t\x12\x0e\n\x06userId\x18\x02 \x01(\t\x12\x1b\n\x0cshowBranding\x18\x03 \x01(\x08:\x05\x66\x61lse\x12\x19\n\x11gameFSRedirectMap\x18\x04 \x01(\t\x12\x1a\n\x12playerInsightState\x18\x05 \x01(\t\x12\x14\n\x0cstartDialogs\x18\x06 \x01(\t\x12\"\n\x13isSocialNetworkUser\x18\x07 \x01(\x08:\x05\x66\x61lse\x12\x14\n\x0cnewPlayCodes\x18\x08 \x01(\t\x12 \n\x18notificationClickPayload\x18\t \x01(\t\x12,\n\x1eisInstalledByPublishingNetwork\x18\n \x01(\x08:\x04true\x12\x13\n\x0b\x64\x65precated1\x18\x0b \x01(\t\x12\x13\n\x0b\x61piSecurity\x18\x0c \x01(\t\x12\x16\n\x0e\x61piServerHosts\x18\r \x01(\t\"7\n\x11\x41uthenticateError\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x11\n\terrorCode\x18\x02 \x01(\x05\"*\n\x0cKeyValuePair\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'auth_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_AUTHENTICATEOUTPUT']._serialized_start=14
-  _globals['_AUTHENTICATEOUTPUT']._serialized_end=82
+  _globals['_AUTHENTICATEARGS']._serialized_start=44
+  _globals['_AUTHENTICATEARGS']._serialized_end=308
+  _globals['_AUTHENTICATEOUTPUT']._serialized_start=311
+  _globals['_AUTHENTICATEOUTPUT']._serialized_end=672
+  _globals['_AUTHENTICATEERROR']._serialized_start=674
+  _globals['_AUTHENTICATEERROR']._serialized_end=729
+  _globals['_KEYVALUEPAIR']._serialized_start=731
+  _globals['_KEYVALUEPAIR']._serialized_end=773
 # @@protoc_insertion_point(module_scope)
