@@ -69,17 +69,23 @@ For more information about Con Artist Games and their current projects, visit th
 #### Install Dependencies:
 - Navigate to the `serverlet` folder and install the required dependencies by running the following command in your terminal:
 
+```
 pip install -r requirements.txt
+```
 
 #### 4. Run the Socket Server:
 In the `serverlet` folder, run the following command:
 
+```
 python socket_serverlet.py
+```
 
 #### 5. Run the API Server:
 In the `serverlet` folder, run the following command:
 
+```
 python api_serverlet.py
+```
 
 #### 6. Set Up the Web Server:
 For the web server, configure the following domain for the HTML site:
