@@ -29,7 +29,7 @@ For more about Con Artist Games and their current projects, visit their official
 - Document key elements necessary to recreate the game experience.
 
 ### 2. Server Development
-- Build a basic server structure to host game data with python.
+- Build a basic server structure to host game data with Python.
 - Develop APIs to mimic the original game's server communication.
 - Test server stability and performance.
 
@@ -59,14 +59,22 @@ For more about Con Artist Games and their current projects, visit their official
 2. **Move the Files to the Server**:  
    After installing XAMPP, place all the files located in (typically `htdocs` in XAMPP).
 
-3. **Access the Web Page**:  
-   You can access the game page via your browser. However, please note that the server socket/API part of the game is **not yet functional** at this point.
+3. **Setup the Web Server**:  
+   The web server **must be set up** at **https://ddeadzonegame.com** for testing purposes.
 
-4. **Run the Python Server**:  
-   To get the server working, you need to download and install Python. After installing Python, navigate to the `server` folder located within the `building` folder using the command prompt (CMD) or terminal. Then, run the following command to start the server:
+4. **Access the Web Page**:  
+   You can access the game page via your browser at **https://ddeadzonegame.com**. However, please note that the server socket/API part of the game is **not yet functional** at this point.
+
+5. **Run the Python Server**:  
+   To get the server working, you need to download and install Python. After installing Python, navigate to the `serverlet` folder located within the `building` folder using the command prompt (CMD) or terminal. Then, run the following command to start the server:
 
    ```bash
-   python app.py
+   python apiserver.py
+   ```
+
+   ```bash
+   python socketserver.py
+   ```
 
 *Note: This project is fan-made and non-commercial. All rights to *The Last Stand: Dead Zone* belong to Con Artist Games.*
 
@@ -84,24 +92,26 @@ For more about Con Artist Games and their current projects, visit their official
 #### Running the Socket Server
 
 1. Download & Install [Python](https://www.python.org/downloads/). During the installation, make sure that pip is also installed and `python.exe` as well as pip are added to the PATH environment variable.
-2. Open command line on VSCode (default shortcut `Ctrl+\`\`) and run the server by typing:
+2. Open command line on VSCode (default shortcut `Ctrl+\``) and run the server by typing:
    
-	```bash
+   ```bash
    python server_socket/app.py
+   ```
 
 #### Running the API Server
 
 1. Download & Install [Python](https://www.python.org/downloads/). During the installation, make sure that `python.exe` is added to PATH and pip is also installed.
 2. Open command line on administrator mode. Install Flask by typing:
    
-	```bash
-    pip install flask
+   ```bash
+   pip install flask
+   ```
 
-4. Open command line on VSCode (make a second terminal if you are running this with the socket server). Run the server by typing:
+3. Open command line on VSCode (make a second terminal if you are running this with the socket server). Run the server by typing:
    
-	```bash
+   ```bash
    python server_api/serverlet.py
+   ```
 
 > [!NOTE]
-> Currently, the game is still stuck on the loading screen as the server part isn't working yet. Therefore, running the socket and API server is not necessary to follow.
-
+> Currently, the game is still stuck on the loading screen as the server part isn't working yet. Therefore, running the socket server is not necessary to follow.

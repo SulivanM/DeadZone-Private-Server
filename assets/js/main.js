@@ -1,40 +1,39 @@
-var _____WB$wombat$assign$function_____ = function (name) { return (self._wb_wombat && self._wb_wombat.local_init && self._wb_wombat.local_init(name)) || self[name]; };
-if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; return this; } }
+var _____WB$wombat$assign$function_____ = function(name) {
+    return (self._wb_wombat && self._wb_wombat.local_init && self._wb_wombat.local_init(name)) || self[name];
+};
+if (!self.__WB_pmw) {
+    self.__WB_pmw = function(obj) {
+        this.__WB_source = obj;
+        return this;
+    }
+}
 {
-    let window = _____WB$wombat$assign$function_____("window");
-    let self = _____WB$wombat$assign$function_____("self");
-    let document = _____WB$wombat$assign$function_____("document");
-    let location = _____WB$wombat$assign$function_____("location");
-    let top = _____WB$wombat$assign$function_____("top");
-    let parent = _____WB$wombat$assign$function_____("parent");
-    let frames = _____WB$wombat$assign$function_____("frames");
-    let opener = _____WB$wombat$assign$function_____("opener");
+    const window = _____WB$wombat$assign$function_____("window");
+    const document = _____WB$wombat$assign$function_____("document");
+    const location = _____WB$wombat$assign$function_____("location");
 
-    var appId = "1131663138272181";
-    var flashVersion = "11.3.300.271";
-    var messages = [];
-    var unloadMessage = "";
-    var mt = "";
-    var simulatedUserId = "930437541626936";
-    var simulatedAccessToken = "GGQVlhTGlHSU5lcVBmMzRVMDQ0ODlUUWFEZADI3b05yQUh1VkNIcElTaTY3WUllYlU0cEFjV2poOW9NQS1iRFFIcmlYbG1WOVBNQWJRR2Q1bXpvWHJrQ3laUURSSnVnTU9SSGNPNVAwXzNUbVdsUUNwdFVpSlA2b0hqLTlPSW9RNHVKMXE2OFNVWnVEZAUxhM3B6SURGOTNzbDhzU1o1bXZAOXzJB";
+    const appId = "1131663138272181";
+    const flashVersion = "11.3.300.271";
+    const messages = [];
+    let unloadMessage = "";
+    const mt = false;
+    let mtPST = "";
 
-    var userAgent = navigator.userAgent.toLowerCase();
-    $.browser.chrome = /chrome/.test(navigator.userAgent.toLowerCase());
+    const userAgent = navigator.userAgent.toLowerCase();
+    $.browser.chrome = /chrome/.test(userAgent);
 
     if ($.browser.chrome) {
-        userAgent = userAgent.substring(userAgent.indexOf('chrome/') + 7);
-        userAgent = userAgent.substring(0, userAgent.indexOf('.'));
-        $.browser.version = userAgent;
+        const versionStart = userAgent.indexOf('chrome/') + 7;
+        $.browser.version = userAgent.substring(versionStart, userAgent.indexOf('.', versionStart));
         $.browser.safari = false;
+    } else if ($.browser.safari) {
+        const versionStart = userAgent.indexOf('safari/') + 7;
+        $.browser.version = userAgent.substring(versionStart, userAgent.indexOf('.', versionStart));
     }
 
-    if ($.browser.safari) {
-        userAgent = userAgent.substring(userAgent.indexOf('safari/') + 7);
-        userAgent = userAgent.substring(0, userAgent.indexOf('.'));
-        $.browser.version = userAgent;
-    }
+    $(document).ready(initApp);
 
-    $("document").ready(function () {
+    function initApp() {
         if (mt) {
             showMaintenanceScreen();
             return;
@@ -43,153 +42,145 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
         $.ajax({
             url: "bridge.php",
             type: "GET",
-            data: {
-                service: "pio"
-            },
+            data: { service: "fb" },
             dataType: "json",
             timeout: 5000,
             cache: false,
-            success: function (json) {
-                if (json == null) {
-                    showGameScreen();
-                    return;
-                }
+            success: handleBridgeResponse,
+            error: () => showGameScreen()
+        });
+    }
 
-                var obj = json.services[0];
-                if (obj.mode == 2) {
-                    orig = obj.onlineETA;
-                    origArr = orig.split(":");
-                    var d = new Date();
-                    d.setUTCHours(origArr[0]);
-                    d.setUTCMinutes(origArr[1]);
-                    var hrs = d.getHours();
-                    var mins = Math.ceil(d.getMinutes() / 15) * 15;
-                    while (mins >= 60) {
-                        mins -= 60;
-                        hrs++;
-                    }
-                    while (hrs >= 24)
-                        hrs -= 24;
+    function handleBridgeResponse(json) {
+        if (!json) {
+            showGameScreen();
+            return;
+        }
 
-                    mtPST = (hrs < 10 ? "0" + hrs : hrs) + ":" + (mins < 10 ? "0" + mins : mins);
-                    showMaintenanceScreen();
-                } else {
-                    showGameScreen();
-                }
-
-                if (obj.htmlMessage && obj.htmlMessage != "")
-                    addMessage("statusMessage", obj.htmlMessage, true);
-
-            },
-            error: function (xhr, status) {
-                showGameScreen();
+        const obj = json.services[0];
+        if (obj.mode === 2) {
+            const [hours, minutes] = obj.onlineETA.split(":");
+            const d = new Date();
+            d.setUTCHours(hours);
+            d.setUTCMinutes(minutes);
+            
+            let hrs = d.getHours();
+            let mins = Math.ceil(d.getMinutes() / 15) * 15;
+            
+            if (mins >= 60) {
+                mins -= 60;
+                hrs++;
             }
-        })
-    });
+            hrs %= 24;
+
+            mtPST = `${hrs < 10 ? "0" + hrs : hrs}:${mins < 10 ? "0" + mins : mins}`;
+            showMaintenanceScreen();
+        } else {
+            showGameScreen();
+        }
+
+        if (obj.htmlMessage) {
+            addMessage("statusMessage", obj.htmlMessage, true);
+        }
+    }
+
+    function checkLoginState() {
+        FB.getLoginStatus(statusChangeCallback);
+    }
+
+    function statusChangeCallback(response) {
+        if (response.status === 'connected') {
+            console.log('Nice, your are logged :p');
+            getUserData();
+            location.reload();
+        } else {
+            console.log('Mamamia not logged...');
+        }
+    }
+
+    function getUserData() {
+        FB.api('/me', {fields: 'id,name,email'}, (response) => {
+            console.log('Success login :' + response.name);
+        });
+    }
 
     function showGameScreen() {
-        var currentFlashVersion = swfobject.getFlashPlayerVersion();
+        const currentFlashVersion = swfobject.getFlashPlayerVersion();
         $("#noflash_reqVersion").html(flashVersion);
-        $("#noflash_currentVersion").html(currentFlashVersion.major + "." + currentFlashVersion.minor + "." + currentFlashVersion.release);
-
+        $("#noflash_currentVersion").html(`${currentFlashVersion.major}.${currentFlashVersion.minor}.${currentFlashVersion.release}`);
+        
         if (screen.availWidth <= 1250) {
             $("#fb_likes").css("right", "-6px");
             $("#nav").css("left", "220px");
         }
 
-        window.fbAsyncInit = function () {
+        window.fbAsyncInit = function() {
             FB.init({
                 appId: appId,
                 status: true,
                 cookie: true,
                 oauth: true,
-                version: 'v22.0',
+                version: 'v2.0',
                 hideFlashCallback: onFlashHide
             });
-        
-            FB.AppEvents.logPageView();
-        
-            setTimeout(function () {
+            
+            setTimeout(() => {
                 FB.Canvas.setSize({ height: 1100 });
-        
-                var response = {
-                    status: "connected",
-                    authResponse: {
-                        userID: simulatedUserId,
-                        accessToken: simulatedAccessToken
+
+                FB.getLoginStatus((response) => {
+                    $("#userID").html(response.status === "connected" ? `User Id: fb${response.authResponse.userID}` : "");
+                    
+                    switch (response.status) {
+                        case "connected":
+                            getParameterByName("migration") 
+                                ? startMigration(response.authResponse.accessToken)
+                                : startGame(response.authResponse.accessToken);
+                            break;
+                        case "not_authorized":
+                            showError("App not Authorized", "The Last Stand: Dead Zone Facebook Application has not been authorized. <br/>You will need to log in to the app to continue.");
+                            showLoginButton();
+                            break;
+                        default:
+                            showError("Not logged into Facebook", "You need to be logged into Facebook to play The Last Stand: Dead Zone. <br/>Please make sure you are logged into Facebook and try again.");
                     }
-                };
-        
-                handleLoginStatus(response);
+                });
             }, 500);
         };
-        
-        function handleLoginStatus(response) {
-            switch (response.status) {
-                case "connected":
-                    $("#userID").html("User Id: " + response.authResponse.userID);
-                    if (getParameterByName("migration") != "") {
-                        startMigration(response.authResponse.accessToken);
-                    } else {
-                        startGame(response.authResponse.accessToken);
-                    }
-                    break;
-        
-                case "not_authorized":
-                    $("#userID").html("");
-                    showError("App not Authorized", "L'application n'a pas été autorisée.");
-                    showLoginButton();
-                    break;
-        
-                default:
-                    $("#userID").html("");
-                    showError("Not logged into Facebook", "Vous devez être connecté à Facebook pour jouer.");
-                    break;
-            }
-        }
 
-        (function(d, s, id){
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) {return;}
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-          }(document, 'script', 'facebook-jssdk'));
+        loadFacebookSDK();
+    }
+
+    function loadFacebookSDK() {
+        const script = document.createElement('script');
+        script.id = 'facebook-jssdk';
+        script.src = 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.0&appId=1131663138272181&autoLogAppEvents=1';
+        document.body.appendChild(script);
     }
 
     function getParameterByName(name) {
-        name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-        var regexS = "[\\?&]" + name + "=([^&#]*)";
-        var regex = new RegExp(regexS);
-        var results = regex.exec(window.location.search);
-        if (results == null)
-            return "";
-        else
-            return decodeURIComponent(results[1].replace(/\+/g, " "));
+        name = name.replace(/[[\]]/g, "\\$&");
+        const regex = new RegExp(`[?&]${name}=([^&#]*)`);
+        const results = regex.exec(window.location.search);
+        return results ? decodeURIComponent(results[1].replace(/\+/g, " ")) : "";
     }
 
     function getRefererParam(key) {
-        key = key.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-        var regex = new RegExp("[\\?&]" + key + "=([^&#]*)");
-        var qs = regex.exec(document.referrer);
-        if (qs == null)
-            return "";
-        else
-            return qs[1];
+        key = key.replace(/[[\]]/g, "\\$&");
+        const regex = new RegExp(`[?&]${key}=([^&#]*)`);
+        const qs = regex.exec(document.referrer);
+        return qs ? qs[1] : "";
     }
 
-
     function startGame(accessToken) {
-        var flashVars = {
+        const flashVars = {
             path: "/game/",
-            service: "pio",
+            service: "fb",
             accessToken: accessToken,
             affiliate: getParameterByName("a"),
-            useSSL: ("https:" == document.location.protocol ? "1" : "0"),
-            publishingnetworklogin: "auto"
+            useSSL: 0,
         };
-
-        var params = {
+        
+        const params = {
             allowScriptAccess: "always",
             allowFullScreen: "true",
             allowFullScreenInteractive: "true",
@@ -200,39 +191,25 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
             wmode: "direct",
             bgColor: "#000000"
         };
-
-        var attributes = {
-            id: "game",
-            name: "game"
-        };
-
+        
+        const attributes = { id: "game", name: "game" };
+        
         $("#game_wrapper").height("0px");
-
-        var swfURL = "/game/preloader.swf"
-        swfobject.embedSWF(swfURL, "game_container", "100%", "100%", flashVersion, "swf/expressinstall.swf", flashVars, params, attributes, function (e) {
-            if (!e.success) {
-                showNoFlash();
-            } else {
-                setMouseWheelState(false);
-            }
-        });
+        embedSWF("/game/preloader.swf", flashVars, params, attributes);
     }
 
     function startMigration(accessToken) {
-
-        var migrationStr = getParameterByName("migration");
-
-        var flashVars = {
+        const flashVars = {
             path: "/migration/",
             core: "importClient.swf",
-            migration: migrationStr,
-            service: "pio",
+            migration: getParameterByName("migration"),
+            service: "fb",
             accessToken: accessToken,
             affiliate: getParameterByName("a"),
-            useSSL: ("https:" == document.location.protocol ? "1" : "0"),
+            useSSL: 1,
         };
-
-        var params = {
+        
+        const params = {
             allowScriptAccess: "always",
             allowFullScreen: "true",
             allowFullScreenInteractive: "false",
@@ -243,27 +220,37 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
             wmode: "direct",
             bgColor: "#000000"
         };
-
-        var attributes = {
-            id: "game",
-            name: "game"
-        };
-
+        
+        const attributes = { id: "game", name: "game" };
+        
         $("#game_wrapper").height("0px");
+        embedSWF("/migration/preloader.swf", flashVars, params, attributes);
+    }
 
-        var swfURL = "/game/preloader.swf"
-        swfobject.embedSWF(swfURL, "game_container", "100%", "100%", flashVersion, "swf/expressinstall.swf", flashVars, params, attributes, function (e) {
-            if (!e.success) {
-                showNoFlash();
-            } else {
-                setMouseWheelState(false);
+    function embedSWF(swfURL, flashVars, params, attributes) {
+        swfobject.embedSWF(
+            swfURL, 
+            "game_container", 
+            "100%", 
+            "100%", 
+            flashVersion, 
+            "swf/expressinstall.swf", 
+            flashVars, 
+            params, 
+            attributes, 
+            (e) => {
+                if (!e.success) {
+                    showNoFlash();
+                } else {
+                    setMouseWheelState(false);
+                }
             }
-        });
+        );
     }
 
     function showMaintenanceScreen() {
-        addMessage("maintenance", "The Last Stand: Dead Zone is down for scheduled maintenance. ETA " + mtPST + " local time.");
-        showError("Scheduled Maintenance", "The Last Stand: Dead Zone is down for scheduled maintenance.<br/>We apologise for any inconvenience.<br/><br/><strong>ETA " + mtPST + " local time</strong>");
+        addMessage("maintenance", `The Last Stand: Dead Zone is down for scheduled maintenance. ETA ${mtPST} local time.`);
+        showError("Scheduled Maintenance", `The Last Stand: Dead Zone is down for scheduled maintenance.<br/>We apologise for any inconvenience.<br/><br/><strong>ETA ${mtPST} local time</strong>`);
     }
 
     function showNoFlash() {
@@ -275,10 +262,20 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
 
     function showError(title, message) {
         $("#loading").remove();
-        $("#generic_error").css("display", "block");
-        $("#generic_error").html("<p><h2>" + title + "</h2></p><p>" + message + "</p>");
-        $("#generic_error").append($("#loginbutton"));
+        $("#generic_error").css("display", "flex").html(`
+            <div class="error-content">
+                <h2>${title}</h2>
+                <p>${message}</p>
+                <div class="login-button-container">
+                    <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+                </div>
+            </div>
+        `);
         $("#userID").html("");
+        
+        if (typeof FB !== 'undefined') {
+            FB.XFBML.parse();
+        }
     }
 
     function showLoginButton() {
@@ -286,15 +283,14 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
     }
 
     function killGame() {
-        $("#game").remove();
-        $("#game_container").remove();
-        $("#loading").remove();
-        $("#content").prepend("" +
-            "<div id='messagebox'>" +
-            "<div class='header'>Are you there?</div>" +
-            "<div class='msg'>You've left your compound unattended for some time. Are you still playing?</div>" +
-            "<div class='btn' onclick='refresh()'>BACK TO THE DEAD ZONE</div>" +
-            "</div>");
+        $("#game, #game_container, #loading").remove();
+        $("#content").prepend(`
+            <div id='messagebox'>
+                <div class='header'>Are you there?</div>
+                <div class='msg'>You've left your compound unattended for some time. Are you still playing?</div>
+                <div class='btn' onclick='refresh()'>BACK TO THE DEAD ZONE</div>
+            </div>
+        `);
     }
 
     function onPreloaderReady() {
@@ -303,14 +299,13 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
     }
 
     function onFlashHide(info) {
-        if (info.state == "opened") {
-            var strImg = document.getElementById("game").getScreenshot();
-            if (strImg != null)
-                $("#content").append("<img id='screenshot' style='position:absolute; top:120px; width:960px; height:804px;' src='data:image/jpeg;base64," + strImg + "'/>");
-        }
-        else {
-            var screenElement = $("#screenshot");
-            if (screenElement != null) screenElement.remove();
+        if (info.state === "opened") {
+            const strImg = document.getElementById("game").getScreenshot();
+            if (strImg) {
+                $("#content").append(`<img id='screenshot' style='position:absolute; top:120px; width:960px; height:804px;' src='data:image/jpeg;base64,${strImg}'/>`);
+            }
+        } else {
+            $("#screenshot").remove();
         }
     }
 
@@ -323,95 +318,72 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
         location.reload();
     }
 
-    function addMessage(id, message, showCloseButton, showSpinner) {
-        var bar = $("<div class=\"header_message_bar\"></div>");
-        bar.data("id", id);
+    function addMessage(id, message, showCloseButton, showSpinner = false) {
+        const bar = $(`<div class="header_message_bar"></div>`).data("id", id);
 
         if (showCloseButton) {
-            var closeDiv = $("<div class=\"close\"></div>").click(function () {
-                bar.stop(true, true).animate({ height: "toggle" }, 250);
-            });
-            bar.append(closeDiv);
+            bar.append($("<div class='close'></div>").click(() => bar.stop(true, true).animate({ height: "toggle" }, 250)));
         }
 
         if (showSpinner) {
-            var loader = $("<div class=\"loader\"></div<");
-            bar.append(loader);
+            bar.append($("<div class='loader'></div>"));
         }
 
-        message = parseUTCStrings(message);
-
-        var msgDiv = $("<div class=\"header_message\">" + message + "</div>");
-        bar.append(msgDiv);
-        $("#warning_container").append(bar);
-
-        bar.height("0px").animate({ height: "30px" }, 250);
+        bar.append($(`<div class="header_message">${parseUTCStrings(message)}</div>`));
+        $("#warning_container").append(bar.height("0px").animate({ height: "30px" }, 250));
         messages.push(bar);
     }
 
     function removeMessage(id) {
-        for (var i = messages.length - 1; i >= 0; i--) {
-            var msg = messages[i];
-            if (msg.data("id") == id) {
-                msg.stop(true).animate({ height: "toggle" }, 250);
-                messages.splice(i, 1);
-            }
-        }
+        messages.filter(msg => msg.data("id") === id).forEach(msg => {
+            msg.stop(true).animate({ height: "toggle" }, 250);
+        });
+        messages = messages.filter(msg => msg.data("id") !== id);
     }
 
     function parseUTCStrings(msg) {
-        reg = /\[\%UTC (\d{4})\-(\d{2})\-(\d{2}) (\d{2})\-(\d{2})\]/ig;
-        while (seg = reg.exec(msg)) {
-            msg = msg.replace(seg[0], convertUTCtoLocal(Number(seg[1]), Number(seg[2]), Number(seg[3]), Number(seg[4]), Number(seg[5])));
-        }
-        reg = /\[\%UTC (\d{2})\-(\d{2})\]/ig;
-        while (seg = reg.exec(msg)) {
-            msg = msg.replace(seg[0], convertUTCtoLocal(0, 0, 0, Number(seg[1]), Number(seg[2])));
-        }
-        return msg;
+        return msg
+            .replace(/\[\%UTC (\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})\]/ig, (_, y, m, d, h, min) => convertUTCtoLocal(y, m, d, h, min))
+            .replace(/\[\%UTC (\d{2})-(\d{2})\]/ig, (_, h, min) => convertUTCtoLocal(0, 0, 0, h, min));
     }
 
     function convertUTCtoLocal(year, month, date, hours, mins) {
-        var d = new Date();
-        if (year > 0)
-            d.setUTCFullYear(year, month - 1, date);
+        const d = new Date();
+        if (year > 0) d.setUTCFullYear(year, month-1, date);
         d.setUTCHours(hours);
         d.setUTCMinutes(mins);
-
-        var str = "";
-        if (year > 0) {
-            months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            str = months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() + " ";
-        }
-        str += (d.getHours() <= 12 ? d.getHours() : d.getHours() - 12) + ":" + (d.getMinutes() < 10 ? "0" + d.getMinutes() : d.getMinutes()) + (d.getHours() < 12 ? "am" : "pm");
-        return str;
+        
+        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        let str = year > 0 ? `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ` : "";
+        
+        const displayHours = d.getHours() % 12 || 12;
+        const displayMins = d.getMinutes().toString().padStart(2, "0");
+        return `${str}${displayHours}:${displayMins}${d.getHours() < 12 ? "am" : "pm"}`;
     }
 
-    var requestCodeRedeemInterval;
-    var waitingForCodeRedeem = false;
+    let requestCodeRedeemInterval;
+    let waitingForCodeRedeem = false;
 
     function openRedeemCodeDialogue() {
         updateNavClass("code");
+        if (mt || waitingForCodeRedeem) return;
 
-        if (mt || waitingForCodeRedeem)
-            return;
-
-        var requestDialogue = function () {
+        const requestDialogue = () => {
             try {
                 document.getElementById("game").openRedeemCode();
                 removeMessage("openingCodeRedeem");
                 updateNavClass(null);
                 return true;
+            } catch (err) {
+                return false;
             }
-            catch (err) { }
-            return false;
         };
 
         if (!requestDialogue()) {
             addMessage("openingCodeRedeem", "Please wait while the game loads...", false, true);
-
             waitingForCodeRedeem = true;
-            requestCodeRedeemInterval = setInterval(function () {
+            
+            requestCodeRedeemInterval = setInterval(() => {
                 if (requestDialogue()) {
                     waitingForCodeRedeem = false;
                     clearInterval(requestCodeRedeemInterval);
@@ -420,32 +392,29 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
         }
     }
 
-    var requestGetMoreInterval;
-    var waitingForGetMore = false;
+    let requestGetMoreInterval;
+    let waitingForGetMore = false;
 
     function openGetMoreDialogue() {
         updateNavClass("get_more");
+        if (mt || waitingForGetMore) return;
 
-        if (mt || waitingForGetMore)
-            return;
-
-        var requestDialogue = function () {
+        const requestDialogue = () => {
             try {
                 if (document.getElementById("game").openGetMore()) {
                     removeMessage("openingFuel");
                     updateNavClass(null);
                     return true;
                 }
-            }
-            catch (err) { }
+            } catch (err) {}
             return false;
         };
 
         if (!requestDialogue()) {
             addMessage("openingFuel", "Opening Fuel Store, please wait while the game loads...", false, true);
-
             waitingForGetMore = true;
-            requestGetMoreInterval = setInterval(function () {
+            
+            requestGetMoreInterval = setInterval(() => {
                 if (requestDialogue()) {
                     waitingForGetMore = false;
                     clearInterval(requestGetMoreInterval);
@@ -465,34 +434,34 @@ if (!self.__WB_pmw) { self.__WB_pmw = function (obj) { this.__WB_source = obj; r
                 document.removeEventListener("DOMMouseScroll", preventWheel, false);
             }
         } else {
-            document.onmousewheel = function () { preventWheel(); }
+            document.onmousewheel = () => preventWheel();
             if (document.addEventListener) {
                 document.addEventListener("DOMMouseScroll", preventWheel, false);
             }
         }
     }
 
-    function preventWheel(e) {
-        if (!e) { e = window.event; }
+    function preventWheel(e = window.event) {
         if (e.preventDefault) {
             e.preventDefault();
-        } else e.returnValue = false;
-
-        function setBeforeUnloadMessage(msg) {
-            unloadMessage = msg;
-            $(window).bind('beforeunload', handleUnload);
-            return true;
+        } else {
+            e.returnValue = false;
         }
+    }
 
-        function clearBeforeUnloadMessage() {
-            unloadMessage = "";
-            $(window).unbind('beforeunload', handleUnload);
-            return true;
-        }
+    function setBeforeUnloadMessage(msg) {
+        unloadMessage = msg;
+        $(window).bind('beforeunload', handleUnload);
+        return true;
+    }
 
-        function handleUnload() {
-            return unloadMessage;
-        }
+    function clearBeforeUnloadMessage() {
+        unloadMessage = "";
+        $(window).unbind('beforeunload', handleUnload);
+        return true;
+    }
 
+    function handleUnload() {
+        return unloadMessage;
     }
 }

@@ -15,6 +15,7 @@
     <link href="assets/css/screen.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
 </head>
 <body>
@@ -50,6 +51,15 @@
                         </div>
                     </div>
                 </div>
+				<div id="generic_error" class="error">
+					<div class="error-content">
+						<h2>Not logged into Facebook</h2>
+						<p>You need to be logged into Facebook to play The Last Stand: Dead Zone.<br/>Please make sure you are logged into Facebook and try again.</p>
+						<div class="login-button-container">
+							<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+						</div>
+					</div>
+				</div>
             </div>
             <div id="loading">Connecting to Facebook...</div>
             <div id="generic_error" class="error"></div>
