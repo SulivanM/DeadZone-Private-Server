@@ -72,10 +72,6 @@ For more about Con Artist Games and their current projects, visit their official
    python apiserver.py
    ```
 
-   ```bash
-   python socketserver.py
-   ```
-
 *Note: This project is fan-made and non-commercial. All rights to *The Last Stand: Dead Zone* belong to Con Artist Games.*
 
 ### Example: Using VSCode Live Server as Web Server
