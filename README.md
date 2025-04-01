@@ -22,6 +22,16 @@ We extend our sincere thanks to Chris "Con" Condon and Con Artist Games for thei
 
 ---
 
+## ☕ Support the Project  
+
+If you appreciate our work on *The Last Stand: Dead Zone - Private Server* and want to support further development, you can now do so via **Buy Me a Coffee**! Your contributions help keep this project alive and improve its quality.  
+
+🔗 **Support us here:** [buymeacoffee.com/sulivanm](https://buymeacoffee.com/sulivanm)  
+
+Thank you for your support! ❤️  
+
+---
+
 ## ⚠️ Disclaimer
 
 This project is strictly for private and non-commercial use. We have no intention of infringing upon the rights of the original creators. If you enjoy this game, please support the developers by exploring their other works and following them on their official platforms.
