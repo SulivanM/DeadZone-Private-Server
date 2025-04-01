@@ -1,2 +1,2 @@
-Flask==2.3.2
-protobuf==4.23.3
+Flask==3.1.0
+protobuf==6.30.2
