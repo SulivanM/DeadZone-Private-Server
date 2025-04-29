@@ -90,7 +90,7 @@ def main():
     server.start()
     try:
         while True:
-            threading.Event().wait()
+            threading.Event().wait(1)
     except KeyboardInterrupt:
         logger.info("Shutdown requested by user")
     finally:
