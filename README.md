@@ -77,3 +77,5 @@ For more information about Con Artist Games and their current projects, visit th
 - Ensure firewall rules allow access to port 8000 and the socket server ports if applicable.  
 - This project assumes basic knowledge of running Python scripts and web servers.  
 - For testing the web server in a more advanced environment, you may use tools like XAMPP or other HTTP servers.
+- We have public documentation about the game at [DeadZone Documentation](https://dead-zone-documentation.vercel.app/) (the [GitHub](https://github.com/glennhenry/DeadZone-Documentation)). Please share your research on the game's source code to help new contributors.
+- For more assistance, join our [Discord community](https://discord.gg/Q5dTKrPmfq).
