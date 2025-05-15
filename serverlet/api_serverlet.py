@@ -12,7 +12,7 @@ def handle_request(RPCMethod):
         response_msg.token = ""
         response_msg.userId = ""
         response_msg.showBranding = False
-        response_msg.gameFSRedirectMap = "cdnmap|https://ddeadzonegame.com"
+        response_msg.gameFSRedirectMap = "cdnmap|http://localhost:8000"
         response_msg.facebookUserId = ""
         response_msg.partnerId = ""
         response_msg.playerInsightState = ""

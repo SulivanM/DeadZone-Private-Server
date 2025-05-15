@@ -42,72 +42,38 @@ For more information about Con Artist Games and their current projects, visit th
 
 ## 📝 TODO: Development Roadmap
 
-1. **Research and Documentation**
-   - Collect and analyze game resources (e.g., assets, mechanics, and structure).
-   - Document key elements necessary for recreating the gameplay experience.
-
-2. **Server Development**
-   - Build a basic server structure to host game data using Python.
-   - Develop APIs to mimic the server communication from the original game.
-   - Test server stability and performance.
-
-3. **Game Client Reconstruction**
-   - Reverse engineer and recreate the game's user interface and mechanics.
-   - Implement the game's logic and interactions.
-
-4. **Multiplayer Features**
-   - Enable player registration and login functionality.
-   - Develop a system to sync game data between the server and client.
-
-5. **Testing and Debugging**
-   - Conduct thorough testing to ensure the game is bug-free.
-   - Fix compatibility issues and optimize for different devices.
-
-6. **Finalization**
-   - Ensure the game is as faithful as possible to the original.
-   - Provide detailed instructions for personal use and installation.
+1. Research and Documentation  
+2. Server Development  
+3. Game Client Reconstruction  
+4. Multiplayer Features  
+5. Testing and Debugging  
+6. Finalization  
 
 ---
 
-## 🛠️ Installation Steps
+## 🛠️ Setup & Launch Guide
 
-### 1. Socket Server
+### Prerequisites
+- Python installed and added to your system PATH.  
+- Internet connection for dependency installation.
 
-#### Install Python:
-- Download and install Python. Ensure `python.exe` is added to the PATH environment variable.
+### Quick Setup & Launch
 
-#### Install Dependencies:
-- Navigate to the `serverlet` folder and install the required dependencies by running the following command in your terminal:
+1. Place the provided `run.bat` script in the root folder of the project (next to `index.html`).
 
-```
-pip install -r requirements.txt
-```
+2. Double-click `run.bat` or run it via Command Prompt.  
+   This script will:  
+   - Update `pip`  
+   - Install dependencies from `serverlet/requirements.txt`  
+   - Launch `api_serverlet.py` and `socket_serverlet.py` in separate windows  
+   - Start a simple web server serving the game at `http://localhost:8000`
 
-#### 4. Run the Socket Server:
-In the `serverlet` folder, run the following command:
+3. Open your browser and go to:  
+   `http://localhost:8000/`  
 
-```
-python socket_serverlet.py
-```
+---
 
-#### 5. Run the API Server:
-In the `serverlet` folder, run the following command:
-
-```
-python api_serverlet.py
-```
-
-#### 6. Set Up the Web Server:
-For the web server, configure the following domain for the HTML site:
-
-- **Domain**: https://ddeadzonegame.com
-- **Protocol**: HTTPS only
-
-#### 7. Testing the Web Server:
-For testing purposes, you can use XAMPP to set up the web server.
-
-### Additional Notes:
-- Ensure that all dependencies are correctly installed and paths are configured properly to avoid errors during server setup.
-- You may need to configure firewall and port settings if you are running the server on a network.
-
-The project assumes a basic understanding of Python and web server setup. If you run into issues, consult the documentation or community forums for help.
+### Additional Notes
+- Ensure firewall rules allow access to port 8000 and the socket server ports if applicable.  
+- This project assumes basic knowledge of running Python scripts and web servers.  
+- For testing the web server in a more advanced environment, you may use tools like XAMPP or other HTTP servers.
