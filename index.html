@@ -13,13 +13,28 @@
     <link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
     <link href="assets/css/reset.css" rel="stylesheet" type="text/css" />
     <link href="assets/css/screen.css" rel="stylesheet" type="text/css" />
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js" integrity="sha512-INjccm+ffMBD7roophHluNrqwX0TLzZSEUPX2omxJP78ho8HbymItbcdh3HvgznbxeBhwcuqd6BnkBvdXeb1pg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-	<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
+    <style>
+        .login-container {
+            margin: 20px auto;
+            text-align: center;
+            max-width: 300px;
+        }
+        .login-container input {
+            display: block;
+            margin: 10px auto;
+            padding: 8px;
+            width: 80%;
+        }
+        .login-container button {
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div id="fb-root"></div>
     <div id="wrapper">
         <a name="top"></a>
         <div id="header">
@@ -27,14 +42,10 @@
             <div id="nav">
                 <ul id="nav_ul" class="play">
                     <li id="play"><a href="#top" onclick="updateNavClass('play')">Play</a></li>
-                    <li id="fan_page"><a href="http://www.facebook.com/LastStandDeadZone" target="_blank" onclick="updateNavClass('fan_page')">Fan Page</a></li>
                     <li id="get_more"><a href="#top" onclick="openGetMoreDialogue()">Get More</a></li>
                     <li id="help"><a href="http://localhost:8000/help" onclick="updateNavClass('help')" target="_blank">Help</a></li>
                     <li id="history"><a href="https://getsatisfaction.com/deadzone" onclick="updateNavClass('history')" target="_blank">Feedback</a></li>
                 </ul>
-            </div>
-            <div id="fb_likes">
-                <iframe src="https://www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.facebook.com%2FLastStandDeadZone&send=false&layout=button_count&width=200&show_faces=true&action=like&colorscheme=dark&font&height=21&appId=319734431374018" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:100px; height:21px;" allowTransparency="true"></iframe>
             </div>
         </div>
         <div id="warning_container"></div>
@@ -42,7 +53,7 @@
         <div id="content">
             <div id="game_wrapper">
                 <div id="game_container">
-                    <div id="noflash" class="error">
+                    <div id="noflash" class="error" style="display: none;">
                         <p><h2>Flash Player Required</h2></p>
                         <p>The Last Stand: Dead Zone requires the latest version of Flash Player to run (version 11.1.102.55).<br/>It's free, and only takes a small amount of time to download.</p>
                         <div id="downloadFlash">
@@ -51,27 +62,25 @@
                         </div>
                     </div>
                 </div>
-				<div id="generic_error" class="error">
-					<div class="error-content">
-						<h2>Not logged into Facebook</h2>
-						<p>You need to be logged into Facebook to play The Last Stand: Dead Zone.<br/>Please make sure you are logged into Facebook and try again.</p>
-						<div class="login-button-container">
-							<fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
-						</div>
-					</div>
-				</div>
             </div>
-            <div id="loading">Connecting to Facebook...</div>
-            <div id="generic_error" class="error"></div>
+            <div id="loading" style="display: none;">Connecting...</div>
+            <div id="generic_error" style="display: flex;">
+                <div class="error-content">
+                    <h2>Login Required</h2>
+                    <p>Please enter your credentials to play The Last Stand: Dead Zone.</p>
+                    <div class="login-container">
+                        <input type="text" id="username" placeholder="Username" />
+                        <input type="password" id="password" placeholder="Password" />
+                        <button onclick="handleLogin()">Login</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="footer" align="center">
-            <a href="http://localhost:8000/terms" target="_blank">Terms</a> | <a href="http://localhost:8000/privacy" target="_blank">Privacy Policy</a> | <a href="http://alternativaplatform.com/" target="_blank">Powered by AlternativaPlatform</a> | &copy; 2012 - Con Artist Games Pty Ltd.
+            <a href="http://localhost:8000/terms" target="_blank">Terms</a> | <a href="http://localhost:8000/privacy" target="_blank">Privacy Policy</a> | <a href="http://alternativaplatform.com/" target="_blank">Powered by AlternativaPlatform</a> | © 2012 - Con Artist Games Pty Ltd.
         </div>
-        <div id="userID">Connecting...</div>
-        <div id="conArtistLogo"><a href="http://conartistgames.com" title="Con Artist Games" target="_blank"><img src="assets/images/conartistlogo.gif" alt="Con Artist Games"></div>
+        <div id="userID"></div>
+        <div id="conArtistLogo"><a href="http://conartistgames.com" title="Con Artist Games" target="_blank"><img src="assets/images/conartistlogo.gif" alt="Con Artist Games"></a></div>
     </div>
-    <script>
-        // addMessage("maintenance", "The Last Stand: Dead Zone is down for maintenance. ETA 30 minutes.")
-    </script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
 
-echo ================================
+echo =====================================
 echo 🧟‍♂️ The Last Deadzone Revive Setup 🧟‍♂️
-echo ================================
+echo =====================================
 
 where python >nul 2>&1
 if errorlevel 1 (

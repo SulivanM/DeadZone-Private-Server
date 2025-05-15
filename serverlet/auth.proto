@@ -1,29 +1,20 @@
 syntax = "proto2";
 
-package playerio.generated.messages;
-
-message FacebookOAuthConnectArgs {
+message AuthenticateArgs {
   optional string gameId = 1;
-  optional string accessToken = 2;
-  optional string partnerId = 3;
-  repeated string playerInsightSegments = 4;
-  optional string clientAPI = 5;
-  repeated KeyValuePair clientInfo = 6;
+  optional string userId = 2;
 }
 
-message FacebookOAuthConnectOutput {
+message AuthenticateOutput {
   optional string token = 1;
   optional string userId = 2;
   optional bool showBranding = 3 [default = false];
-  optional string gameFSRedirectMap = 4;
-  optional string facebookUserId = 5;
-  optional string partnerId = 6;
-  optional string playerInsightState = 7;
-}
-
-message FacebookOAuthConnectError {
-  optional string message = 1;
-  optional int32 errorCode = 2;
+  optional string playerInsightState = 4;
+  optional bool isSocialNetworkUser = 5 [default = false];
+  optional bool isInstalledByPublishingNetwork = 6 [default = false];
+  optional bool deprecated1 = 7 [default = false];
+  optional string apiSecurity = 8;
+  repeated string apiServerHosts = 9;
 }
 
 message KeyValuePair {

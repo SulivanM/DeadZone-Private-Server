@@ -1,21 +1,41 @@
 from flask import Flask, request, Response, send_from_directory
 import auth_pb2
 import logging
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/api/<int:RPCMethod>', methods=['POST'])
 def handle_request(RPCMethod):
-    if RPCMethod == 418:
-        response_msg = auth_pb2.FacebookOAuthConnectOutput()
-        response_msg.token = ""
-        response_msg.userId = ""
+    if RPCMethod == 13:
+        request_data = request.get_data()
+        app.logger.debug(f"Raw request data: {request_data}")
+        app.logger.debug(f"Request data length: {len(request_data)}")
+
+        if len(request_data) == 0:
+            app.logger.error("Request data is empty, cannot parse")
+            return Response("Invalid request data", status=400)
+
+        auth_input = auth_pb2.AuthenticateArgs()
+        try:
+            auth_input.ParseFromString(request_data)
+            app.logger.debug(f"Parsed gameId: {auth_input.gameId}, userId: {auth_input.userId}")
+        except Exception as e:
+            app.logger.error(f"Failed to parse AuthenticateArgs: {str(e)}")
+            return Response(f"Parse error: {str(e)}", status=400)
+
+        response_msg = auth_pb2.AuthenticateOutput()
+        response_msg.token = "mock-auth-token-123456"
+        response_msg.userId = "user123"
         response_msg.showBranding = False
-        response_msg.gameFSRedirectMap = "cdnmap|http://localhost:8000"
-        response_msg.facebookUserId = ""
-        response_msg.partnerId = ""
         response_msg.playerInsightState = ""
+        response_msg.isSocialNetworkUser = False
+        response_msg.isInstalledByPublishingNetwork = False
+        response_msg.deprecated1 = False
+        response_msg.apiSecurity = ""
+        response_msg.apiServerHosts.extend(["127.0.0.1:5000"])
 
         serialized_data = response_msg.SerializeToString()
         response_data = bytearray()
@@ -24,7 +44,7 @@ def handle_request(RPCMethod):
         response_data.extend(serialized_data)
 
         return Response(bytes(response_data), content_type="application/octet-stream")
-    
+
     elif RPCMethod == 27:
         response_msg = auth_pb2.CreateJoinRoomOutput()
         response_msg.roomId = "defaultRoomId"
