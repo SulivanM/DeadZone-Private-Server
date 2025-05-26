@@ -1,0 +1,15 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-hand.daeanim
+framerate	30
+
+
+hand-idle-crouching			582	584						
+hand-idle-standing			585	587						
+hand-run				588	617	594	footL	609	footR		
+hand-swingHigh				619	673	639	swingStart	649	hit	654	swingEnd
+hand-swingLow				675	729	695	swingStart	700	hit	703	swingEnd
+hand-swingDown				731	785	751	swingStart	756	hit	759	swingEnd

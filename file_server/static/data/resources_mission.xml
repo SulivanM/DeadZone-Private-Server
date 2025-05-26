@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+	<!-- Required mission assets -->
+	<res>mission.zip</res>
+
+	<res>models/anim/human-knockback.anim</res>
+	<res>models/anim/human-knockback.daeanim</res>
+	
+	<res>sound/impacts/body-hit1.mp3</res>
+</resources>

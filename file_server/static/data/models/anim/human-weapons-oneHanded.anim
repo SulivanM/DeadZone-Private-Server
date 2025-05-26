@@ -1,0 +1,17 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-oneHanded.daeanim
+framerate	30
+
+
+oneHanded-idle-crouching		3	5						
+oneHanded-idle-standing			6	8						
+oneHanded-run				9	38	15	footL	30	footR						
+oneHanded-stab				40	94	46	swingStart	54	hit	68	swingEnd
+oneHanded-swingHigh			96	150	116	swingStart	126	hit	131	swingEnd
+oneHanded-swingLow			152	206	172	swingStart	177	hit	180	swingEnd
+oneHanded-swingDown			208	262	228	swingStart	233	hit	236	swingEnd
+oneHanded-swingUp			264	318	270	swingStart	274	hit	277	swingEnd
