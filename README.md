@@ -53,9 +53,16 @@ For more information about Con Artist Games and their current projects, visit th
 
 ## 🛠️ Setup & Launch Guide
 
+### Tools
+
+- [Basilisk web browser](https://www.basilisk-browser.org/) ([Portable version with Flash pre-installed](https://archive.org/download/basilisk-portable-with-flash_202502/Basilisk%20Portable%20with%20Flash.zip))
+- [JPEXS Free Flash Decompiler](https://github.com/jindrapetrik/jpexs-decompiler)
+- [Adobe Flash Player with debug enabled](https://archive.org/details/flashplayer32.0.0.465_win_debug_npapi_patched)
+
 ### Prerequisites
 - Python installed and added to your system PATH.  
 - Internet connection for dependency installation.
+- `ddeadzonegame.com 127.0.0.1` configured in `hosts` file. Some of the urls are hardcoded into the game.
 
 ### Quick Setup & Launch
 
@@ -64,12 +71,11 @@ For more information about Con Artist Games and their current projects, visit th
 2. Double-click `run.bat` or run it via Command Prompt.  
    This script will:  
    - Update `pip`  
-   - Install dependencies from `serverlet/requirements.txt`  
-   - Launch `api_serverlet.py` and `socket_serverlet.py` in separate windows  
-   - Start a simple web server serving the game at `http://localhost:8000`
+   - Install dependencies from all `requirements.txt` files inside the directories  
+   - Launch `api_server/main.py`, `socket_server/main.py`, `file_server/main.py` and `workaround.py` in separate windows  
 
 3. Open your browser and go to:  
-   `http://localhost:8000/`  
+   `http://127.0.0.1:8000/`  
 
 ---
 
