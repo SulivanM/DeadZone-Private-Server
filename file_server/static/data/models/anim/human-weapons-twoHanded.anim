@@ -1,0 +1,19 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-twoHanded.daeanim
+framerate	30
+
+twoHanded-idle-crouching		320	322						
+twoHanded-idle-standing			323	325						
+twoHanded-swingHigh			326	368	346	swingStart	350	hit	354	swingEnd
+twoHanded-swingLow			370	412	390	swingStart	394	hit	398	swingEnd
+
+//
+anim		models/anim/human-weapons-polearm.daeanim
+framerate	30
+
+twoHanded-run				420	449	426	footL	441	footR		
+twoHanded-swingDown			539	581	559	swingStart	563	hit	567	swingEnd

@@ -1,0 +1,19 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-rifle.daeanim
+framerate	30
+
+		
+rifle-idle-crouching			3	5				
+rifle-idle-standing			6	8				
+rifle-run				9	38	15	footL	30	footR				
+rifle-threat-standing			70	59				
+rifle-fire-crouching			40	59				
+rifle-fire-standing			61	80				
+rifle-reload-crouching			82	126	86	magOut	108	magIn
+rifle-reload-standing			128	172	132	magOut	154	magIn
+LMG-reload-crouching			174	323	178	magOut	200	magIn
+LMG-reload-standing			325	474	329	magOut	351	magIn

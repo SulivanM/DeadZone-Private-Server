@@ -1,0 +1,17 @@
+//
+// Human animation data
+//
+
+// 
+anim		models/anim/human-weapons-crossbow.daeanim
+framerate	30
+
+		
+crossbow-idle-crouching			3	5					
+crossbow-idle-standing			6	8					
+crossbow-run				9	38	15	footL	30	footR	
+crossbow-threat-standing		61	62					
+crossbow-fire-crouching			40	59	41	magOut	
+crossbow-fire-standing			61	80	62	magOut	
+crossbow-reload-crouching		82	126	105	magIn				
+crossbow-reload-standing		128	172	151	magIn				

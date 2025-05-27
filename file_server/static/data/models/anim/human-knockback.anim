@@ -1,0 +1,15 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-knockback.daeanim
+framerate	30
+
+
+knockback-rifle			2	49	34	hit
+knockback-pistol		51	98	83	hit
+knockdown-rise-back		100	159
+knockdown-rise-side		161	220
+hurt-rifle			2	12
+hurt-pistol			51	61

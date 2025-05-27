@@ -1,0 +1,15 @@
+//
+// Human animation data
+//
+
+//
+anim		models/anim/human-weapons-polearm.daeanim
+framerate	30
+
+
+polearm-idle-crouching			414	416						
+polearm-idle-standing			417	419						
+polearm-run				420	449	426	footL	441	footR		
+polearm-swingHigh			451	493	471	swingStart	475	hit	479	swingEnd
+polearm-swingLow			495	537	515	swingStart	519	hit	523	swingEnd
+polearm-swingDown			539	581	559	swingStart	563	hit	567	swingEnd

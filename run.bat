@@ -15,17 +15,28 @@ if errorlevel 1 (
 echo ⬆️ Updating pip...
 python -m pip install --upgrade pip
 
-if exist "serverlet\requirements.txt" (
-    echo 📦 Installing dependencies...
-    pip install -r serverlet\requirements.txt
+if exist "api_server\requirements.txt" (
+    echo 📦 Installing dependencies api_server...
+    pip install -r api_server\requirements.txt
 ) else (
-    echo ⚠️ No requirements.txt found in serverlet\
+    echo ⚠️ No requirements.txt found in api_server\
 )
 
-start "API Server" cmd /k "cd serverlet && python api_serverlet.py"
-start "Socket Server" cmd /k "cd serverlet && python socket_serverlet.py"
+if exist "socket_server\requirements.txt" (
+    echo 📦 Installing dependencies socket_server...
+    pip install -r socket_server\requirements.txt
+) else (
+    echo ⚠️ No requirements.txt found in socket_server\
+)
 
-echo 🚀 Starting web server at http://localhost:8000...
-python -m http.server 8000
+if exist "file_server\requirements.txt" (
+    echo 📦 Installing dependencies file_server...
+    pip install -r file_server\requirements.txt
+) else (
+    echo ⚠️ No requirements.txt found in file_server\
+)
 
-pause
+start "File server" cmd /k "cd file_server && python main.py"
+start "API server" cmd /k "cd api_server && python main.py"
+start "Socket server" cmd /k "cd socket_server && python main.py"
+start "Workaround server" cmd /k "python workaround.py"
