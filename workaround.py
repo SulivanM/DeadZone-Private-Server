@@ -7,12 +7,6 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__, static_folder="static", static_url_path="/")
 cors_app = CORS(app)
 
-
-@app.route("/crossdomain.xml", methods=["GET"])
-def crossdomain():
-    return send_file("api_server/static/crossdomain.xml")
-
-
 @app.route("/r/<path:filename>")
 def serve_files(filename=""):
     return send_from_directory("r", filename)
