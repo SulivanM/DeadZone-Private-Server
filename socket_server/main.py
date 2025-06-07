@@ -1,6 +1,7 @@
 import socket
 import threading
 import logging
+import msgpack
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("EndpointServer")
@@ -18,7 +19,6 @@ class EndpointServer:
         self.port = port
         self.server_socket = None
         self.running = False
-        self.clients = []
 
     def start(self):
         try:
@@ -28,47 +28,42 @@ class EndpointServer:
             self.server_socket.listen(5)
             self.running = True
             logger.info(f"Server started on {self.host}:{self.port}")
-            accept_thread = threading.Thread(target=self.accept_connections)
-            accept_thread.daemon = True
-            accept_thread.start()
+            threading.Thread(target=self.accept_loop, daemon=True).start()
         except Exception as e:
-            logger.error(f"Error starting the server: {e}")
+            logger.error(f"Error starting server: {e}")
             self.stop()
 
-    def accept_connections(self):
+    def accept_loop(self):
         while self.running:
             try:
                 client_socket, client_address = self.server_socket.accept()
                 logger.info(f"New connection from {client_address}")
-                self.clients.append(client_socket)
-                client_thread = threading.Thread(
-                    target=self.handle_client, args=(client_socket, client_address)
-                )
-                client_thread.daemon = True
-                client_thread.start()
+                threading.Thread(target=self.handle_client, args=(client_socket, client_address), daemon=True).start()
             except Exception as e:
-                if self.running:
-                    logger.error(f"Error accepting connection: {e}")
+                logger.error(f"Error accepting connection: {e}")
 
-    def handle_client(self, client_socket, client_address):
+    def handle_client(self, sock, addr):
+        unpacker = msgpack.Unpacker(raw=False)
         try:
-            while self.running:
-                data = client_socket.recv(1024)
+            while True:
+                data = sock.recv(4096)
                 if not data:
                     break
-                logger.info(f"Data received from {client_address}: {data}")
+                logger.info(f"Data received from {addr}: {data}")
+
                 if data.startswith(b"<policy-file-request/>"):
-                    client_socket.send(CROSS_DOMAIN_POLICY)
-                    logger.info(f"Sent policy file to {client_address}")
-                else:
-                    client_socket.send(data)
+                    sock.sendall(CROSS_DOMAIN_POLICY)
+                    logger.info(f"Sent cross-domain policy to {addr}")
+                    break
+
+                unpacker.feed(data)
+                for obj in unpacker:
+                    logger.info(f"Decoded MessagePack from {addr}: {obj}")
         except Exception as e:
-            logger.error(f"Error with client {client_address}: {e}")
+            logger.error(f"Error with client {addr}: {e}")
         finally:
-            client_socket.close()
-            if client_socket in self.clients:
-                self.clients.remove(client_socket)
-            logger.info(f"Client {client_address} disconnected")
+            sock.close()
+            logger.info(f"Connection closed with {addr}")
 
     def stop(self):
         self.running = False
@@ -76,24 +71,18 @@ class EndpointServer:
             try:
                 self.server_socket.close()
             except Exception as e:
-                logger.error(f"Error closing the socket: {e}")
-        for client_socket in self.clients[:]:
-            try:
-                client_socket.close()
-            except Exception as e:
-                logger.error(f"Error closing a client connection: {e}")
-        self.clients.clear()
+                logger.error(f"Error closing socket: {e}")
         logger.info("Server stopped")
 
 
 def main():
-    server = EndpointServer(host="127.0.0.1", port=7777)
+    server = EndpointServer()
     server.start()
     try:
         while True:
             threading.Event().wait(1)
     except KeyboardInterrupt:
-        logger.info("Shutdown requested by user")
+        logger.info("Shutdown requested")
     finally:
         server.stop()
 
