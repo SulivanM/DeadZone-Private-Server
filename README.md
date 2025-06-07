@@ -55,14 +55,14 @@ For more information about Con Artist Games and their current projects, visit th
 
 ### Tools
 
-- [Basilisk web browser](https://www.basilisk-browser.org/) ([Portable version with Flash pre-installed](https://archive.org/download/basilisk-portable-with-flash_202502/Basilisk%20Portable%20with%20Flash.zip))
+- [Basilisk web browser](https://www.basilisk-browser.org/) ([Portable version with Flash pre-installed](https://www.mediafire.com/file/tmecqq7ke0uhqm7/Basilisk_with_Flash_%2528debug%2529.zip/file))
 - [JPEXS Free Flash Decompiler](https://github.com/jindrapetrik/jpexs-decompiler)
 - [Adobe Flash Player with debug enabled](https://archive.org/details/flashplayer32.0.0.465_win_debug_npapi_patched)
 
 ### Prerequisites
 - Python installed and added to your system PATH.  
 - Internet connection for dependency installation.
-- `ddeadzonegame.com 127.0.0.1` configured in `hosts` file. Some of the urls are hardcoded into the game.
+- `127.0.0.1 ddeadzonegame.com` configured in `hosts` file. Some of the urls are hardcoded into the game.
 
 ### Quick Setup & Launch
 
