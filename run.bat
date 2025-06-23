@@ -39,4 +39,3 @@ if exist "file_server\requirements.txt" (
 start "File server" cmd /k "cd file_server && python main.py"
 start "API server" cmd /k "cd api_server && python main.py"
 start "Socket server" cmd /k "cd socket_server && python main.py"
-start "Workaround server" cmd /k "python workaround.py"
