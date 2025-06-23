@@ -2,6 +2,7 @@ import socket
 import threading
 import logging
 import msgpack
+import serde
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("EndpointServer")
@@ -43,27 +44,58 @@ class EndpointServer:
                 logger.error(f"Error accepting connection: {e}")
 
     def handle_client(self, sock, addr):
-        unpacker = msgpack.Unpacker(raw=False)
+        # unpacker = msgpack.Unpacker(raw=False)
+        serializer = serde.BinarySerializer()
+        deserializer = serde.BinaryDeserializer()
+
         try:
             while True:
                 data = sock.recv(4096)
                 if not data:
                     break
-                logger.info(f"Data received from {addr}: {data}")
+                logger.info(f"[{addr}] Received: {data}")
 
                 if data.startswith(b"<policy-file-request/>"):
                     sock.sendall(CROSS_DOMAIN_POLICY)
-                    logger.info(f"Sent cross-domain policy to {addr}")
+                    logger.info(f"[{addr}] Sent cross-domain policy")
                     break
 
-                unpacker.feed(data)
-                for obj in unpacker:
-                    logger.info(f"Decoded MessagePack from {addr}: {obj}")
+                # In the connect handler, the client writes byte 0 and immediately flushes it. Ignoring it as it is probably a new message indication.
+                if data[0] == 0x00:
+                    logger.info(f"[{addr}] Received x00 --- ignoring")
+                    data = data[1:]
+
+                try:
+                    deserialized = deserializer.deserialize(data)
+                    logger.info(f"[{addr}] Deserialized: {deserialized}")
+                except Exception as e:
+                    logger.warning(f"[{addr}] Deserialization failed: {e}")
+                    continue
+
+                # Client sends join message (from API server)
+                if data.startswith(b'\x87\xc4join\xcedefaultJoinKey'):
+                    logger.info(f"[{addr}] Join room request received")
+
+                    # Assume the client joined successfully
+                    successful_join = True
+                    if successful_join:
+                        msg = ["playerio.joinresult", True]
+                    else:
+                        # If failed, send back PlayerIOError of type 11
+                        msg = ["playerio.joinresult", False, 11, "Failed to join room: Unknown connection"]
+    
+                    try:
+                        serialized = serializer.serialize(msg)
+                        logger.info(f"[{addr}] Sending: {serialized}")
+                        sock.sendall(serialized)
+                    except Exception as e:
+                        logger.error(f"[{addr}] Serialization/send failed: {e}")
+
         except Exception as e:
-            logger.error(f"Error with client {addr}: {e}")
+            logger.error(f"[{addr}] Connection error: {e}")
         finally:
             sock.close()
-            logger.info(f"Connection closed with {addr}")
+            logger.info(f"[{addr}] Connection closed")
 
     def stop(self):
         self.running = False

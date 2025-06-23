@@ -31,7 +31,7 @@ def social_request():
     response_msg.myProfile.userId = "user123"
     response_msg.myProfile.displayName = "John Doe"
     response_msg.myProfile.avatarUrl = "http://example.com/avatar.png"
-    response_msg.myProfile.lastOnline = 1622547800.0
+    response_msg.myProfile.lastOnline = 1622547800
     response_msg.myProfile.countryCode = "US"
     response_msg.myProfile.userToken = "user-token-1"
 

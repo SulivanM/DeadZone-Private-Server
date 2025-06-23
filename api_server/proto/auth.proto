@@ -1,5 +1,8 @@
 syntax = "proto2";
 
+// Protobuf Python guide: https://protobuf.dev/getting-started/pythontutorial/#compiling-protocol-buffers
+// Compile command: protoc --proto_path=api_server/proto --python_out=api_server/proto api_server/proto/auth.proto
+
 message AuthenticateArgs {
   optional string gameId = 1;
   optional string userId = 2;
@@ -20,6 +23,21 @@ message AuthenticateOutput {
 message KeyValuePair {
   optional string key = 1;
   optional string value = 2;
+}
+
+message SocialRefreshOutput {
+    optional SocialProfile myProfile = 1;
+    repeated SocialProfile friends = 2;
+    repeated string blocked = 3;
+}
+
+message SocialProfile {
+    optional string userId = 1;
+    optional string displayName = 2;
+    optional string avatarUrl = 3;
+    optional int64 lastOnline = 4;
+    optional string countryCode = 5;
+    optional string userToken = 6;
 }
 
 message CreateJoinRoomArgs {
