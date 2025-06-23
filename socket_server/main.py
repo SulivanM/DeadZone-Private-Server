@@ -62,7 +62,6 @@ class EndpointServer:
 
                 # In the connect handler, the client writes byte 0 and immediately flushes it. Ignoring it as it is probably a new message indication.
                 if data[0] == 0x00:
-                    logging.info("Received x00 --- ignoring")
                     logger.info(f"[{addr}] Received x00 --- ignoring")
                     data = data[1:]
 
@@ -77,20 +76,20 @@ class EndpointServer:
                 if data.startswith(b'\x87\xc4join\xcedefaultJoinKey'):
                     logger.info(f"[{addr}] Join room request received")
 
-                # Assume the client joined successfully
-                successful_join = True
-                if successful_join:
-                    msg = ["playerio.joinresult", True]
-                else:
-                    # If failed, send back PlayerIOError of type 11
-                    msg = ["playerio.joinresult", False, 11, "Failed to join room: Unknown connection"]
-
-                try:
-                    serialized = serializer.serialize(msg)
-                    logger.info(f"[{addr}] Sending: {serialized}")
-                    sock.sendall(serialized)
-                except Exception as e:
-                    logger.error(f"[{addr}] Serialization/send failed: {e}")
+                    # Assume the client joined successfully
+                    successful_join = True
+                    if successful_join:
+                        msg = ["playerio.joinresult", True]
+                    else:
+                        # If failed, send back PlayerIOError of type 11
+                        msg = ["playerio.joinresult", False, 11, "Failed to join room: Unknown connection"]
+    
+                    try:
+                        serialized = serializer.serialize(msg)
+                        logger.info(f"[{addr}] Sending: {serialized}")
+                        sock.sendall(serialized)
+                    except Exception as e:
+                        logger.error(f"[{addr}] Serialization/send failed: {e}")
 
         except Exception as e:
             logger.error(f"[{addr}] Connection error: {e}")
