@@ -1,25 +1,15 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>The Last Stand: Dead Zone</title>
-    <meta property="og:title" content="The Last Stand: Dead Zone" />
-    <meta property="og:type" content="game" />
-    <meta property="og:url" content="https://apps.facebook.com/laststand-deadzone/" />
-    <meta property="og:image" content="" />
-    <meta property="og:site_name" content="The Last Stand: Dead Zone" />
-    <meta property="og:description"
-        content="Build, fight, scavenge and survive against infected and humans alike in this action strategy RPG." />
-    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
-    <link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
-    <link href="assets/css/reset.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/screen.css" rel="stylesheet" type="text/css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js"
-        integrity="sha512-INjccm+ffMBD7roophHluNrqwX0TLzZSEUPX2omxJP78ho8HbymItbcdh3HvgznbxeBhwcuqd6BnkBvdXeb1pg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script type="text/javascript" src="assets/js/main.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="icon" type="image/x-icon" href="http://localhost:8000/assets/favicon.ico"/>
+    <link rel="shortcut icon" type="image/x-icon" href="http://localhost:8000/assets/favicon.ico"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="http://localhost:8000/assets/css/screen.css" rel="stylesheet" type="text/css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swfobject/2.2/swfobject.min.js" integrity="sha512-INjccm+ffMBD7roophHluNrqwX0TLzZSEUPX2omxJP78ho8HbymItbcdh3HvgznbxeBhwcuqd6BnkBvdXeb1pg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="http://localhost:8000/assets/js/main.js"></script>
     <script id="publishingnetwork" type="text/javascript" async="true" src="/assets/js/PublishingNetwork.js"></script>
     <script>
         const originalEval = window.eval;
@@ -32,65 +22,61 @@
         }
     </script>
 </head>
-
-<body>
+<body class="bg-gray-850 text-white">
     <div id="wrapper">
         <a name="top"></a>
         <div id="header">
-            <a id="logo" href="#" onclick="refresh()"><img src="assets/images/logo.png" alt="TLS" /></a>
+            <a id="logo" href="#" onclick="refresh()"><img src="http://localhost:8000/assets/images/logo.png" alt="TLS"/></a>
             <div id="nav">
                 <ul id="nav_ul" class="play">
-                    <li id="play"><a href="#top" onclick="updateNavClass('play')">Play</a></li>
                     <li id="get_more"><a href="#top" onclick="openGetMoreDialogue()">Get More</a></li>
-                    <li id="help"><a href="http://localhost:8000/help" onclick="updateNavClass('help')"
-                            target="_blank">Help</a></li>
-                    <li id="history"><a href="https://getsatisfaction.com/deadzone" onclick="updateNavClass('history')"
-                            target="_blank">Feedback</a></li>
+                    <li id="code"><a href="#top" onclick="openRedeemCodeDialogue()">Redeem Code</a></li>
+                    <li id="fan_page"><a href="https://deadzonegame.net" target="_blank" onclick="updateNavClass('fan_page')">Fan Page</a></li>
+                    <li id="help"><a href="https://discord.gg/7EyxwYEush" onclick="updateNavClass('help')" target="_blank">Help</a></li>
+                    <li id="feedback"><a href="https://discord.gg/7EyxwYEush" onclick="updateNavClass('feedback')" target="_blank">Forum</a></li>
                 </ul>
             </div>
         </div>
         <div id="warning_container"></div>
         <div id="message_container"></div>
-        <div id="content">
+        <div id="content" class="bg-black">
             <div id="game_wrapper">
                 <div id="game_container">
-                    <div id="noflash" class="error" style="display: none;">
-                        <p>
-                        <h2>Flash Player Required</h2>
-                        </p>
-                        <p>The Last Stand: Dead Zone requires the latest version of Flash Player to run (version
-                            11.1.102.55).<br />It's free, and only takes a small amount of time to download.</p>
+                    <div id="noflash" class="error">
+                        <p><h2>Flash Player Required</h2></p>
+                        <p><strong>The Last Stand: Dead Zone</strong> requires the latest version of Adobe<sup>®</sup> Flash<sup>®</sup> Player.<br/>It's free, and only takes a small amount of time to download.</p>
+                        <p>Required version: <strong><span id="noflash_reqVersion"></span></strong></p>
+                        <p>Currently running version: <strong><span id="noflash_currentVersion"></span></strong></p>
                         <div id="downloadFlash">
-                            <p><a href="http://get.adobe.com/flashplayer/"
-                                    title="Download Flash Player"><strong>Download Flash Player</strong></a></p>
-                            <p><a href="?detectflash=false" title="I already have the latest Flash Player">I already
-                                    have the latest Flash Player</a></p>
+                            <p><a href="http://localhost:8000/flashplayer" title="Download Flash Player"><strong>Download Flash Player</strong></a></p>
+                            <p><a href="?detectflash=false" title="I already have the latest Flash Player">I already have the latest Flash Player!</a></p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div id="loading" style="display: none;">Connecting...</div>
-            <div id="generic_error" style="display: flex;">
-                <div class="error-content">
-                    <h2>Login Required</h2>
-                    <p>Please enter your credentials to play The Last Stand: Dead Zone.</p>
-                    <form class="login-container">
-                        <input type="text" id="username" placeholder="Username" />
-                        <input type="password" id="password" placeholder="Password" />
-                        <button type="submit" onclick="handleLogin()">Login</button>
+            <div id="loading" class="bg-cover bg-center text-gray-500 text-sm pt-12 text-center" style="background-image: url('http://localhost:8000/assets/images/loader.gif');">
+                <p>Login Please...</p>
+                <div id="login_form" class="max-w-md mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-md">
+                    <form id="pio_login" class="space-y-4">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-300">Username:</label>
+                            <input type="text" id="username" name="username" required class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-700 text-white">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-300">Password:</label>
+                            <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-700 text-white">
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Login</button>
                     </form>
                 </div>
             </div>
+            <div id="generic_error" class="error"></div>
         </div>
-        <div id="footer" align="center">
-            <a href="http://localhost:8000/terms" target="_blank">Terms</a> | <a href="http://localhost:8000/privacy"
-                target="_blank">Privacy Policy</a> | <a href="http://alternativaplatform.com/" target="_blank">Powered
-                by AlternativaPlatform</a> | © 2012 - Con Artist Games Pty Ltd.
+        <div id="footer" class="mt-5 text-center text-gray-500 text-xs">
+            <a href="http://localhost:8000/terms" target="_blank" class="text-gray-500">Terms</a> | <a href="http://localhost:8000/privacy" target="_blank" class="text-gray-500">Privacy</a> | © 2025 Con Artist Games. Fan-made revival.
         </div>
-        <div id="userID"></div>
-        <div id="conArtistLogo"><a href="http://conartistgames.com" title="Con Artist Games" target="_blank"><img
-                    src="assets/images/conartistlogo.gif" alt="Con Artist Games"></a></div>
+        <div id="userID" class="mt-2.5 ml-2.5 text-gray-500 text-xs">Connecting...</div>
+        <div id="conArtistLogo" class="float-right mt-[-25px] mr-2.5"><a href="http://localhost:8000/conartist" title="Con Artist Games" target="_blank"><img src="http://localhost:8000/assets/images/conartistlogo.gif" alt="Con Artist Games"></a></div>
     </div>
 </body>
-
 </html>

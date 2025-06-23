@@ -1,373 +1,362 @@
-var _____WB$wombat$assign$function_____ = function (name) {
-    return (self._wb_wombat && self._wb_wombat.local_init && self._wb_wombat.local_init(name)) || self[name];
-};
-if (!self.__WB_pmw) {
-    self.__WB_pmw = function (obj) {
-        this.__WB_source = obj;
-        return this;
-    }
-}
-{
-    const window = _____WB$wombat$assign$function_____("window");
-    const document = _____WB$wombat$assign$function_____("document");
-    const location = _____WB$wombat$assign$function_____("location");
+var flashVersion = "11.3.300.271";
+var messages = [];
+var unloadMessage = "";
+var mt = false;
+var mtPST = "00:00";
 
-    const flashVersion = "11.3.300.271";
-    const messages = [];
-    let unloadMessage = "";
-    const mt = false;
-    let mtPST = "";
-
-    const userAgent = navigator.userAgent.toLowerCase();
-    $.browser.chrome = /chrome/.test(userAgent);
-
-    if ($.browser.chrome) {
-        const versionStart = userAgent.indexOf('chrome/') + 7;
-        $.browser.version = userAgent.substring(versionStart, userAgent.indexOf('.', versionStart));
-        $.browser.safari = false;
-    } else if ($.browser.safari) {
-        const versionStart = userAgent.indexOf('safari/') + 7;
-        $.browser.version = userAgent.substring(versionStart, userAgent.indexOf('.', versionStart));
-    }
-
-    $(document).ready(initApp);
-
-    function initApp() {
-        if (mt) {
-            showMaintenanceScreen();
-            return;
-        }
+$(document).ready(function () {
+    if (mt) {
+        showMaintenanceScreen();
+    } else {
         showGameScreen();
     }
 
-    function showGameScreen() {
-        const currentFlashVersion = swfobject.getFlashPlayerVersion();
-        $("#noflash_reqVersion").html(flashVersion);
-        $("#noflash_currentVersion").html(`${currentFlashVersion.major}.${currentFlashVersion.minor}.${currentFlashVersion.release}`);
+    $("#pio_login").submit(function (event) {
+        event.preventDefault();
+        var username = $("#username").val();
+        var password = $("#password").val();
+        console.log("Login attempt with username: " + username);
+        startGame("pio_access_token");
+    });
+});
 
-        if (screen.availWidth <= 1250) {
-            $("#nav").css("left", "220px");
+function showGameScreen() {
+    var a = swfobject.getFlashPlayerVersion();
+    $("#noflash_reqVersion").html(flashVersion);
+    $("#noflash_currentVersion").html(a.major + "." + a.minor + "." + a.release);
+    if (screen.availWidth <= 1250) {
+        $("#nav").css("left", "220px");
+    }
+}
+
+function startGame(username, password) {
+    $("#loading").css("display", "block");
+    const flashVars = {
+        path: "/game/",
+        service: "pio",
+        username: username,
+        password: password,
+        affiliate: getParameterByName("a"),
+        useSSL: 0,
+        // core: "core.swf",
+        gameId: "laststand-deadzone",
+        connectionId: "public",
+        clientAPI: "javascript",
+        playerInsightSegments: [],
+        playCodes: [],
+        // local: 0,
+        clientInfo: {
+            platform: navigator.platform,
+            userAgent: navigator.userAgent
         }
-    }
+    };
 
-    function getParameterByName(name) {
-        name = name.replace(/[[\]]/g, "\\$&");
-        const regex = new RegExp(`[?&]${name}=([^&#]*)`);
-        const results = regex.exec(window.location.search);
-        return results ? decodeURIComponent(results[1].replace(/\+/g, " ")) : "";
-    }
+    const params = {
+        allowScriptAccess: "always",
+        allowFullScreen: "true",
+        allowFullScreenInteractive: "true",
+        allowNetworking: "all",
+        menu: "false",
+        scale: "noScale",
+        salign: "tl",
+        wmode: "direct",
+        bgColor: "#000000"
+    };
 
-    function getRefererParam(key) {
-        key = key.replace(/[[\]]/g, "\\$&");
-        const regex = new RegExp(`[?&]${key}=([^&#]*)`);
-        const qs = regex.exec(document.referrer);
-        return qs ? qs[1] : "";
-    }
+    const attributes = { id: "game", name: "game" };
 
-    function startGame(username, password) {
-        $("#loading").css("display", "block");
-        const flashVars = {
-            path: "/game/",
-            service: "pio",
-            username: username,
-            password: password,
-            affiliate: getParameterByName("a"),
-            useSSL: 0,
-            // core: "core.swf",
-            gameId: "laststand-deadzone",
-            connectionId: "public",
-            clientAPI: "javascript",
-            playerInsightSegments: [],
-            playCodes: [],
-            // local: 0,
-            clientInfo: {
-                platform: navigator.platform,
-                userAgent: navigator.userAgent
+    $("#game_wrapper").height("0px");
+    embedSWF("/game/preloader.swf", flashVars, params, attributes);
+}
+
+function startMigration(username, password) {
+    $("#loading").css("display", "block");
+    const flashVars = {
+        path: "/migration/",
+        core: "importClient.swf",
+        migration: getParameterByName("migration"),
+        service: "pio",
+        username: username,
+        password: password,
+        affiliate: getParameterByName("a"),
+        useSSL: 1,
+        gameId: "laststand-deadzone",
+        connectionId: "public",
+        clientAPI: "javascript",
+        playerInsightSegments: [],
+        playCodes: [],
+        clientInfo: {
+            userAgent: navigator.userAgent
+        }
+    };
+
+    const params = {
+        allowScriptAccess: "always",
+        allowFullScreen: "true",
+        allowFullScreenInteractive: "false",
+        allowNetworking: "all",
+        menu: "false",
+        scale: "noScale",
+        salign: "tl",
+        wmode: "direct",
+        bgColor: "#000000"
+    };
+
+    const attributes = { id: "game", name: "game" };
+
+    $("#game_wrapper").height("0px");
+    embedSWF("/migration/preloader.swf", flashVars, params, attributes);
+}
+
+function embedSWF(swfURL, flashVars, params, attributes) {
+    swfobject.embedSWF(
+        swfURL,
+        "game_container",
+        "100%",
+        "100%",
+        flashVersion,
+        "swf/expressinstall.swf",
+        flashVars,
+        params,
+        attributes,
+        (e) => {
+            if (!e.success) {
+                showNoFlash();
+            } else {
+                setMouseWheelState(false);
             }
-        };
+        }
+    );
+}
 
-        const params = {
-            allowScriptAccess: "always",
-            allowFullScreen: "true",
-            allowFullScreenInteractive: "true",
-            allowNetworking: "all",
-            menu: "false",
-            scale: "noScale",
-            salign: "tl",
-            wmode: "direct",
-            bgColor: "#000000"
-        };
+function showMaintenanceScreen() {
+    var maintenanceMessage = "The Last Stand: Dead Zone is down for scheduled maintenance. ETA " + mtPST + " local time.";
+    addMessage("maintenance", maintenanceMessage);
+    showError("Scheduled Maintenance", "The Last Stand: Dead Zone is down for scheduled maintenance.<br/>We apologize for any inconvenience.<br/><br/><strong>ETA " + mtPST + " local time</strong>");
+}
 
-        const attributes = { id: "game", name: "game" };
+function showNoFlash() {
+    $("#loading").remove();
+    $("#noflash").css("display", "block");
+    $("#game_wrapper").height("100%");
+    $("#userID").html("");
+}
 
-        $("#game_wrapper").height("0px");
-        embedSWF("/game/preloader.swf", flashVars, params, attributes);
-    }
+function showError(b, a) {
+    $("#loading").remove();
+    $("#generic_error").css("display", "block");
+    $("#generic_error").html("<p><h2>" + b + "</h2></p><p>" + a + "</p>");
+    $("#userID").html("");
+}
 
-    function startMigration(username, password) {
-        $("#loading").css("display", "block");
-        const flashVars = {
-            path: "/migration/",
-            core: "importClient.swf",
-            migration: getParameterByName("migration"),
-            service: "pio",
-            username: username,
-            password: password,
-            affiliate: getParameterByName("a"),
-            useSSL: 1,
-            gameId: "laststand-deadzone",
-            connectionId: "public",
-            clientAPI: "javascript",
-            playerInsightSegments: [],
-            playCodes: [],
-            clientInfo: {
-                platform: navigator.platform,
-                userAgent: navigator.userAgent
-            }
-        };
+function killGame() {
+    $("#game").remove();
+    $("#game_container").remove();
+    $("#loading").remove();
+    $("#content").prepend("<div id='messagebox'><div class='header'>Are you there?</div><div class='msg'>You've left your compound unattended for some time. Are you still playing?</div><div class='btn' onclick='refresh()'>BACK TO THE DEAD ZONE</div></div>");
+}
 
-        const params = {
-            allowScriptAccess: "always",
-            allowFullScreen: "true",
-            allowFullScreenInteractive: "false",
-            allowNetworking: "all",
-            menu: "false",
-            scale: "noScale",
-            salign: "tl",
-            wmode: "direct",
-            bgColor: "#000000"
-        };
+function onPreloaderReady() {
+    $("#loading").remove();
+    $("#game_wrapper").height("100%");
+}
 
-        const attributes = { id: "game", name: "game" };
-
-        $("#game_wrapper").height("0px");
-        embedSWF("/migration/preloader.swf", flashVars, params, attributes);
-    }
-
-    function embedSWF(swfURL, flashVars, params, attributes) {
-        swfobject.embedSWF(
-            swfURL,
-            "game_container",
-            "100%",
-            "100%",
-            flashVersion,
-            "swf/expressinstall.swf",
-            flashVars,
-            params,
-            attributes,
-            (e) => {
-                if (!e.success) {
-                    showNoFlash();
-                } else {
-                    setMouseWheelState(false);
-                }
-            }
-        );
-    }
-
-    function showMaintenanceScreen() {
-        addMessage("maintenance", `The Last Stand: Dead Zone is down for scheduled maintenance. ETA ${mtPST} local time.`);
-        showError("Scheduled Maintenance", `The Last Stand: Dead Zone is down for scheduled maintenance.<br/>We apologise for any inconvenience.<br/><br/><strong>ETA ${mtPST} local time</strong>`);
-    }
-
-    function showNoFlash() {
-        $("#loading").css("display", "none");
-        $("#noflash").css("display", "block");
-        $("#game_wrapper").height("100%");
-        $("#userID").html("");
-    }
-
-    function showError(title, message) {
-        $("#loading").css("display", "none");
-        $("#generic_error").css("display", "flex").html(`
-            <div class="error-content">
-                <h2>${title}</h2>
-                <p>${message}</p>
-                <div class="login-container">
-                    <input type="text" id="username" placeholder="Username" />
-                    <input type="password" id="password" placeholder="Password" />
-                    <button onclick="handleLogin()">Login</button>
-                </div>
-            </div>
-        `);
-        $("#userID").html("");
-    }
-
-    function handleLogin() {
-        const username = $("#username").val();
-        const password = $("#password").val();
-        if (username && password) {
-            $("#generic_error").css("display", "none");
-            getParameterByName("migration") ? startMigration(username, password) : startGame(username, password);
-        } else {
-            alert("Please enter both username and password.");
+function onFlashHide(c) {
+    if (c.state == "opened") {
+        var b = document.getElementById("game").getScreenshot();
+        if (b != null) {
+            $("#content").append("<img id='screenshot' style='position:absolute; top:120px; width:960px; height:804px;' src='data:image/jpeg;base64," + b + "'/>");
+        }
+    } else {
+        var a = $("#screenshot");
+        if (a != null) {
+            a.remove();
         }
     }
+}
 
-    function killGame() {
-        $("#game, #game_container, #loading").remove();
-        $("#content").prepend(`
-            <div id='messagebox'>
-                <div class='header'>Are you there?</div>
-                <div class='msg'>You've left your compound unattended for some time. Are you still playing?</div>
-                <div class='btn' onclick='refresh()'>BACK TO THE DEAD ZONE</div>
-            </div>
-        `);
-    }
+function showFlash() {
+    $("#showGame").remove();
+    FB.Canvas.showFlashElement(document.getElementById("game"));
+}
 
-    function onPreloaderReady() {
-        $("#loading").css("display", "none");
-        $("#game_wrapper").height("100%");
-    }
+function refresh() {
+    location.reload();
+}
 
-    function refresh() {
-        location.reload();
-    }
-
-    function addMessage(id, message, showCloseButton, showSpinner = false) {
-        const bar = $(`<div class="header_message_bar"></div>`).data("id", id);
-
-        if (showCloseButton) {
-            bar.append($("<div class='close'></div>").click(() => bar.stop(true, true).animate({ height: "toggle" }, 250)));
-        }
-
-        if (showSpinner) {
-            bar.append($("<div class='loader'></div>"));
-        }
-
-        bar.append($(`<div class="header_message">${parseUTCStrings(message)}</div>`));
-        $("#warning_container").append(bar.height("0px").animate({ height: "30px" }, 250));
-        messages.push(bar);
-    }
-
-    function removeMessage(id) {
-        messages.filter(msg => msg.data("id") === id).forEach(msg => {
-            msg.stop(true).animate({ height: "toggle" }, 250);
+function addMessage(h, f, g, b) {
+    var e = $('<div class="header_message_bar"></div>');
+    e.data("id", h);
+    if (g) {
+        var c = $('<div class="close"></div>').click(function () {
+            e.stop(true, true).animate({ height: "toggle" }, 250);
         });
-        messages = messages.filter(msg => msg.data("id") !== id);
+        e.append(c);
     }
-
-    function parseUTCStrings(msg) {
-        return msg
-            .replace(/\[\%UTC (\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})\]/ig, (_, y, m, d, h, min) => convertUTCtoLocal(y, m, d, h, min))
-            .replace(/\[\%UTC (\d{2})-(\d{2})\]/ig, (_, h, min) => convertUTCtoLocal(0, 0, 0, h, min));
+    if (b) {
+        var a = $('<div class="loader"></div>');
+        e.append(a);
     }
+    f = parseUTCStrings(f);
+    var d = $('<div class="header_message">' + f + "</div>");
+    e.append(d);
+    $("#warning_container").append(e);
+    e.height("0px").animate({ height: "30px" }, 250);
+    messages.push(e);
+}
 
-    function convertUTCtoLocal(year, month, date, hours, mins) {
-        const d = new Date();
-        if (year > 0) d.setUTCFullYear(year, month - 1, date);
-        d.setUTCHours(hours);
-        d.setUTCMinutes(mins);
-
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        let str = year > 0 ? `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ` : "";
-
-        const displayHours = d.getHours() % 12 || 12;
-        const displayMins = d.getMinutes().toString().padStart(2, "0");
-        return `${str}${displayHours}:${displayMins}${d.getHours() < 12 ? "am" : "pm"}`;
+function removeMessage(c) {
+    for (var a = messages.length - 1; a >= 0; a--) {
+        var b = messages[a];
+        if (b.data("id") == c) {
+            b.stop(true).animate({ height: "toggle" }, 250);
+            messages.splice(a, 1);
+        }
     }
+}
 
-    let requestCodeRedeemInterval;
-    let waitingForCodeRedeem = false;
+function parseUTCStrings(a) {
+    reg = /\[\%UTC (\d{4})\-(\d{2})\-(\d{2}) (\d{2})\-(\d{2})\]/ig;
+    while (seg = reg.exec(a)) {
+        a = a.replace(seg[0], convertUTCtoLocal(Number(seg[1]), Number(seg[2]), Number(seg[3]), Number(seg[4]), Number(seg[5])));
+    }
+    reg = /\[\%UTC (\d{2})\-(\d{2})\]/ig;
+    while (seg = reg.exec(a)) {
+        a = a.replace(seg[0], convertUTCtoLocal(0, 0, 0, Number(seg[1]), Number(seg[2])));
+    }
+    return a;
+}
 
-    function openRedeemCodeDialogue() {
-        updateNavClass("code");
-        if (mt || waitingForCodeRedeem) return;
+function convertUTCtoLocal(c, f, b, a, e) {
+    var h = new Date();
+    if (c > 0) {
+        h.setUTCFullYear(c, f - 1, b);
+    }
+    h.setUTCHours(a);
+    h.setUTCMinutes(e);
+    var g = "";
+    if (c > 0) {
+        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        g = months[h.getMonth()] + " " + h.getDate() + ", " + h.getFullYear() + " ";
+    }
+    g += (h.getHours() <= 12 ? h.getHours() : h.getHours() - 12) + ":" + (h.getMinutes() < 10 ? "0" + h.getMinutes() : h.getMinutes()) + (h.getHours() < 12 ? "am" : "pm");
+    return g;
+}
 
-        const requestDialogue = () => {
-            try {
-                document.getElementById("game").openRedeemCode();
-                removeMessage("openingCodeRedeem");
+var requestCodeRedeemInterval;
+var waitingForCodeRedeem = false;
+
+function openRedeemCodeDialogue() {
+    updateNavClass("code");
+    if (mt || waitingForCodeRedeem) {
+        return;
+    }
+    var a = function () {
+        try {
+            document.getElementById("game").openRedeemCode();
+            removeMessage("openingCodeRedeem");
+            updateNavClass(null);
+            return true;
+        } catch (b) { }
+        return false;
+    };
+    if (!a()) {
+        addMessage("openingCodeRedeem", "Please wait while the game loads...", false, true);
+        waitingForCodeRedeem = true;
+        requestCodeRedeemInterval = setInterval(function () {
+            if (a()) {
+                waitingForCodeRedeem = false;
+                clearInterval(requestCodeRedeemInterval);
+            }
+        }, 1000);
+    }
+}
+
+var requestGetMoreInterval;
+var waitingForGetMore = false;
+
+function openGetMoreDialogue() {
+    updateNavClass("get_more");
+    if (mt || waitingForGetMore) {
+        return;
+    }
+    var a = function () {
+        try {
+            if (document.getElementById("game").openGetMore()) {
+                removeMessage("openingFuel");
                 updateNavClass(null);
                 return true;
-            } catch (err) {
-                return false;
             }
+        } catch (b) { }
+        return false;
+    };
+    if (!a()) {
+        addMessage("openingFuel", "Opening Fuel Store, please wait while the game loads...", false, true);
+        waitingForGetMore = true;
+        requestGetMoreInterval = setInterval(function () {
+            if (a()) {
+                waitingForGetMore = false;
+                clearInterval(requestGetMoreInterval);
+            }
+        }, 1000);
+    }
+}
+
+function updateNavClass(a) {
+    $("#nav_ul")[0].className = a;
+}
+
+function setMouseWheelState(a) {
+    if (a) {
+        document.onmousewheel = null;
+        if (document.addEventListener) {
+            document.removeEventListener("DOMMouseScroll", preventWheel, false);
+        }
+    } else {
+        document.onmousewheel = function () {
+            preventWheel();
         };
-
-        if (!requestDialogue()) {
-            addMessage("openingCodeRedeem", "Please wait while the game loads...", false, true);
-            waitingForCodeRedeem = true;
-
-            requestCodeRedeemInterval = setInterval(() => {
-                if (requestDialogue()) {
-                    waitingForCodeRedeem = false;
-                    clearInterval(requestCodeRedeemInterval);
-                }
-            }, 1000);
+        if (document.addEventListener) {
+            document.addEventListener("DOMMouseScroll", preventWheel, false);
         }
     }
+}
 
-    let requestGetMoreInterval;
-    let waitingForGetMore = false;
-
-    function openGetMoreDialogue() {
-        updateNavClass("get_more");
-        if (mt || waitingForGetMore) return;
-
-        const requestDialogue = () => {
-            try {
-                if (document.getElementById("game").openGetMore()) {
-                    removeMessage("openingFuel");
-                    updateNavClass(null);
-                    return true;
-                }
-            } catch (err) { }
-            return false;
-        };
-
-        if (!requestDialogue()) {
-            addMessage("openingFuel", "Opening Fuel Store, please wait while the game loads...", false, true);
-            waitingForGetMore = true;
-
-            requestGetMoreInterval = setInterval(() => {
-                if (requestDialogue()) {
-                    waitingForGetMore = false;
-                    clearInterval(requestGetMoreInterval);
-                }
-            }, 1000);
-        }
+function preventWheel(a) {
+    if (!a) {
+        a = window.event;
     }
-
-    function updateNavClass(className) {
-        $("#nav_ul")[0].className = className;
+    if (a.preventDefault) {
+        a.preventDefault();
+    } else {
+        a.returnValue = false;
     }
+}
 
-    function setMouseWheelState(state) {
-        if (state) {
-            document.onmousewheel = null;
-            if (document.addEventListener) {
-                document.removeEventListener("DOMMouseScroll", preventWheel, false);
-            }
-        } else {
-            document.onmousewheel = () => preventWheel();
-            if (document.addEventListener) {
-                document.addEventListener("DOMMouseScroll", preventWheel, false);
-            }
-        }
-    }
+function setBeforeUnloadMessage(a) {
+    unloadMessage = a;
+    $(window).bind("beforeunload", handleUnload);
+    return true;
+}
 
-    function preventWheel(e = window.event) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        } else {
-            e.returnValue = false;
-        }
-    }
+function clearBeforeUnloadMessage() {
+    unloadMessage = "";
+    $(window).unbind("beforeunload", handleUnload);
+    return true;
+}
 
-    function setBeforeUnloadMessage(msg) {
-        unloadMessage = msg;
-        $(window).bind('beforeunload', handleUnload);
-        return true;
-    }
+function handleUnload() {
+    return unloadMessage;
+}
 
-    function clearBeforeUnloadMessage() {
-        unloadMessage = "";
-        $(window).unbind('beforeunload', handleUnload);
-        return true;
-    }
-
-    function handleUnload() {
-        return unloadMessage;
+function getParameterByName(b) {
+    b = b.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var a = "[\\?&]" + b + "=([^&#]*)";
+    var d = new RegExp(a);
+    var c = d.exec(window.location.search);
+    if (c == null) {
+        return "";
+    } else {
+        return decodeURIComponent(c[1].replace(/\+/g, " "));
     }
 }
