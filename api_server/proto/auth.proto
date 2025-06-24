@@ -64,3 +64,16 @@ message ServerEndpoint {
   optional string address = 1;
   optional int32 port = 2;
 }
+
+message WriteErrorArgs {
+  optional string source = 1;
+  optional string error = 2;
+  optional string details = 3;
+  optional string stacktrace = 4;
+  repeated KeyValuePair extraData = 5;
+}
+
+message WriteErrorError {
+  optional int32 errorCode = 1;
+  optional string message = 2;
+}

@@ -1,3 +1,4 @@
+
 import socket
 import threading
 import logging
@@ -83,13 +84,20 @@ class EndpointServer:
                     else:
                         # If failed, send back PlayerIOError of type 11
                         msg = ["playerio.joinresult", False, 11, "Failed to join room: Unknown connection"]
-    
+
                     try:
                         serialized = serializer.serialize(msg)
                         logger.info(f"[{addr}] Sending: {serialized}")
                         sock.sendall(serialized)
+
                     except Exception as e:
                         logger.error(f"[{addr}] Serialization/send failed: {e}")
+
+                    # Simulate uncaught exception to test API 50
+                    # Supposed to be a game ready message (gr)
+                    msg = "gr first second"
+                    logger.info(f"[{addr}] Sending: {msg}")
+                    sock.sendall(msg)
 
         except Exception as e:
             logger.error(f"[{addr}] Connection error: {e}")
