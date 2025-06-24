@@ -3,21 +3,37 @@ from flask import Flask, request, Response, send_from_directory
 from flask_cors import CORS
 from proto import auth_pb2
 import logging
+from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 CORS(app)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s | %(name)-10s | %(levelname)-8s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+write_error_logger = logging.getLogger("write_error_logger")
+if not write_error_logger.handlers:
+    handler = RotatingFileHandler("write_error.log", maxBytes=1_000_000, backupCount=3)
+    formatter = logging.Formatter(
+        "%(asctime)s | %(name)-10s | %(levelname)-8s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    handler.setFormatter(formatter)
+    write_error_logger.setLevel(logging.INFO)
+    write_error_logger.addHandler(handler)
 
 
 @app.route("/api/<int:RPCMethod>", methods=["POST"])
 def handle_request(RPCMethod):
     request_data = request.get_data()
-    app.logger.debug(f"[API {RPCMethod}] received data of len: {len(request_data)}")
+    app.logger.debug(f"Received data of len: {len(request_data)}")
 
     handlers = {
         13: authenticate,
         27: create_join_room,
         601: social_request,
+        50: write_error,
     }
 
     handler = handlers.get(RPCMethod, default_handler)
@@ -71,6 +87,21 @@ def social_request(_=None):
     return serialize_message(response_msg)
 
 
+def write_error(request_data):
+    write_error_input = auth_pb2.WriteErrorArgs()
+    if not parse_request_args(request_data, write_error_input):
+        return Response("Parse error", status=400)
+
+    write_error_logger.info(write_error_input)
+
+    # Server can send error to client if needed
+    response_msg = auth_pb2.WriteErrorError()
+    response_msg.message = "anErrorMessage"
+    response_msg.errorCode = 400
+
+    return serialize_message(response_msg)
+
+
 def default_handler():
     return Response(b"\x00\x00\x00\x00", content_type="application/octet-stream")
 
@@ -89,16 +120,16 @@ def parse_request_args(data, message_obj):
     try:
         message_obj.ParseFromString(data)
         app.logger.debug(
-            "Parsed args:\n" + "=" * 40 + "\n%s%s",
+            "Parsed args:\n" + "=" * 45 + "\n%s%s",
             message_obj,
-            "=" * 40
+            "=" * 45
         )
         return True
     except Exception as e:
         app.logger.error(
-            "\n" + "=" * 40 + "\nArgs parsing failed:\n%s\n%s\n",
+            "\n" + "=" * 45 + "\nArgs parsing failed:\n%s\n%s\n",
             str(e),
-            "=" * 40
+            "=" * 45
         )
         return False
 
