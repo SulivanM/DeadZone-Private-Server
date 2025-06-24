@@ -28,6 +28,7 @@ if not write_error_logger.handlers:
 @app.route("/api/<int:RPCMethod>", methods=["POST"])
 def handle_request(RPCMethod):
     request_data = request.get_data()
+    app.logger.debug(f"\n{"=" * 45} [/api/{RPCMethod}] {"=" * 45}")
     app.logger.debug(f"Received data of len: {len(request_data)}")
 
     handlers = {
@@ -120,18 +121,10 @@ def serialize_message(response_msg):
 def parse_request_args(data, message_obj):
     try:
         message_obj.ParseFromString(data)
-        app.logger.debug(
-            "Parsed args:\n" + "=" * 45 + "\n%s%s",
-            message_obj,
-            "=" * 45
-        )
+        app.logger.debug(f"Parsed args:\n\n{message_obj}")
         return True
     except Exception as e:
-        app.logger.error(
-            "\n" + "=" * 45 + "\nArgs parsing failed:\n%s\n%s\n",
-            str(e),
-            "=" * 45
-        )
+        app.logger.error(f"Args parsing failed:\n\n{str(e)}")
         return False
 
 
