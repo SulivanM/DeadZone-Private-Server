@@ -22,6 +22,7 @@ if not write_error_logger.handlers:
     handler.setFormatter(formatter)
     write_error_logger.setLevel(logging.INFO)
     write_error_logger.addHandler(handler)
+    write_error_logger.propagate = False
 
 
 @app.route("/api/<int:RPCMethod>", methods=["POST"])
