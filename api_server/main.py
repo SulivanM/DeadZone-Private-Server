@@ -1,4 +1,3 @@
-
 from flask import Flask, request, Response, send_from_directory
 from flask_cors import CORS
 from proto import auth_pb2
