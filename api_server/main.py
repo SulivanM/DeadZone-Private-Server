@@ -28,7 +28,7 @@ if not write_error_logger.handlers:
 @app.route("/api/<int:RPCMethod>", methods=["POST"])
 def handle_request(RPCMethod):
     request_data = request.get_data()
-    app.logger.debug(f"\n{"=" * 45} [/api/{RPCMethod}] {"=" * 45}")
+    app.logger.debug(f"\n{'=' * 45} [/api/{RPCMethod}] {'=' * 45}")
     app.logger.debug(f"Received data of len: {len(request_data)}")
 
     handlers = {
