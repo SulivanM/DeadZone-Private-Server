@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<attire>
+	
+	<!-- Voices -->
+	<voices>
+		<voice id="white-m"  gender="male"   samples="3" />
+		<voice id="black-m"  gender="male"   samples="3" />
+		<voice id="latino-m" gender="male"   samples="3" />
+		<voice id="asian-m"  gender="male"   samples="3" />
+		<voice id="white-f"  gender="female" samples="3" />
+		<voice id="black-f"  gender="female" samples="3" />
+		<voice id="latino-f" gender="female" samples="3" />
+	</voices>
+	
+	<!-- Hair textures -->
+	<hair_textures>
+		<tex id="black"      color="#211D1B" allow_random="1" uri="models/characters/hair/hair-black.jpg" />
+		<tex id="darkBrown"  color="#35231C" allow_random="1" uri="models/characters/hair/hair-brown-dark.jpg" />
+		<tex id="brown"      color="#70493A" allow_random="1" uri="models/characters/hair/hair-brown.jpg" />
+		<tex id="blonde"     color="#C4B67F" allow_random="1" uri="models/characters/hair/hair-blonde.jpg" />
+		<tex id="grey"       color="#707070" allow_random="1" uri="models/characters/hair/hair-grey.jpg" />
+		<tex id="red"        color="#a0411e" allow_random="1" uri="models/characters/hair/hair-red.jpg" />
+	</hair_textures>
+	
+	<!-- Skins -->
+	<item id="light1" type="skin" color="#DBB588">
+		<male>
+			<tex uri="models/characters/survivorClasses/body-1skin-light1M.jpg" />
+			<voice>white-m</voice>
+		</male>
+		<female>
+			<tex uri="models/characters/survivorClasses/body-1skin-light1F.jpg" />
+			<voice>white-f</voice>
+		</female>
+	</item>
+	<item id="mid1" type="skin" color="#B67643">
+		<male>
+			<tex uri="models/characters/survivorClasses/body-1skin-mid1M.jpg" />
+			<voice>latino-m</voice>
+			<voice>asian-m</voice>
+		</male>
+		<female>
+			<tex uri="models/characters/survivorClasses/body-1skin-mid1F.jpg" />
+			<voice>latino-f</voice>
+		</female>
+	</item>
+	<item id="dark1" type="skin" color="#51382F">
+		<male>
+			<tex uri="models/characters/survivorClasses/body-1skin-dark1M.jpg" />
+			<voice>black-m</voice>
+		</male>
+		<female>
+			<tex uri="models/characters/survivorClasses/body-1skin-dark1F.jpg" />
+			<voice>black-f</voice>
+		</female>
+	</item>
+	
+	<!-- 
+		Class appearances
+	-->
+	<!-- Engineer -->
+	<item id="class_engineer" type="upper" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-engineerM.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-engineer.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-engineerF.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-engineer.png" />
+		</female>
+		<child>class_engineer_goggles</child>
+	</item>
+	<item id="class_engineer" type="lower" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-engineerM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-engineerF.jpg" />
+		</female>
+	</item>
+	<item id="class_engineer_goggles" type="acc">
+		<flag>EYES</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-engineerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-engineerM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-engineerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-engineerF.jpg" />
+		</female>
+	</item>
+	
+	<!-- Recon -->
+	<item id="class_recon" type="upper" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-reconM.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-reconM.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-reconF.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-reconF.png" />
+		</female>
+		<child>class_recon_hood</child>
+	</item>
+	<item id="class_recon" type="lower" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconM.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-reconM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconF.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-reconF.jpg" />
+		</female>
+	</item>
+	<item id="class_recon_hood" type="acc">
+		<flag>NO_HAIR</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-reconM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-reconM.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-reconM-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-reconF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-reconF.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-reconF-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<!-- Fighter -->
+	<item id="class_fighter" type="upper" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-fighterM.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-fighterM.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-fighterF.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-fighterF.png" />
+		</female>
+	</item>
+	<item id="class_fighter" type="lower" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterM.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-fighterM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterF.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-fighterF.jpg" />
+		</female>
+	</item>
+	
+	<!-- Medic -->
+	<item id="class_medic" type="upper" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-medicM.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-medic.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-medicF.jpg" />
+			<overlay type="skin" uri="models/characters/survivorClasses/body-1skin-overlay01-medic.png" />
+		</female>
+		<child>class_medic_mask</child>
+	</item>
+	<item id="class_medic" type="lower" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicM.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-medicM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicF.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-medicF.jpg" />
+		</female>
+	</item>
+	<item id="class_medic_mask" type="acc">
+		<flag>MOUTH</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-medicM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-medicM.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-medicF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-medicF.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<!-- Scavenger -->
+	<item id="class_scavenger" type="upper" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-scavengerM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-scavengerF.jpg" />
+		</female>
+		<child>class_scavenger_backpack</child>
+	</item>
+	<item id="class_scavenger" type="lower" classOnly="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-scavengerM.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-3lower-scavengerF.jpg" />
+		</female>
+	</item>
+	<item id="class_scavenger_backpack" type="acc">
+		<flag>BACK</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-scavengerM.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-scavengerM-extras.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-scavengerF.dae" />
+			<tex uri="models/characters/survivorClasses/body-2upper-scavengerF-extras.jpg" />
+		</female>
+	</item>
+	
+	
+	<!-- 
+		Class alternatives
+	-->
+	
+	<item id="fighterUpperAlt1" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterM.dae" />
+			<tex uri="models/characters/m-upper-fighter-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-fighter-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterF.dae" />
+			<tex uri="models/characters/f-upper-fighter-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-fighter-alt1.png" />
+		</female>
+	</item>
+	<item id="fighterUpperAlt2" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterM.dae" />
+			<tex uri="models/characters/m-upper-fighter-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-fighter-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-fighterF.dae" />
+			<tex uri="models/characters/f-upper-fighter-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-fighter-alt1.png" />
+		</female>
+	</item>
+	
+	<item id="engineerUpperAlt1" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerM.dae" />
+			<tex uri="models/characters/m-upper-engineer-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-engineer-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerF.dae" />
+			<tex uri="models/characters/f-upper-engineer-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-engineer-alt1.png" />
+		</female>
+		<child>engineerUpperAlt1_goggles</child>
+	</item>
+	<item id="engineerUpperAlt1_goggles" type="acc">
+		<flag>EYES</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-engineerM.dae" />
+			<tex uri="models/characters/m-upper-engineer-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-engineerF.dae" />
+			<tex uri="models/characters/f-upper-engineer-alt1.jpg" />
+		</female>
+	</item>
+	
+	<item id="engineerUpperAlt2" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerM.dae" />
+			<tex uri="models/characters/m-upper-engineer-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-engineer-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-engineerF.dae" />
+			<tex uri="models/characters/f-upper-engineer-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-engineer-alt1.png" />
+		</female>
+		<child>engineerUpperAlt2_goggles</child>
+	</item>
+	<item id="engineerUpperAlt2_goggles" type="acc">
+		<flag>EYES</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-engineerM.dae" />
+			<tex uri="models/characters/m-upper-engineer-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-engineerF.dae" />
+			<tex uri="models/characters/f-upper-engineer-alt2.jpg" />
+		</female>
+	</item>
+	
+	<!-- MEDIC -->
+	<item id="medicUpperAlt1" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicM.dae" />
+			<tex uri="models/characters/m-upper-medic-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-medic-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicF.dae" />
+			<tex uri="models/characters/f-upper-medic-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-medic-alt1.png" />
+		</female>
+		<child>medicUpperAlt1_mask</child>
+	</item>
+	<item id="medicUpperAlt1_mask" type="acc">
+		<flag>MOUTH</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-medicM.dae" />
+			<tex uri="models/characters/m-upper-medic-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-medicF.dae" />
+			<tex uri="models/characters/f-upper-medic-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<item id="medicUpperAlt2" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicM.dae" />
+			<tex uri="models/characters/m-upper-medic-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-medic-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-medicF.dae" />
+			<tex uri="models/characters/f-upper-medic-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-medic-alt1.png" />
+		</female>
+		<child>medicUpperAlt2_mask</child>
+	</item>
+	<item id="medicUpperAlt2_mask" type="acc">
+		<flag>MOUTH</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-medicM.dae" />
+			<tex uri="models/characters/m-upper-medic-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-medicF.dae" />
+			<tex uri="models/characters/f-upper-medic-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-medic-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<!-- RECON -->
+	<item id="reconUpperAlt1" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconM.dae" hide_hair="1" />
+			<tex uri="models/characters/m-upper-recon-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconF.dae" hide_hair="1" />
+			<tex uri="models/characters/f-upper-recon-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-alt1.png" />
+		</female>
+		<child>reconUpperAlt1_hood</child>
+	</item>
+	<item id="reconUpperAlt1_hood" type="acc">
+		<flag>NO_HAIR</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-reconM.dae" />
+			<tex uri="models/characters/m-upper-recon-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-recon-alt1-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-reconF.dae" />
+			<tex uri="models/characters/f-upper-recon-alt1.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-recon-alt1-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<item id="reconUpperAlt2" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconM.dae" hide_hair="1" />
+			<tex uri="models/characters/m-upper-recon-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-alt1.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-reconF.dae" hide_hair="1" />
+			<tex uri="models/characters/f-upper-recon-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-alt1.png" />
+		</female>
+		<child>reconUpperAlt2_hood</child>
+	</item>
+	<item id="reconUpperAlt2_hood" type="acc">
+		<flag>NO_HAIR</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-reconM.dae" />
+			<tex uri="models/characters/m-upper-recon-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-recon-alt1-overlay-upper.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-reconF.dae" />
+			<tex uri="models/characters/f-upper-recon-alt2.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/default-recon-alt1-overlay-upper.png" />
+		</female>
+	</item>
+	
+	<item id="scavengerUpperAlt1" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerM.dae" />
+			<tex uri="models/characters/m-upper-scavenger-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerF.dae" />
+			<tex uri="models/characters/f-upper-scavenger-alt1.jpg" />
+		</female>
+		<child>scavengerUpperAlt1_backpack</child>
+	</item>
+	<item id="scavengerUpperAlt1_backpack" type="acc">
+		<flag>BACK</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-scavengerM.dae" />
+			<tex uri="models/characters/m-upper-scavenger-alt1-extras.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-scavengerF.dae" />
+			<tex uri="models/characters/f-upper-scavenger-alt1-extras.jpg" />
+		</female>
+	</item>
+	
+	<item id="scavengerUpperAlt2" type="upper" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerM.dae" />
+			<tex uri="models/characters/m-upper-scavenger-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-upper-scavengerF.dae" />
+			<tex uri="models/characters/f-upper-scavenger-alt2.jpg" />
+		</female>
+		<child>scavengerUpperAlt1_backpack</child>
+	</item>
+	
+	
+	<!-- Legs/lower bodies -->
+	<item id="pants" type="lower" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-lower-pantsM.dae" />
+			<tex uri="models/characters/body-3lower-pantsM.jpg" allow_hue="1" />
+		</male>
+		<female>
+			<mdl uri="models/characters/body-lower-pantsF.dae" />
+			<tex uri="models/characters/body-3lower-pantsF.jpg" allow_hue="1" />
+		</female>
+	</item>
+	
+	<item id="skirt" type="lower" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-lower-skirtF.dae" />
+			<tex uri="models/characters/body-3lower-skirtF.jpg" allow_hue="1" />
+		</male>
+		<female>
+			<mdl uri="models/characters/body-lower-skirtF.dae" />
+			<tex uri="models/characters/body-3lower-skirtF.jpg" allow_hue="1" />
+		</female>
+	</item>
+	
+	
+	<!-- Class Alternatives -->
+	<item id="fighterLowerAlt1" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterM.dae" />
+			<tex uri="models/characters/m-lower-fighter-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterF.dae" />
+			<tex uri="models/characters/m-lower-fighter-alt1.jpg" />
+		</female>
+	</item>
+	<item id="fighterLowerAlt2" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterM.dae" />
+			<tex uri="models/characters/m-lower-fighter-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-fighterF.dae" />
+			<tex uri="models/characters/m-lower-fighter-alt2.jpg" />
+		</female>
+	</item>
+	
+	<item id="reconLowerAlt1" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconM.dae" />
+			<tex uri="models/characters/m-lower-recon-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconF.dae" />
+			<tex uri="models/characters/f-lower-recon-alt1.jpg" />
+		</female>
+	</item>
+	<item id="reconLowerAlt2" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconM.dae" />
+			<tex uri="models/characters/m-lower-recon-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-reconF.dae" />
+			<tex uri="models/characters/f-lower-recon-alt2.jpg" />
+		</female>
+	</item>
+	
+	<item id="engineerLowerAlt1" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerM.dae" />
+			<tex uri="models/characters/m-lower-engineer-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerF.dae" />
+			<tex uri="models/characters/f-lower-engineer-alt1.jpg" />
+		</female>
+	</item>
+	<item id="engineerLowerAlt2" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerM.dae" />
+			<tex uri="models/characters/m-lower-engineer-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-engineerF.dae" />
+			<tex uri="models/characters/f-lower-engineer-alt2.jpg" />
+		</female>
+	</item>
+	
+	<item id="medicLowerAlt1" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicM.dae" />
+			<tex uri="models/characters/m-lower-medic-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicF.dae" />
+			<tex uri="models/characters/f-lower-medic-alt1.jpg" />
+		</female>
+	</item>
+	<item id="medicLowerAlt2" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicM.dae" />
+			<tex uri="models/characters/m-lower-medic-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-medicF.dae" />
+			<tex uri="models/characters/f-lower-medic-alt2.jpg" />
+		</female>
+	</item>
+
+	<item id="scavengerLowerAlt1" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerM.dae" />
+			<tex uri="models/characters/m-lower-scavenger-alt1.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerF.dae" />
+			<tex uri="models/characters/f-lower-scavenger-alt1.jpg" />
+		</female>
+	</item>
+	<item id="scavengerLowerAlt2" type="lower" free="1">
+		<male>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerM.dae" />
+			<tex uri="models/characters/m-lower-scavenger-alt2.jpg" />
+		</male>
+		<female>
+			<mdl uri="models/characters/survivorClasses/body-lower-scavengerF.dae" />
+			<tex uri="models/characters/f-lower-scavenger-alt2.jpg" />
+		</female>
+	</item>
+	
+	<!-- GENERIC UPPER BODY -->
+	<item id="hoodie" type="upper" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-upper-hoodieM.dae"/>
+			<tex uri="models/characters/body-2upper-hoodieM.jpg" allow_hue="1" />
+		</male>
+		<female>
+			<mdl uri="models/characters/body-upper-hoodieF.dae"/>
+			<tex uri="models/characters/body-2upper-hoodieF.jpg" allow_hue="1" />
+		</female>
+	</item>
+	
+	<item id="longSleeve" type="upper" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-upper-longSleeveM.dae" />
+			<tex uri="models/characters/body-2upper-longSleeveShirtM.jpg" allow_hue="1" />
+		</male>
+		<female>
+			<mdl uri="models/characters/body-upper-longSleeveF.dae" />
+			<tex uri="models/characters/body-2upper-longSleeveShirtF.jpg" allow_hue="1" />
+		</female>
+	</item>
+	
+	<item id="longSleeveCheckers" type="upper" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-upper-longSleeveM.dae" />
+			<tex uri="models/characters/body-2upper-longSleeveShirtM-checkers.jpg" allow_hue="1" />
+		</male>
+	</item>
+	
+	<item id="longSleeveJacket" type="upper" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-upper-longSleeveM.dae" />
+			<tex uri="models/characters/body-2upper-longSleeveJacketM.jpg" allow_hue="1" />
+		</male>
+	</item>
+	
+	<item id="tshirt" type="upper" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/body-upper-tshirtM.dae" />
+			<tex uri="models/characters/body-2upper-tshirtM.jpg" allow_hue="1" />
+		</male>
+		<female>
+			<mdl uri="models/characters/body-upper-tshirtF.dae" />
+			<tex uri="models/characters/body-2upper-tshirtF.jpg" allow_hue="1" />
+		</female>
+	</item>
+	
+	
+	<!-- Hair -->
+	<item id="hair0" type="hair" free="1" allow_unassigned="1">
+		<male />
+		<female />
+	</item>
+	<item id="hair1" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-01.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-01.dae" />
+		</female>
+	</item>
+	<item id="hair2" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-02.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-02.dae" />
+		</female>
+	</item>
+	<item id="hair3" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-03.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-03.dae" />
+		</female>
+	</item>
+	<item id="hair4" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-04.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-04.dae" />
+		</female>
+	</item>
+	<item id="hair5" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-05.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-05.dae" />
+		</female>
+	</item>
+	<item id="hair6" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-06.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-06.dae" />
+		</female>
+	</item>	
+	<item id="hair7" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-07.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-07.dae" />
+		</female>
+	</item>
+	<item id="hair8" type="hair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/hair-M-08.dae" />
+		</male>
+		<female>
+			<mdl uri="models/characters/hair/hair-F-08.dae" />
+		</female>
+	</item>
+	
+	<item id="hair9" type="hair" free="1" allow_unassigned="1">
+		<female>
+			<mdl uri="models/characters/hair/hair-F-09.dae" />
+		</female>
+	</item>
+	
+	<item id="hair10" type="hair" free="1" allow_unassigned="1">
+		<female>
+			<mdl uri="models/characters/hair/hair-M-08.dae" />
+		</female>
+	</item>
+
+	
+	<!-- Facial hair -->
+	<item id="facialHair0" type="fhair" free="1" allow_unassigned="1">
+		<male />
+		<female />
+	</item>
+	<item id="facialHair1" type="fhair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/facialhair-m-01.dae" />
+		</male>
+	</item>
+	<item id="facialHair2" type="fhair" free="1" allow_unassigned="1">
+		<male>
+			<mdl uri="models/characters/hair/facialhair-m-02.dae" />
+		</male>
+	</item>
+	<item id="facialHair3" type="fhair" free="1" allow_unassigned="1">
+		<male>
+			<overlay type="skin" uri="models/characters/clothing/default-facial-hair-stubble.png" />
+		</male>
+	</item>
+
+
+	<item id="alpineRecon_hood" type="acc">
+		<flag>NO_HAIR</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-reconM.dae" />
+			<tex uri="models/characters/alpine-recon.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/alpine-recon-overlay.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-reconF.dae" />
+			<tex uri="models/characters/alpine-recon.jpg" />
+			<overlay type="skin" uri="models/characters/clothing/alpine-recon-overlay.png" />
+		</female>
+	</item>
+	
+
+	<item id="freedomRecon_hood" type="acc">
+		<flag>NO_HAIR</flag>
+		<flag>HEAD</flag>
+		<male>
+			<mdl uri="models/characters/clothing/default-reconM.dae" />
+			<tex uri="models/characters/clothing/recon-upper-freedom-2019.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-freedom.png" />
+		</male>
+		<female>
+			<mdl uri="models/characters/clothing/default-reconF.dae" />
+			<tex uri="models/characters/clothing/recon-upper-freedom-2019.jpg" />
+			<overlay type="skin" uri="models/characters/body-1skin-overlay01-recon-freedom.png" />
+		</female>
+	</item>
+	
+</attire>
