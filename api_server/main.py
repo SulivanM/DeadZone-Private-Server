@@ -1,4 +1,3 @@
-
 from flask import Flask, request, Response, send_from_directory
 from flask_cors import CORS
 from proto import auth_pb2
@@ -36,6 +35,7 @@ def handle_request(RPCMethod):
         27: create_join_room,
         601: social_request,
         50: write_error,
+        85: bigdb_load_objects
     }
 
     handler = handlers.get(RPCMethod, default_handler)
@@ -100,6 +100,106 @@ def write_error(request_data):
     response_msg = auth_pb2.WriteErrorError()
     response_msg.message = "anErrorMessage"
     response_msg.errorCode = 400
+
+    return serialize_message(response_msg)
+
+
+def bigdb_load_objects(request_data):
+    load_object_input = auth_pb2.LoadObjectsArgs()
+    if not parse_request_args(request_data, load_object_input):
+        return Response("Parse error", status=400)
+
+    response_msg = auth_pb2.LoadObjectsOutput()
+    valid_users = {"user123", "userABC"} # without user restriction, the game somehow requests continuously
+
+    for obj_id in load_object_input.objectIds:
+        if not obj_id.keys or obj_id.keys[0] not in valid_users:
+            continue
+
+        obj = response_msg.objects.add()
+        obj.key = obj_id.keys[0] if obj_id.keys else "mock_key"
+        obj.version = "1"
+        obj.creator = 123456
+
+        # Request to load PlayerObjects
+        if obj_id.table == "PlayerObjects":
+            # Mock a reasonable data: the object contains name and level
+            playerobj = auth_pb2.ObjectProperty()
+            playerobj.name = "name"
+            playerobj.value.valueType = auth_pb2.ValueObject.STRING
+            playerobj.value.string = "user123"
+            obj.properties.append(playerobj)
+
+            level_prop = auth_pb2.ObjectProperty()
+            level_prop.name = "level"
+            level_prop.value.valueType = auth_pb2.ValueObject.INT32
+            level_prop.value.int32 = 5
+            obj.properties.append(level_prop)
+
+        # Request to load NeighborHistory
+        elif obj_id.table == "NeighborHistory":
+            # Mock a reasonable data: the object contains visited players
+            historyobj = auth_pb2.ObjectProperty()
+            historyobj.name = "visited"
+            historyobj.value.valueType = auth_pb2.ValueObject.ARRAY
+
+            for i in range(2):
+                entry = auth_pb2.ArrayProperty()
+                entry.index = i
+                entry.value.valueType = auth_pb2.ValueObject.STRING
+                entry.value.string = f"neighbor_{i}"
+                historyobj.value.arrayProperties.append(entry)
+
+            obj.properties.append(historyobj)
+
+        elif obj_id.table == "Inventory":
+            # Mock a reasonable data: the object inventory contains value array.
+            inventoryobj = auth_pb2.ObjectProperty()
+            inventoryobj.name = "inventory"
+
+            inventory_value = auth_pb2.ValueObject()
+            inventory_value.valueType = auth_pb2.ValueObject.ARRAY
+
+            # List of items
+            array_items = []
+
+            # Generate items
+            for n in range(2):
+                # Each item is an object itself
+                item = auth_pb2.ValueObject()
+                item.valueType = auth_pb2.ValueObject.OBJECT
+
+                # which contains property name
+                name_prop = auth_pb2.ObjectProperty()
+                name_prop.name = "name"
+                name_prop.value.valueType = auth_pb2.ValueObject.STRING
+                name_prop.value.string = f"item_{n}"
+
+                # and property quantity
+                qty_prop = auth_pb2.ObjectProperty()
+                qty_prop.name = "quantity"
+                qty_prop.value.valueType = auth_pb2.ValueObject.INT32
+                qty_prop.value.int32 = 10 + n
+
+                # Add the item property
+                item.objectProperties.extend([name_prop, qty_prop])
+
+                # Creates an entry of array for the item
+                array_entry = auth_pb2.ArrayProperty()
+                array_entry.index = n
+                array_entry.value.CopyFrom(item)
+
+                array_items.append(array_entry)
+
+            # Add the items array to value of inventory
+            inventory_value.arrayProperties.extend(array_items)
+
+            # Assign the inventory value to inventory object
+            inventoryobj.value.CopyFrom(inventory_value)
+
+            obj.properties.append(inventoryobj)
+        else:
+            app.logger.debug(f"Unimplemented table: {load_object_input.objectIds}")
 
     return serialize_message(response_msg)
 
