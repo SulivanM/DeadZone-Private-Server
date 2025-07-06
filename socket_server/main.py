@@ -1,8 +1,9 @@
-
 import socket
 import threading
 import logging
 import serde
+import time
+import player_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("EndpointServer")
@@ -93,11 +94,30 @@ class EndpointServer:
                     except Exception as e:
                         logger.error(f"[{addr}] Serialization/send failed: {e}")
 
-                    # Simulate uncaught exception to test API 50
-                    # Supposed to be a game ready message (gr)
-                    msg = "gr first second"
-                    logger.info(f"[{addr}] Sending: {msg}")
-                    sock.sendall(msg)
+                    # game ready (gr) message. Contains messageId, serverTime, binaries (config.xml), costTableData, srvTableData (survivor), loginPlayerState.
+                    time.sleep(1)
+
+                    config_path, config_uri = "config.xml.gz", "xml/config.xml"
+                    buildings_path, buildings_uri = "buildings.xml.gz", "xml/buildings.xml"
+                    res_second_path, res_second_uri = "resources_secondary.xml", "xml/resources_secondary.xml"
+                    alliances_path, alliances_uri = "alliances.xml.gz", "xml/alliances.xml"
+                    
+                    msg = [
+                        "gr", 
+                        time.time(), 
+                        player_data.generate_binaries({
+                            (config_path, config_uri, True),
+                            (buildings_path, buildings_uri, True),
+                            (res_second_path, res_second_uri, False),
+                            (alliances_path, alliances_uri, True),
+                        }), 
+                        player_data.generate_cost_table(), 
+                        player_data.generate_srv_table(),
+                        player_data.generate_login_state(), 
+                    ]
+                    serialized = serializer.serialize(msg)
+                    logger.info(f"[{addr}] Sending: {serialized}")
+                    sock.sendall(serialized)
 
         except Exception as e:
             logger.error(f"[{addr}] Connection error: {e}")
