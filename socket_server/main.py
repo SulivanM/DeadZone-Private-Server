@@ -2,7 +2,6 @@
 import socket
 import threading
 import logging
-import msgpack
 import serde
 
 logging.basicConfig(level=logging.INFO)
@@ -45,7 +44,6 @@ class EndpointServer:
                 logger.error(f"Error accepting connection: {e}")
 
     def handle_client(self, sock, addr):
-        # unpacker = msgpack.Unpacker(raw=False)
         serializer = serde.BinarySerializer()
         deserializer = serde.BinaryDeserializer()
 
@@ -72,6 +70,8 @@ class EndpointServer:
                 except Exception as e:
                     logger.warning(f"[{addr}] Deserialization failed: {e}")
                     continue
+                finally:
+                    deserializer.reset()
 
                 # Client sends join message (from API server)
                 if data.startswith(b'\x87\xc4join\xcedefaultJoinKey'):
