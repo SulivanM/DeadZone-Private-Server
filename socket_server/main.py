@@ -96,35 +96,11 @@ class EndpointServer:
 
                     # game ready (gr) message. Contains messageId, serverTime, binaries (config.xml), costTableData, srvTableData (survivor), loginPlayerState.
                     time.sleep(1)
-
-                    config_files = {
-                        ("../file_server/static/data/xml/alliances.xml.gz", "xml/alliances.xml", True),
-                        ("../file_server/static/data/xml/arenas.xml.gz", "xml/arenas.xml", True),
-                        ("../file_server/static/data/xml/badwords.xml.gz", "xml/badwords.xml", True),
-                        ("../file_server/static/data/xml/buildings.xml.gz", "xml/buildings.xml", True),
-                        ("../file_server/static/data/xml/config.xml.gz", "xml/config.xml", True),
-                        ("../file_server/static/data/xml/crafting.xml.gz", "xml/crafting.xml", True),
-                        ("../file_server/static/data/xml/effects.xml.gz", "xml/effects.xml", True),
-                        ("../file_server/static/data/xml/humanenemies.xml.gz", "xml/humanenemies.xml", True),
-                        ("../file_server/static/data/xml/injury.xml.gz", "xml/injury.xml", True),
-                        ("../file_server/static/data/xml/itemmods.xml.gz", "xml/itemmods.xml", True),
-                        ("../file_server/static/data/xml/items.xml.gz", "xml/items.xml", True),
-                        ("../file_server/static/data/xml/quests.xml.gz", "xml/quests.xml", True),
-                        ("../file_server/static/data/xml/quests_global.xml.gz", "xml/quests_global.xml", True),
-                        ("../file_server/static/data/xml/raids.xml.gz", "xml/raids.xml", True),
-                        ("../file_server/static/data/xml/skills.xml.gz", "xml/skills.xml", True),
-                        ("../file_server/static/data/xml/streetstructs.xml.gz", "xml/streetstructs.xml", True),
-                        ("../file_server/static/data/xml/survivor.xml.gz", "xml/survivor.xml", True),
-                        ("../file_server/static/data/xml/vehiclenames.xml.gz", "xml/vehiclenames.xml", True),
-                        ("../file_server/static/data/xml/zombie.xml.gz", "xml/zombie.xml", True),
-                        ("../file_server/static/data/xml/resources_secondary.xml.gz", "xml/resources_secondary.xml", True),
-                        ("../file_server/static/data/xml/attire.xml.gz", "xml/attire.xml", True),
-                    }
-                    
+       
                     msg = [
                         "gr", 
                         time.time(), 
-                        player_data.generate_binaries(config_files), 
+                        player_data.generate_binaries(), 
                         player_data.generate_cost_table(), 
                         player_data.generate_srv_table(),
                         player_data.generate_login_state(), 
