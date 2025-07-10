@@ -117,8 +117,8 @@ class EndpointServer:
                         ("../file_server/static/data/xml/survivor.xml.gz", "xml/survivor.xml", True),
                         ("../file_server/static/data/xml/vehiclenames.xml.gz", "xml/vehiclenames.xml", True),
                         ("../file_server/static/data/xml/zombie.xml.gz", "xml/zombie.xml", True),
-                        ("../file_server/static/data/resources_secondary.xml", "xml/resources_secondary.xml", False), # Uncompressed and a pure XML by default
-                        ("../file_server/static/data/xml/attire.xml", "xml/attire.xml", False), # Must be pure a pure uncompressed XML
+                        ("../file_server/static/data/xml/resources_secondary.xml.gz", "xml/resources_secondary.xml", True),
+                        ("../file_server/static/data/xml/attire.xml.gz", "xml/attire.xml", True),
                     }
                     
                     msg = [
