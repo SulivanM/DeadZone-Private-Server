@@ -325,24 +325,13 @@ def generate_login_state():
             "volume": 0.8,
             "language": "en"
         },
-        "news": {
-            "event": "Double XP Weekend"
-        },
-        "sales": [
-            ["weapons", "discount"],
-            ["armor", "clearance"]
-        ],
-        "allianceWinnings": {
-            "gold": 500,
-            "medals": 2
-        },
-        "recentPVPList": [
-            {"opponent": "Player123", "result": "win"},
-            {"opponent": "Player456", "result": "loss"}
-        ],
+        "news": {},
+        "sales": [],
+        "allianceWinnings": {},
+        "recentPVPList": [],
 
-        # All of below is used by playerObject
-        "invsize": 50,
+        # All of below will be assigned to PlayerData, which is combined with  playerObjects from API 85
+        "invsize": 8,
         "upgrades": dummy_upgrades,
         "allianceId": None,
         "allianceTag": None,
