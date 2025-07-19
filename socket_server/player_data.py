@@ -318,8 +318,6 @@ def generate_srv_table():
 # Player login state, includes info updates from server and the thing that has been going on since player offline (like finished war or attack report).
 # Data is mostly mocked or empty.
 def generate_login_state():
-    dummy_upgrades = base64.b64encode(b'\x00' * 10).decode('utf-8')
-
     return json.dumps({
         "settings": {
             "volume": 0.8,
@@ -332,7 +330,7 @@ def generate_login_state():
 
         # All of below will be assigned to PlayerData, which is combined with  playerObjects from API 85
         "invsize": 8,
-        "upgrades": dummy_upgrades,
+        "upgrades": None,
         "allianceId": None,
         "allianceTag": None,
         "longSession": True,
@@ -341,8 +339,10 @@ def generate_login_state():
         "promoSale": None,
         "dealItem": None,
         "leaderResets": 0,
-        "unequipItemBinds": False,
-        "globalStats": {},
+        "unequipItemBinds": [],
+        "globalStats": {
+            "idList": []
+        },
         "inventory": [],
         "neighborHistory": {},
         "zombieAttack": False,
