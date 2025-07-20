@@ -1,0 +1,4 @@
+data PlayerIOUser
+
+abstractUser: AbstractUser!
+profile: PublishingNetworkProfile!

@@ -1,0 +1,7 @@
+enum NavigationLocation
+
+PLAYER_COMPOUND: String = "playerCompound"
+NEIGHBOR_COMPOUND: String = "neighborCompound"
+MISSION: String = "mission"
+MISSION_PLANNING: String = "missionPlanning"
+WORLD_MAP: String = "worldmap"

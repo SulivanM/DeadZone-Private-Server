@@ -1,0 +1,3 @@
+data MiscEffectItem
+
+effectItem: EffectItem!

@@ -1,0 +1,5 @@
+enum TaskStatus
+
+ACTIVE: String = "active"
+INACTIVE: String = "inactive"
+COMPLETE: String = "complete"

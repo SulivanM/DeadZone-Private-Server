@@ -1,0 +1,6 @@
+data DamageType
+    
+UNKNOWN: UInt = 0
+MELEE: UInt = 1
+PROJECTILE: UInt = 2
+EXPLOSIVE: UInt = 3

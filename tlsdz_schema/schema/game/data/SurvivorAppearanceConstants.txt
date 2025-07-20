@@ -1,0 +1,4 @@
+enum SurvivorAppearanceConstants
+
+SLOT_UPPER_BODY: String = "clothing_upper"
+SLOT_LOWER_BODY: String = "clothing_lower"

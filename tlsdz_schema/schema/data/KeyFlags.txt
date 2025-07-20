@@ -1,0 +1,5 @@
+enum KeyFlags
+
+NONE: UInt = 0
+CONTROL: UInt = 1
+SHIFT: UInt = 2

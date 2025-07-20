@@ -1,0 +1,9 @@
+data ResearchState
+
+start: Long!
+id: String!
+length: Int!
+category: String!
+group: String!
+level: Int!
+completed: Boolean!

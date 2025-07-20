@@ -1,0 +1,4 @@
+data EffectItem
+
+item: Item! // inherited
+effect: ByteArray // see effect.as for bytearray specification

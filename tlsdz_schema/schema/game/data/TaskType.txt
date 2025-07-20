@@ -1,0 +1,4 @@
+enum TaskType
+
+JUNK_REMOVAL: String = "junk_removal"
+ITEM_CRAFTING: String = "item_crafting"

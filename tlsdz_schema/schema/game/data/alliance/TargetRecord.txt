@@ -1,0 +1,4 @@
+data TargetRecord
+
+user: String!
+time: Long!

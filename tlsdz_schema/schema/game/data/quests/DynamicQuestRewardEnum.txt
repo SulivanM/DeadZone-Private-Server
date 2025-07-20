@@ -1,0 +1,5 @@
+enum DynamicQuestRewardEnum
+
+xp: String = "xp"
+itm: String = "itm"
+morale: String = "morale"

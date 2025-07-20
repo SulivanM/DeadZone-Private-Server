@@ -1,0 +1,3 @@
+data EffectCollection
+
+list: List<Effect>! = []

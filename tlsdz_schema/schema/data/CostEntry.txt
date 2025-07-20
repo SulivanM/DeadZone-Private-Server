@@ -1,0 +1,4 @@
+data CostEntry
+
+key: String!
+type: String?

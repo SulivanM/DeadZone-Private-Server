@@ -1,0 +1,4 @@
+enum DynamicQuestGoalEnum
+
+statInc: String = "statInc"
+xpInc: String = "xpInc"

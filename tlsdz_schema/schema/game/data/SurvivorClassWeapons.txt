@@ -1,0 +1,6 @@
+data SurvivorClassWeapons
+
+// added from param1.weapons of readObject of SurvivorClass
+
+classes: List<WeaponClass> = []
+types: List<WeaponType> = []

@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+tlsdz_schema/outpy
+tlsdz_schema/outkt
+tlsdz_schema/__pycache__/

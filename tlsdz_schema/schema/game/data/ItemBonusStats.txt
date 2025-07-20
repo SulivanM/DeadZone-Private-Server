@@ -1,0 +1,5 @@
+data ItemBonusStats
+
+stat_srv: Map<String, Double>?
+stat_weap: Map<String, Double>?
+stat_gear: Map<String, Double>?

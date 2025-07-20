@@ -1,0 +1,5 @@
+enum EnemyEliteType
+
+NONE: UInt = 0      
+RARE: UInt = 1      
+UNIQUE: UInt = 2

@@ -1,0 +1,4 @@
+data CostTable
+
+objectsByKey: Map<String, CostEntry> = {}
+categories: Map<String, Map<String, CostEntry>> = {}

@@ -1,0 +1,9 @@
+data Task
+
+id: String!
+type: String!
+length: Int!
+time: Double!
+items: List<Item>?
+completed: Boolean!
+survivors: List<String>! // survivor ids

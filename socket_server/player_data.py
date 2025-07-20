@@ -2,23 +2,53 @@
 
 import base64
 import json
+import os
 import struct
-import gzip
 
 # During the game data loading, it expects to receive many XML data to be reloaded. To progress smoothly without any error in the middle, send all XML data.
-def generate_binaries(entries):
+def generate_binaries():
     payload = bytearray()
 
-    # sending x number of files
-    payload.append(len(entries))
+    default_base = "../file_server/static/data/xml"
+    secondary_base = "../file_server/static/data"
 
-    for path, uri, is_compressed in entries:
-        with open(path, "rb") as f:
-            raw = f.read()
+    files = [
+        "alliances.xml.gz",
+        "arenas.xml.gz",
+        "attire.xml.gz",
+        "badwords.xml.gz",
+        "buildings.xml.gz",
+        "config.xml.gz",
+        "crafting.xml.gz",
+        "effects.xml.gz",
+        "humanenemies.xml.gz",
+        "injury.xml.gz",
+        "itemmods.xml.gz",
+        "items.xml.gz",
+        "quests.xml.gz",
+        "quests_global.xml.gz",
+        "raids.xml.gz",
+        "skills.xml.gz",
+        "streetstructs.xml.gz",
+        "survivor.xml.gz",
+        "vehiclenames.xml.gz",
+        "zombie.xml.gz",
+        "resources_secondary.xml.gz",
+    ]
 
-        data = raw if is_compressed else gzip.compress(raw)
+    payload.append(len(files))
 
+    for filename in files:
+        base_path = secondary_base if filename == "resources_secondary.xml.gz" else default_base
+        file_path = os.path.join(base_path, filename)
+        
+        with open(file_path, "rb") as f:
+            data = f.read()
+
+        uri_name = filename[:-3] if filename.endswith(".gz") else filename
+        uri = f"xml/{uri_name}"
         encoded_uri = uri.encode("utf-8")
+
         payload += struct.pack("<H", len(encoded_uri))
         payload += encoded_uri
         payload += struct.pack("<I", len(data))
@@ -288,32 +318,19 @@ def generate_srv_table():
 # Player login state, includes info updates from server and the thing that has been going on since player offline (like finished war or attack report).
 # Data is mostly mocked or empty.
 def generate_login_state():
-    dummy_upgrades = base64.b64encode(b'\x00' * 10).decode('utf-8')
-
     return json.dumps({
         "settings": {
             "volume": 0.8,
             "language": "en"
         },
-        "news": {
-            "event": "Double XP Weekend"
-        },
-        "sales": [
-            ["weapons", "discount"],
-            ["armor", "clearance"]
-        ],
-        "allianceWinnings": {
-            "gold": 500,
-            "medals": 2
-        },
-        "recentPVPList": [
-            {"opponent": "Player123", "result": "win"},
-            {"opponent": "Player456", "result": "loss"}
-        ],
+        "news": {},
+        "sales": [],
+        "allianceWinnings": {},
+        "recentPVPList": [],
 
-        # All of below is used by playerObject
-        "invsize": 50,
-        "upgrades": dummy_upgrades,
+        # All of below will be assigned to PlayerData, which is combined with  playerObjects from API 85
+        "invsize": 8,
+        "upgrades": None,
         "allianceId": None,
         "allianceTag": None,
         "longSession": True,
@@ -322,8 +339,10 @@ def generate_login_state():
         "promoSale": None,
         "dealItem": None,
         "leaderResets": 0,
-        "unequipItemBinds": False,
-        "globalStats": {},
+        "unequipItemBinds": [],
+        "globalStats": {
+            "idList": []
+        },
         "inventory": [],
         "neighborHistory": {},
         "zombieAttack": False,

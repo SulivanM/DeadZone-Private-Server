@@ -1,0 +1,7 @@
+enum SurvivorState
+
+AVAILABLE: UInt = 0
+ON_MISSION: UInt = 1
+ON_TASK: UInt = 2
+REASSIGNING: UInt = 4
+ON_ASSIGNMENT: UInt = 8

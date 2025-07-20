@@ -1,0 +1,4 @@
+data ResearchTask
+
+active: List<ResearchTask>?
+levels: Map<String, Int>?

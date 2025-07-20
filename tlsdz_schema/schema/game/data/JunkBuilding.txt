@@ -1,0 +1,6 @@
+data JunkBuilding
+
+building: Building!
+items: List<Item> = []
+pos: String! // position separated by , for x y z
+rot: String! // rotation separated by , for x y z

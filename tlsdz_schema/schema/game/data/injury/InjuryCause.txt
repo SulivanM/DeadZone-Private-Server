@@ -1,0 +1,8 @@
+enum InjuryCause
+
+UNKNOWN: String = "unknown"
+BLUNT: String = "blunt"
+SHARP: String = "sharp"
+HEAT: String = "heat"
+BULLET: String = "bullet"
+ILLNESS: String = "illness"

@@ -1,0 +1,3 @@
+data PrevLogin
+
+date: Long!

@@ -1,0 +1,4 @@
+data ArenaStageData
+
+srvpoints: Int!
+objpoints: Int!
