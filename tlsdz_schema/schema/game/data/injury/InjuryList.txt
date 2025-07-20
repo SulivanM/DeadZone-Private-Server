@@ -1,0 +1,3 @@
+data InjuryList
+
+list: List<Injury>! // casted to array in code

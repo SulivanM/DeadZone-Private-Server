@@ -1,0 +1,3 @@
+data SkillCollection
+
+map: Map<String, SkillState>? = {}

@@ -1,0 +1,5 @@
+data ItemAttributes
+
+baseValues: Map<String, Map<String, Double>> = {}
+modValues: Map<String, Map<String, Double>> = {}
+attCaps: Map<String, Map<String, Double>> = {}

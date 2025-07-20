@@ -1,0 +1,5 @@
+enum AssignmentStageState
+
+LOCKED: UInt = 0
+ACTIVE: UInt = 1
+COMPLETE: UInt = 2

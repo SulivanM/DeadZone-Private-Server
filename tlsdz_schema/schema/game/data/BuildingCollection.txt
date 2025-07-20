@@ -1,0 +1,3 @@
+data BuildingCollection
+
+list: List<Building> = []

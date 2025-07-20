@@ -1,0 +1,7 @@
+enum InjurySeverity
+
+MINOR: String = "minor"
+MODERATE: String = "moderate"
+SERIOUS: String = "serious"
+SEVERE: String = "severe"
+CRITICAL: String = "critical"

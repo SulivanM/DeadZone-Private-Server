@@ -1,0 +1,5 @@
+enum RaidStageObjectiveState
+
+INCOMPLETE: UInt = 0
+COMPLETE: UInt = 1
+FAILED: UInt = 2

@@ -1,0 +1,3 @@
+data FlagSet
+
+byteArray: ByteArray = []

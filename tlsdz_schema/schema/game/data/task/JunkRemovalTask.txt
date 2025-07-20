@@ -1,0 +1,7 @@
+data JunkRemovalTask
+
+task: Task!
+target: JunkBuilding!
+targetId: String!   // obtained from buildingId
+buildingId: String!
+xp: Int = 0

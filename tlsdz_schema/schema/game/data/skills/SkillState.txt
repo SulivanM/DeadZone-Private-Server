@@ -1,0 +1,4 @@
+data SkillState
+
+xp: Int!
+level: Int!

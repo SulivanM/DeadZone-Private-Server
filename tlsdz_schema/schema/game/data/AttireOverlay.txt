@@ -1,0 +1,5 @@
+data AttireOverlay
+
+// usually created from reading XML
+type: String!
+texture: String!

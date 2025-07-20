@@ -1,0 +1,4 @@
+enum WeaponFlags
+
+NONE: UInt = 0
+SUPPRESSED: UInt = 1

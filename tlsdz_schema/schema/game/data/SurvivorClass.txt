@@ -1,0 +1,13 @@
+data SurvivorClass
+
+id: String!
+maleUpper: String!
+maleLower: String!
+maleSkinOverlay: String?
+femaleUpper: String!
+femaleLower: String!
+femaleSkinOverlay: String?
+baseAttributes: Attributes!
+levelAttributes: Attributes!
+hideHair: Boolean = false
+weapons: List<SurvivorClassWeapons>

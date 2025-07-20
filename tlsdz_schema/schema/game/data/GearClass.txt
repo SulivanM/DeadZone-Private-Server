@@ -1,0 +1,9 @@
+data GearClass
+
+GLOVES: String = "gloves"
+GLASSES: String = "glasses"
+SHOES: String = "shoes"
+VEST: String = "vest"
+GRENADE: String = "grenade"
+EXPLOSIVE_CHARGE: String = "expcharge"
+STIM: String = "stim"

@@ -1,0 +1,16 @@
+enum QuestConstants
+
+SECRET_NONE: UInt = 0
+SECRET_TITLE_ONLY: UInt = 1
+SECRET_HIDDEN: UInt = 2
+TYPE_ACHIEVEMENT: String = "achievement"
+TYPE_GENERAL: String = "general"
+TYPE_COMBAT: String = "combat"
+TYPE_SCAVENGE: String = "scavenge"
+TYPE_CONSTRUCTION: String = "construct"
+TYPE_COMMUNITY: String = "community"
+TYPE_WORLD: String = "world"
+TYPE_DYNAMIC: String = "dynamic"
+TRACKING_TRACKED: String = "tracked"
+TRACKING_UNTRACKED: String = "untracked"
+TRACKING_MAX_TRACKED: String = "maxTracked"

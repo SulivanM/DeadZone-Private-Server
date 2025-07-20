@@ -1,0 +1,3 @@
+data AllianceList
+
+list: List<AllianceDataSummary> = []

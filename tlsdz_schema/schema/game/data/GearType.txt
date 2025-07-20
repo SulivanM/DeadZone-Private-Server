@@ -1,0 +1,8 @@
+enum GearType
+
+UNKNOWN: UInt = 0
+PASSIVE: UInt = 1
+ACTIVE: UInt = 2
+CONSUMABLE: UInt = 4
+EXPLOSIVE: UInt = 8
+IMPROVISED: UInt = 16

@@ -1,0 +1,4 @@
+data InfectedBountyTask
+
+suburb: String!
+conditions: List<InfectedBountyTaskCondition> = []

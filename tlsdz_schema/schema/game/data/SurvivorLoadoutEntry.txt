@@ -1,0 +1,7 @@
+data SurvivorLoadoutEntry
+
+// custom data from parseLoadout of SurvivorLoadoutManager that mirror Object _loc7_
+
+weapon: String! // weapon id
+gear1: String! // gear id
+gear2: String! // gear id

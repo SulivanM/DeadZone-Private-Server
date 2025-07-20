@@ -1,0 +1,3 @@
+data CooldownCollection
+
+byteArray: Map<String, ByteArray> = {} // will be parsed to Cooldown

@@ -1,0 +1,8 @@
+data AllianceMessage
+
+id: String!
+date: Long!
+playerId: String!
+author: String!
+title: String!
+message: String!

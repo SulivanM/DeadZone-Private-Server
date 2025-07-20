@@ -1,0 +1,7 @@
+data RaidStageData
+
+assignmentStageData: AssignmentStageData!
+objectiveIndex: Int!
+objectiveState: RaidStageObjectiveState = RaidStageObjectiveState.INCOMPLETE
+objectiveXML: String? // actually an XML type
+imageURI: String!

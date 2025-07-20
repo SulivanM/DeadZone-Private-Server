@@ -1,0 +1,3 @@
+enum DynamicQuestType
+
+SURVIVOR_REQUEST: Int = 0
