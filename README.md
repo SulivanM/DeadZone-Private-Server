@@ -42,9 +42,9 @@ For more information about Con Artist Games and their current projects, visit th
 
 ## 📝 TODO: Development Roadmap
 
-1. Research and Documentation  
-2. Server Development  
-3. Game Client Reconstruction  
+1. ~Research and Documentation~
+2. ~Game Client Reconstruction~
+3. Server Development <------ HERE
 4. Multiplayer Features  
 5. Testing and Debugging  
 6. Finalization  
