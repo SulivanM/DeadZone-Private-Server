@@ -14,7 +14,7 @@ repositories {
 }
 
 application {
-    mainClass = "io.ktor.server.netty.EngineMain"
+    mainClass.set("io.ktor.server.netty.EngineMain")
 }
 
 ktor {
@@ -24,6 +24,7 @@ ktor {
 }
 
 tasks.withType<ShadowJar> {
+    archiveFileName.set("deadzone-server.jar")
     destinationDirectory.set(file("deploy"))
     manifest {
         attributes["Main-Class"] = "io.ktor.server.netty.EngineMain"
@@ -44,8 +45,8 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.content.negotiation)
-	implementation(libs.ktor.serialization.kotlinx.protobuf)
-	implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.serialization.kotlinx.protobuf)
+    implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.host.common)
     implementation(libs.ktor.server.status.pages)
