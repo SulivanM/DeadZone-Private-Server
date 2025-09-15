@@ -44,3 +44,4 @@ logs/
 .kotlin
 data/db/
 deploy/
+src/main/dump.py
