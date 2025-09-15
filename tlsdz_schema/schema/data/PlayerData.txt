@@ -5,7 +5,7 @@ user: Map<String, AbstractUser> = {}
 admin: Boolean!
 allianceId: String!              // from loginPlayerState
 allianceTag: String!             // from loginPlayerState
-flags: ByteArray?                // deserialized to FlagSet
+flags: ByteArray?,               // deserialized to flagset (see PlayerFlags), indicates tutorial stuff
 upgrades: ByteArray?             // from loginPlayerState, deserialized to FlagSet
 nickname: String!
 playerSurvivor: String!
@@ -35,7 +35,7 @@ defenceLoadout: Map<String, SurvivorLoadoutEntry?>?
 quests: ByteArray?              // parsed by booleanArrayFromByteArray
 questsCollected: ByteArray?     // parsed by booleanArrayFromByteArray
 achievements: ByteArray?        // parsed by booleanArrayFromByteArray
-dailyQuest: DynamicQuest?
+dailyQuest: ByteArray?          // parsed to DynamicQuest via constructor
 questsTracked: String?          // each quest separated with |
 gQuestsV2: Map<String, GQDataObj>?
 bountyCap: Int!

@@ -1,0 +1,8 @@
+package dev.deadzone.core.model.data
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class HighActivity(
+    val buildings: List<String>,  // building ids
+)

@@ -1,0 +1,11 @@
+ktor:
+    application:
+        modules:
+            - dev.deadzone.ApplicationKt.module
+    development: true
+    deployment:
+        port: 8080
+mongo:
+    url: "$MONGO_URL:mongodb://localhost:27017"
+game:
+    enableAdmin: true

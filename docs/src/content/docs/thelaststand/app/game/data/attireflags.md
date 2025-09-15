@@ -1,0 +1,41 @@
+---
+title: AttireFlags
+slug: thelaststand/app/game/data/attireflags
+description: AttireFlags
+---
+
+AttireFlags class
+
+## Object structure
+
+```scala
+enum AttireFlags
+
+NONE: UInt = 0
+NO_HAIR: UInt = 1
+NO_FACIAL_HAIR: UInt = 2
+MOUTH: UInt = 4
+EYES: UInt = 8
+HEAD: UInt = 16
+BACK: UInt = 32
+CHEST: UInt = 64
+NECK: UInt = 128
+WAIST_FRONT: UInt = 256
+WAIST_BACK: UInt = 512
+LEFT_SHOULDER: UInt = 1024
+LEFT_UPPER_ARM: UInt = 2048
+LEFT_LOWER_ARM: UInt = 4096
+LEFT_UPPER_LEG: UInt = 8192
+LEFT_LOWER_LEG: UInt = 16384
+RIGHT_SHOULDER: UInt = 32768
+RIGHT_UPPER_ARM: UInt = 65536
+RIGHT_LOWER_ARM: UInt = 131072
+RIGHT_UPPER_LEG: UInt = 262144
+RIGHT_LOWER_LEG: UInt = 524288
+UPPER_BODY: UInt = 1048576
+LOWER_BODY: UInt = 2097152
+ALL: UInt = 16777215
+CLOTHING: UInt = 3145728
+ACCESSORIES: UInt = 13631487
+
+```

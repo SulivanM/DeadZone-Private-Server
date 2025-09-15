@@ -1,0 +1,1 @@
+start "Recapturing-The-DeadZone" cmd /k ".\gradlew.bat run"

@@ -17,5 +17,5 @@ reassignTimer: TimerData?
 appearance: HumanAppearance?
 scale: Double = 1.22
 voice: String!
-accessories: Map<Int, String> // added from parseClothingAccessories of SurvivorLoadoutManager. string is accessory id
+accessories: Map<String, String> // key parsed to int, added from parseClothingAccessories of SurvivorLoadoutManager. string is accessory id
 maxClothingAccessories: Int

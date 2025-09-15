@@ -1,0 +1,19 @@
+{
+  "name": "deadzone-documentation",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.34.3",
+    "@astrojs/vercel": "^8.1.4",
+    "astro": "^5.6.1",
+    "rehype-external-links": "^3.0.0",
+    "starlight-theme-obsidian": "^0.3.1"
+  }
+}

@@ -1,0 +1,95 @@
+/* Dark mode colors. */
+:root {
+  --sl-color-accent-low: #06214e;
+  --sl-color-accent: #005ee1;
+  --sl-color-accent-high: #a9caff;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #f5f5f5;
+  --sl-color-gray-2: #d8d8d8;
+  --sl-color-gray-3: #c9c9c9;
+  --sl-color-gray-4: #8b8b8b;
+  --sl-color-gray-5: #3c3c3c;
+  --sl-color-gray-6: #272727;
+  --sl-color-black: #2e2e2e;
+
+  /* Custom */
+  --sl-color-panel-divider: #454848;
+  --slsg-graph-outline-color: #454848;
+  --sl-color-hairline: #454848;
+
+  --sl-content-width: 55rem;
+  --sl-text-5xl: 2.2rem;
+  --sl-text-4xl: 1.8rem;
+  --sl-text-3xl: 1.6rem;
+  --sl-text-2xl: 1.3rem;
+  --sl-text-xs: 1rem;
+  --sl-text-code-sm: 0.9rem;
+}
+
+/* Light mode colors. */
+:root[data-theme="light"] {
+  --sl-color-accent-low: #c0d8ff;
+  --sl-color-accent: #004cb8;
+  --sl-color-accent-high: #002c72;
+  --sl-color-white: #181818;
+  --sl-color-gray-1: #3c3c3c;
+  --sl-color-gray-2: #404040;
+  --sl-color-gray-3: #484848;
+  --sl-color-gray-4: #6c6c6c;
+  --sl-color-gray-5: #797878;
+  --sl-color-gray-6: #d9d9d9;
+  --sl-color-gray-7: #dfdfdf;
+  --sl-color-black: #e6e6e6;
+
+  /* Custom */
+  --sl-color-panel-divider: #b7bdc8;
+  --slsg-graph-outline-color: #b7bdc8;
+  --sl-color-hairline: #b7bdc8;
+
+  --sl-content-width: 55rem;
+  --sl-text-5xl: 2.2rem;
+  --sl-text-4xl: 1.8rem;
+  --sl-text-3xl: 1.6rem;
+  --sl-text-2xl: 1.3rem;
+  --sl-text-xs: 1rem;
+  --sl-text-code-sm: 0.9rem;
+}
+
+@layer obsidian {
+  :root[data-theme="dark"] {
+    --sl-color-bg: rgb(30, 30, 32);
+  }
+}
+
+@layer starlight {
+  .top-level li {
+    padding-left: var(--sl-sidebar-item-padding-inline);
+    padding-right: var(--sl-sidebar-item-padding-inline);
+  }
+
+  .top-level a {
+    padding-top: 0.1rem;
+  }
+
+  .mobile-preferences {
+    padding-bottom: 1rem;
+  }
+}
+
+.pagination-links {
+  gap: 1.5rem;
+}
+
+.pagination-links a {
+  padding: 0.8rem;
+  border: 1px solid var(--sl-color-panel-divider);
+}
+
+footer {
+  border-top: none;
+}
+
+.kudos {
+  margin-top: 0;
+  margin-bottom: 0;
+}

@@ -1,0 +1,28 @@
+{
+  "BatchDisposal": {},
+  "BatchRecycle": {},
+  "constructionCosts": {},
+  "CraftUpgradeItem": {},
+  "CraftItem": {},
+  "SurvivorReassign": {},
+  "ArenaLaunch_<name>": {
+    "TODO": "this is dynamic data"
+  },
+  "ArenaLaunch_stadium": {
+    "TODO": "this is dynamic data"
+  },
+  "ResearchTask": {},
+  "AllianceCreation": {},
+  "SpeedUpInfectedBounty": {},
+  "AllianceBannerEdit": {},
+  "buy_coins_<service>": {
+    "TODO": "this is dynamic data, probably no need to implement"
+  },
+  "InventoryUpgrade1": {},
+  "InventoryUpgrade2": {},
+  "InventoryUpgrade3": {},
+  "AttributeReset": {},
+  "TradeSlotUpgrade": {},
+  "DeathMobileUpgrade": {},
+  "InventoryUpgrade1_UNUSED": {}
+}
