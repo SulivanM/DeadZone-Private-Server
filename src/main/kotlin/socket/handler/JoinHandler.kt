@@ -42,8 +42,7 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
         serverContext.playerContextTracker.createContext(
             playerId = connection.playerId,
             connection = connection,
-            db = serverContext.db,
-            useMongo = serverContext.config.useMongo
+            db = serverContext.db
         )
 
         // Second message: game ready message

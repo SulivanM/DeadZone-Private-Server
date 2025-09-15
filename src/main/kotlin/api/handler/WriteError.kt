@@ -1,11 +1,9 @@
 package dev.deadzone.api.handler
 
-import dev.deadzone.api.message.db.LoadObjectsOutput
 import dev.deadzone.api.message.utils.WriteErrorArgs
 import dev.deadzone.api.message.utils.WriteErrorError
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.utils.*
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

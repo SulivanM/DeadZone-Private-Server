@@ -32,7 +32,7 @@ fun Route.apiRoutes(serverContext: ServerContext) {
             "27" -> createJoinRoom()
             "50" -> writeError()
             "85" -> loadObjects(serverContext)
-            "97" -> loadIndexRange(serverContext)
+            "97" -> loadIndexRange()
             else -> {
                 Logger.error(LogConfigAPIError) { "Unimplemented API route: $path" }
                 call.respond(HttpStatusCode.NotFound, "Unimplemented API: $path")

@@ -3,7 +3,6 @@ package dev.deadzone.api.handler
 import dev.deadzone.api.message.db.LoadIndexRangeArgs
 import dev.deadzone.api.message.db.LoadObjectsOutput
 import dev.deadzone.api.utils.pioFraming
-import dev.deadzone.context.ServerContext
 import dev.deadzone.utils.logInput
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respondBytes
@@ -25,7 +24,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
  * - Hook up to your DB/indexing once ready, using args.table/index/start/stop/limit.
  */
 @OptIn(ExperimentalSerializationApi::class)
-suspend fun RoutingContext.loadIndexRange(serverContext: ServerContext) {
+suspend fun RoutingContext.loadIndexRange() {
     val args = ProtoBuf.decodeFromByteArray<LoadIndexRangeArgs>(
         call.receiveChannel().toByteArray()
     )

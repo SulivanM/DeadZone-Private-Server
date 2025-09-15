@@ -30,8 +30,7 @@ class PlayerContextTracker {
     suspend fun createContext(
         playerId: String,
         connection: Connection,
-        db: BigDB,
-        useMongo: Boolean
+        db: BigDB
     ) {
         val playerAccount =
             requireNotNull(db.loadPlayerAccount(playerId)) { "Missing PlayerAccount for playerid=$playerId" }
@@ -41,15 +40,14 @@ class PlayerContextTracker {
             connection = connection,
             onlineSince = getTimeMillis(),
             playerAccount = playerAccount,
-            services = initializeServices(playerId, db, useMongo)
+            services = initializeServices(playerId, db)
         )
         players[playerId] = context
     }
 
     private suspend fun initializeServices(
         playerId: String,
-        db: BigDB,
-        useMongo: Boolean
+        db: BigDB
     ): PlayerServices {
         // if (useMongo)
 
@@ -87,16 +85,6 @@ class PlayerContextTracker {
 
     fun getContext(playerId: String): PlayerContext? {
         return players[playerId]
-    }
-
-    /**
-     * Update the context of a player with a lambda function.
-     *
-     * The [update] method pass the current context and expects to return the updated context.
-     */
-    fun updateContext(playerId: String, update: (PlayerContext) -> PlayerContext) {
-        val context = players.get(playerId) ?: return
-        players[playerId] = update(context)
     }
 
     /**
