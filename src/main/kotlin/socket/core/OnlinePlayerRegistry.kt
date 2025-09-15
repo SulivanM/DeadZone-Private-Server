@@ -31,18 +31,6 @@ class OnlinePlayerRegistry {
         players.remove(playerId)
     }
 
-    fun isOnline(playerId: String): Boolean {
-        return players.contains(playerId)
-    }
-
-    fun getStatus(playerId: String): PlayerStatus? {
-        return players[playerId]
-    }
-
-    fun listOnline(): List<PlayerStatus> {
-        return players.values.toList()
-    }
-
     /**
      * Clear all players
      */

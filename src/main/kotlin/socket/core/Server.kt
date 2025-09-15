@@ -33,10 +33,10 @@ class Server(
         with(context) {
             socketDispatcher.register(JoinHandler(this))
             socketDispatcher.register(AuthHandler())
-            socketDispatcher.register(QuestProgressHandler(this))
+            socketDispatcher.register(QuestProgressHandler())
             socketDispatcher.register(InitCompleteHandler(this))
             socketDispatcher.register(SaveHandler(this))
-            socketDispatcher.register(ZombieAttackHandler(this))
+            socketDispatcher.register(ZombieAttackHandler())
             socketDispatcher.register(RequestSurvivorCheckHandler())
             context.taskDispatcher.register(TimeUpdateTask(this))
             context.taskDispatcher.register(BuildingTask(this))

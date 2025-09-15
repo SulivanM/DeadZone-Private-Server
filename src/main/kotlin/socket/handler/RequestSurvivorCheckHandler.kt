@@ -1,6 +1,5 @@
 package dev.deadzone.socket.handler
 
-import dev.deadzone.context.ServerContext
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.messaging.NetworkMessage
 import dev.deadzone.socket.messaging.SocketMessage

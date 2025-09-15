@@ -1,9 +1,7 @@
 package dev.deadzone.socket.handler
 
-import dev.deadzone.context.GlobalContext
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.LoginStateBuilder
-import dev.deadzone.core.data.PlayerLoginState
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.messaging.NetworkMessage
 import dev.deadzone.socket.messaging.SocketMessage
@@ -11,7 +9,6 @@ import dev.deadzone.socket.messaging.SocketMessageHandler
 import dev.deadzone.socket.protocol.PIOSerializer
 import dev.deadzone.utils.Logger
 import dev.deadzone.utils.Time
-import io.ktor.util.date.*
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer

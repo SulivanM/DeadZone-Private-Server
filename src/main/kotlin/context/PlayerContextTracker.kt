@@ -55,13 +55,10 @@ class PlayerContextTracker {
 
         val plyObj =
             db.getCollection<MongoCollection<PlayerObjects>>(CollectionName.PLAYER_OBJECTS_COLLECTION)
-        val neighbor =
-            db.getCollection<MongoCollection<NeighborHistory>>(CollectionName.NEIGHBOR_HISTORY_COLLECTION)
-        val inv =
-            db.getCollection<MongoCollection<Inventory>>(CollectionName.INVENTORY_COLLECTION)
+        db.getCollection<MongoCollection<NeighborHistory>>(CollectionName.NEIGHBOR_HISTORY_COLLECTION)
+        db.getCollection<MongoCollection<Inventory>>(CollectionName.INVENTORY_COLLECTION)
 
-        val account =
-            requireNotNull(db.loadPlayerAccount(playerId)) { "Weird, PlayerAccount for playerId=$playerId is null" }
+        requireNotNull(db.loadPlayerAccount(playerId)) { "Weird, PlayerAccount for playerId=$playerId is null" }
         val playerObjects =
             requireNotNull(db.loadPlayerObjects(playerId)) { "Weird, PlayerObjects for playerId=$playerId is null" }
 

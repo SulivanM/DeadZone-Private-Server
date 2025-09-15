@@ -32,7 +32,7 @@ object LazyDataUpdater {
                 is Building -> when {
                     upgradeDone -> {
                         val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
-                        bld.copy(level = level.toInt(), upgrade = null)
+                        bld.copy(level = level, upgrade = null)
                     }
                     repairDone -> bld.copy(repair = null)
                     else -> bld
@@ -40,7 +40,7 @@ object LazyDataUpdater {
                 is JunkBuilding -> when {
                     upgradeDone -> {
                         val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
-                        bld.copy(level = level.toInt(), upgrade = null)
+                        bld.copy(level = level, upgrade = null)
                     }
                     repairDone -> bld.copy(repair = null)
                     else -> bld

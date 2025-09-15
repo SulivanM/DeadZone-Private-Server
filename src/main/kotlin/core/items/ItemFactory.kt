@@ -25,7 +25,7 @@ object ItemFactory {
         val baseItem = Item(
             id = itemId,
             type = res.idInXML,
-            quality = ItemQualityType.Companion.fromString(res.element.getAttribute("quality"))
+            quality = ItemQualityType.fromString(res.element.getAttribute("quality"))
         )
 
         when (res.type) {

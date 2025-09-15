@@ -28,7 +28,7 @@ fun parseJsonToMap(json: String): Map<String, Any?> {
     }
 }
 
-fun parseJsonElement(el: JsonElement): Any? = when (el) {
+fun parseJsonElement(el: JsonElement): Any = when (el) {
     is JsonPrimitive -> {
         when {
             el.isString -> el.content

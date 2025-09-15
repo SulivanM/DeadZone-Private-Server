@@ -25,7 +25,7 @@ data class PlayerAccount(
             return PlayerAccount(
                 playerId = AdminData.PLAYER_ID,
                 hashedPassword = AdminData.PASSWORD,
-                profile = UserProfile.Companion.admin(),
+                profile = UserProfile.admin(),
                 serverMetadata = ServerMetadata()
             )
         }

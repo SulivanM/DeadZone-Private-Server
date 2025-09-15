@@ -6,6 +6,9 @@ import dev.deadzone.socket.handler.save.SaveSubHandler
 import dev.deadzone.socket.messaging.SaveDataMethod
 import dev.deadzone.utils.LogConfigSocketToClient
 import dev.deadzone.utils.Logger
+import dev.deadzone.context.requirePlayerContext
+import dev.deadzone.core.model.data.PlayerFlags_Constants
+import kotlin.experimental.inv
 
 class MiscSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISC_SAVES
@@ -24,7 +27,13 @@ class MiscSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.TUTORIAL_COMPLETE -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'TUTORIAL_COMPLETE' message [not implemented]" }
+                val playerId = connection.playerId
+                val services = serverContext.requirePlayerContext(playerId).services
+                val current = services.playerObjectMetadata.getPlayerFlags()
+                val bitIndex = PlayerFlags_Constants.TutorialComplete.toInt()
+                val updated = setFlag(current, bitIndex, true)
+                services.playerObjectMetadata.updatePlayerFlags(updated)
+                Logger.info(LogConfigSocketToClient) { "Tutorial completed flag set for playerId=$playerId" }
             }
 
             SaveDataMethod.GET_OFFERS -> {
@@ -56,4 +65,25 @@ class MiscSaveHandler : SaveSubHandler {
             }
         }
     }
+
+    private fun setFlag(flags: ByteArray, bitIndex: Int, value: Boolean): ByteArray {
+        val byteIndex = bitIndex / 8
+        val bitInByte = bitIndex % 8
+
+        val arr = if (flags.size <= byteIndex) {
+            flags.copyOf(byteIndex + 1)
+        } else {
+            flags.copyOf()
+        }
+
+        val mask = (1 shl bitInByte).toByte()
+        arr[byteIndex] = if (value) {
+            (arr[byteIndex].toInt() or mask.toInt()).toByte()
+        } else {
+            (arr[byteIndex].toInt() and mask.inv().toInt()).toByte()
+        }
+
+        return arr
+    }
+
 }

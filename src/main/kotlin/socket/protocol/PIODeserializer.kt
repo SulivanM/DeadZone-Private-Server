@@ -14,12 +14,11 @@ object PIODeserializer {
         var pattern = Pattern.DOES_NOT_EXIST
         val buffer = ByteArrayOutputStream()
         var partLength = 0
-        var length = -1
+        val length = -1
         val message = mutableListOf<Any>()
 
         fun onValue(value: Any?) {
             if (length == -1 && value is Int) {
-                length = value
             } else {
                 message.add(value ?: "null")
             }

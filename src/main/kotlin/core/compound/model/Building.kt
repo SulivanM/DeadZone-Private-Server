@@ -111,9 +111,7 @@ data class Building(
 
 object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(BuildingLike::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BuildingLike> {
-        val discriminator = element.jsonObject["_t"]?.jsonPrimitive?.contentOrNull
-
-        return when (discriminator) {
+        return when (val discriminator = element.jsonObject["_t"]?.jsonPrimitive?.contentOrNull) {
             "dev.deadzone.core.model.game.data.Building" -> Building.serializer()
             "dev.deadzone.core.model.game.data.JunkBuilding" -> JunkBuilding.serializer()
             null -> {

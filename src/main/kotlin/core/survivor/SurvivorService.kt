@@ -1,9 +1,7 @@
 package dev.deadzone.core.survivor
 
 import dev.deadzone.core.PlayerService
-import dev.deadzone.core.model.game.data.HumanAppearance
 import dev.deadzone.core.model.game.data.Survivor
-import dev.deadzone.utils.LogConfigSocketError
 import dev.deadzone.utils.LogConfigSocketToClient
 import dev.deadzone.utils.Logger
 
@@ -35,7 +33,7 @@ class SurvivorService(
     suspend fun updateSurvivor(
         srvId: String, updateAction: suspend (Survivor) -> Survivor
     ) {
-        val idx = getIndexOfSurvivor(srvId)!!
+        val idx = getIndexOfSurvivor(srvId)
         val update = updateAction(survivors[idx])
         val result = survivorRepository.updateSurvivor(playerId, srvId, update)
         result.onFailure {

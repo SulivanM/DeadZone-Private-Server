@@ -20,7 +20,7 @@ data class HumanAppearance(
     val accessories: List<String>? = null
 ) {
     companion object {
-        fun parse(app: Map<*, *>): HumanAppearance? {
+        fun parse(app: Map<*, *>): HumanAppearance {
             return HumanAppearance(
                 forceHair = app["forceHair"] as? Boolean ?: false,
                 hideGear = app["hideGear"] as? Boolean ?: false,

@@ -68,12 +68,8 @@ fun main(args: Array<String>) {
 }
 
 const val SERVER_HOST = "127.0.0.1"
-const val FILE_SERVER_HOST = "127.0.0.1:8080"
 const val API_SERVER_HOST = "127.0.0.1:8080"
 const val SOCKET_SERVER_HOST = "127.0.0.1:7777"
-
-const val FILE_SERVER_PORT = 8080
-const val API_SERVER_PORT = 8080
 const val SOCKET_SERVER_PORT = 7777
 
 /**

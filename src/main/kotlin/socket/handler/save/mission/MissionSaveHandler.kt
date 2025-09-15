@@ -7,6 +7,7 @@ import dev.deadzone.core.mission.LootService
 import dev.deadzone.core.mission.model.LootParameter
 import dev.deadzone.core.model.game.data.ZombieData
 import dev.deadzone.core.model.game.data.toFlatList
+import dev.deadzone.core.model.game.data.MissionStats
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.handler.buildMsg
 import dev.deadzone.socket.handler.save.SaveSubHandler
@@ -104,7 +105,6 @@ class MissionSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
-            // mis_startFlag and mis_interacted do not expect a response
             SaveDataMethod.MISSION_START_FLAG -> {
                 Logger.info { "<----- Mission start flag received ----->" }
             }
@@ -204,13 +204,139 @@ class MissionSaveHandler : SaveSubHandler {
                 val stats = data["stats"]
                 Logger.debug(logFull = true) { data["stats"].toString() }
                 Logger.warn(LogConfigSocketToClient) { "Received 'STAT_DATA' message on MissionSaveHandler [not implemented] with stats: $stats" }
+                val missionStats = parseMissionStats(data["stats"])
+                Logger.debug(logFull = true) { "STAT_DATA parsed: $missionStats" }
+                // TODO: attach missionStats to a running mission context or persist if needed
             }
-
             SaveDataMethod.STAT -> {
                 val stats = data["stats"]
                 Logger.debug(logFull = true) { data["stats"].toString() }
                 Logger.warn(LogConfigSocketToClient) { "Received 'STAT_DATA' message on MissionSaveHandler [not implemented] with stats: $stats" }
+                val missionStats = parseMissionStats(data["stats"])
+                Logger.debug(logFull = true) { "STAT parsed: $missionStats" }
+                // TODO: attach missionStats to a running mission context or persist if needed
             }
         }
+    }
+
+    private fun parseMissionStats(raw: Any?): MissionStats {
+        val m = (raw as? Map<*, *>) ?: emptyMap<Any?, Any?>()
+        fun asInt(v: Any?): Int = when (v) {
+            is Int -> v
+            is Long -> v.toInt()
+            is Double -> v.toInt()
+            is Float -> v.toInt()
+            is Number -> v.toInt()
+            is String -> v.toIntOrNull() ?: 0
+            else -> 0
+        }
+        fun asDouble(v: Any?): Double = when (v) {
+            is Double -> v
+            is Float -> v.toDouble()
+            is Int -> v.toDouble()
+            is Long -> v.toDouble()
+            is Number -> v.toDouble()
+            is String -> v.toDoubleOrNull() ?: 0.0
+            else -> 0.0
+        }
+
+        val knownKeys = setOf(
+            "zombieSpawned", "levelUps", "damageOutput", "damageTaken", "containersSearched",
+            "survivorKills", "survivorsDowned", "survivorExplosiveKills",
+            "humanKills", "humanExplosiveKills",
+            "zombieKills", "zombieExplosiveKills",
+            "hpHealed", "explosivesPlaced", "grenadesThrown", "grenadesSmokeThrown",
+            "allianceFlagCaptured", "buildingsDestroyed", "buildingsLost", "buildingsExplosiveDestroyed",
+            "trapsTriggered", "trapDisarmTriggered",
+            "cashFound", "woodFound", "metalFound", "clothFound", "foodFound", "waterFound",
+            "ammunitionFound", "ammunitionUsed",
+            "weaponsFound", "gearFound", "junkFound", "medicalFound", "craftingFound",
+            "researchFound", "researchNoteFound", "clothingFound", "cratesFound", "schematicsFound",
+            "effectFound", "rareWeaponFound", "rareGearFound", "uniqueWeaponFound", "uniqueGearFound",
+            "greyWeaponFound", "greyGearFound", "whiteWeaponFound", "whiteGearFound",
+            "greenWeaponFound", "greenGearFound", "blueWeaponFound", "blueGearFound",
+            "purpleWeaponFound", "purpleGearFound", "premiumWeaponFound", "premiumGearFound"
+        )
+
+        val killData = buildMap<String, Int> {
+            for ((kAny, v) in m) {
+                val k = kAny?.toString() ?: continue
+                if (k.endsWith("-kills") || k.endsWith("-explosive-kills")) {
+                    put(k, asInt(v))
+                }
+            }
+        }
+
+        val customData = buildMap<String, Int> {
+            for ((kAny, v) in m) {
+                val k = kAny?.toString() ?: continue
+                if (k !in knownKeys && !k.endsWith("-kills") && !k.endsWith("-explosive-kills")) {
+                    val iv = asInt(v)
+                    if (iv != 0) put(k, iv)
+                }
+            }
+        }
+
+        return MissionStats(
+            zombieSpawned = asInt(m["zombieSpawned"]),
+            levelUps = asInt(m["levelUps"]),
+            damageOutput = asDouble(m["damageOutput"]),
+            damageTaken = asDouble(m["damageTaken"]),
+            containersSearched = asInt(m["containersSearched"]),
+            survivorKills = asInt(m["survivorKills"]),
+            survivorsDowned = asInt(m["survivorsDowned"]),
+            survivorExplosiveKills = asInt(m["survivorExplosiveKills"]),
+            humanKills = asInt(m["humanKills"]),
+            humanExplosiveKills = asInt(m["humanExplosiveKills"]),
+            zombieKills = asInt(m["zombieKills"]),
+            zombieExplosiveKills = asInt(m["zombieExplosiveKills"]),
+            hpHealed = asInt(m["hpHealed"]),
+            explosivesPlaced = asInt(m["explosivesPlaced"]),
+            grenadesThrown = asInt(m["grenadesThrown"]),
+            grenadesSmokeThrown = asInt(m["grenadesSmokeThrown"]),
+            allianceFlagCaptured = asInt(m["allianceFlagCaptured"]),
+            buildingsDestroyed = asInt(m["buildingsDestroyed"]),
+            buildingsLost = asInt(m["buildingsLost"]),
+            buildingsExplosiveDestroyed = asInt(m["buildingsExplosiveDestroyed"]),
+            trapsTriggered = asInt(m["trapsTriggered"]),
+            trapDisarmTriggered = asInt(m["trapDisarmTriggered"]),
+            cashFound = asInt(m["cashFound"]),
+            woodFound = asInt(m["woodFound"]),
+            metalFound = asInt(m["metalFound"]),
+            clothFound = asInt(m["clothFound"]),
+            foodFound = asInt(m["foodFound"]),
+            waterFound = asInt(m["waterFound"]),
+            ammunitionFound = asInt(m["ammunitionFound"]),
+            ammunitionUsed = asInt(m["ammunitionUsed"]),
+            weaponsFound = asInt(m["weaponsFound"]),
+            gearFound = asInt(m["gearFound"]),
+            junkFound = asInt(m["junkFound"]),
+            medicalFound = asInt(m["medicalFound"]),
+            craftingFound = asInt(m["craftingFound"]),
+            researchFound = asInt(m["researchFound"]),
+            researchNoteFound = asInt(m["researchNoteFound"]),
+            clothingFound = asInt(m["clothingFound"]),
+            cratesFound = asInt(m["cratesFound"]),
+            schematicsFound = asInt(m["schematicsFound"]),
+            effectFound = asInt(m["effectFound"]),
+            rareWeaponFound = asInt(m["rareWeaponFound"]),
+            rareGearFound = asInt(m["rareGearFound"]),
+            uniqueWeaponFound = asInt(m["uniqueWeaponFound"]),
+            uniqueGearFound = asInt(m["uniqueGearFound"]),
+            greyWeaponFound = asInt(m["greyWeaponFound"]),
+            greyGearFound = asInt(m["greyGearFound"]),
+            whiteWeaponFound = asInt(m["whiteWeaponFound"]),
+            whiteGearFound = asInt(m["whiteGearFound"]),
+            greenWeaponFound = asInt(m["greenWeaponFound"]),
+            greenGearFound = asInt(m["greenGearFound"]),
+            blueWeaponFound = asInt(m["blueWeaponFound"]),
+            blueGearFound = asInt(m["blueGearFound"]),
+            purpleWeaponFound = asInt(m["purpleWeaponFound"]),
+            purpleGearFound = asInt(m["purpleGearFound"]),
+            premiumWeaponFound = asInt(m["premiumWeaponFound"]),
+            premiumGearFound = asInt(m["premiumGearFound"]),
+            killData = killData,
+            customData = customData
+        )
     }
 }

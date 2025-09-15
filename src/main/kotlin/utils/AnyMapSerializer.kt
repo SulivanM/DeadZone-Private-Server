@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -21,18 +22,31 @@ object AnyMapSerializer : KSerializer<Map<String, Any>> {
     override fun serialize(encoder: Encoder, value: Map<String, Any>) {
         val jsonEncoder = encoder as? JsonEncoder
             ?: error("This serializer only works with JSON")
-        val converted = value.mapValues { (_, v) ->
-            when (v) {
-                is JsonElement -> v
-                is String -> JsonPrimitive(v)
-                is Number -> JsonPrimitive(v)
-                is Boolean -> JsonPrimitive(v)
-                is Map<*, *> -> JsonObject((v as Map<String, Any>).mapValues { JsonPrimitive(it.value.toString()) })
-                is List<*> -> JsonArray(v.map { JsonPrimitive(it.toString()) })
-                else -> JsonPrimitive(v.toString())
+        val jsonObject = JsonObject(
+            value.entries.associate { (k, v) -> k to toJsonElement(v) }
+        )
+        jsonEncoder.encodeJsonElement(jsonObject)
+    }
+
+    private fun toJsonElement(v: Any?): JsonElement {
+        return when (v) {
+            null -> JsonNull
+            is JsonElement -> v
+            is String -> JsonPrimitive(v)
+            is Number -> JsonPrimitive(v)
+            is Boolean -> JsonPrimitive(v)
+            is Map<*, *> -> {
+                val mapped = v.entries
+                    .mapNotNull { (key, value) ->
+                        (key as? String)?.let { it to toJsonElement(value) }
+                    }
+                    .toMap()
+                JsonObject(mapped)
             }
+            is Iterable<*> -> JsonArray(v.map { toJsonElement(it) })
+            is Array<*> -> JsonArray(v.map { toJsonElement(it) })
+            else -> JsonPrimitive(v.toString())
         }
-        jsonEncoder.encodeJsonElement(JsonObject(converted))
     }
 
     override fun deserialize(decoder: Decoder): Map<String, Any> {
