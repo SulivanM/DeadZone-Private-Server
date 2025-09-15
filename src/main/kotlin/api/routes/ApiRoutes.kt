@@ -3,6 +3,7 @@ package dev.deadzone.api.routes
 import dev.deadzone.api.handler.authenticate
 import dev.deadzone.api.handler.createJoinRoom
 import dev.deadzone.api.handler.loadObjects
+import dev.deadzone.api.handler.loadIndexRange
 import dev.deadzone.api.handler.socialRefresh
 import dev.deadzone.api.handler.writeError
 import dev.deadzone.context.ServerContext
@@ -31,6 +32,7 @@ fun Route.apiRoutes(serverContext: ServerContext) {
             "27" -> createJoinRoom()
             "50" -> writeError()
             "85" -> loadObjects(serverContext)
+            "97" -> loadIndexRange(serverContext)
             else -> {
                 Logger.error(LogConfigAPIError) { "Unimplemented API route: $path" }
                 call.respond(HttpStatusCode.NotFound, "Unimplemented API: $path")
