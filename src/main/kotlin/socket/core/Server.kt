@@ -48,7 +48,6 @@ class Server(
             try {
                 val selectorManager = SelectorManager(Dispatchers.IO)
                 val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
-                Logger.info { "Socket server started at $host:$port" }
 
                 while (true) {
                     val socket = serverSocket.accept()
@@ -107,7 +106,7 @@ class Server(
 
                     Logger.info("<------------ SOCKET MESSAGE END ------------>")
                 }
-            } catch (e: io.ktor.utils.io.ClosedByteChannelException) {
+            } catch (_: ClosedByteChannelException) {
                 // Handle connection reset gracefully - this is expected when clients disconnect abruptly
                 Logger.info { "Client ${connection.socket.remoteAddress} disconnected abruptly (connection reset)" }
             } catch (e: java.net.SocketException) {

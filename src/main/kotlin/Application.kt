@@ -12,7 +12,6 @@ import dev.deadzone.core.data.GameDefinitions
 import dev.deadzone.core.model.game.data.Building
 import dev.deadzone.core.model.game.data.BuildingLike
 import dev.deadzone.core.model.game.data.JunkBuilding
-import dev.deadzone.data.db.BigDB
 import dev.deadzone.data.db.CollectionName
 import dev.deadzone.socket.core.OnlinePlayerRegistry
 import dev.deadzone.socket.core.Server
@@ -32,7 +31,6 @@ import dev.deadzone.socket.handler.save.quest.QuestSaveHandler
 import dev.deadzone.socket.handler.save.raid.RaidSaveHandler
 import dev.deadzone.socket.handler.save.survivor.SurvivorSaveHandler
 import dev.deadzone.socket.tasks.ServerTaskDispatcher
-import dev.deadzone.user.PlayerAccountRepository
 import dev.deadzone.user.PlayerAccountRepositoryMongo
 import dev.deadzone.user.auth.WebsiteAuthProvider
 import dev.deadzone.utils.LogLevel
@@ -63,40 +61,31 @@ import org.bson.Document
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
-fun main(args: Array<String>) {
-    EngineMain.main(args)
-}
+fun main(args: Array<String>) = EngineMain.main(args)
 
 const val SERVER_HOST = "127.0.0.1"
 const val API_SERVER_HOST = "127.0.0.1:8080"
 const val SOCKET_SERVER_HOST = "127.0.0.1:7777"
 const val SOCKET_SERVER_PORT = 7777
 
-/**
- * Setup the server:
- *
- * 1. Install Ktor modules and configure them.
- * 2. Initialize contexts: [GlobalContext], [ServerContext].
- * 3. Initialize each [ServerContext] components.
- * 4. Inject dependency.
- */
 suspend fun Application.module() {
-    // 1. Configure Websockets
+    // Core setup
     install(WebSockets) {
         pingPeriod = 15.seconds
         timeout = 15.seconds
         masking = true
     }
+    Logger.info("🚀 Starting DeadZone server")
+
     val wsManager = WebsocketManager()
 
-    // 2. Configure Serialization
+    // Serialization
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
             subclass(JunkBuilding::class, JunkBuilding.serializer())
         }
     }
-
     val json = Json {
         serializersModule = module
         classDiscriminator = "_t"
@@ -112,65 +101,53 @@ suspend fun Application.module() {
         protobuf(ProtoBuf)
     }
 
-    // 3. Initialize GlobalContext
+    // Global context
     GlobalContext.init(
         json = json,
         gameDefinitions = GameDefinitions(onResourceLoadComplete = {
-            launch {
-                wsManager.onResourceLoadComplete()
-            }
+            launch { wsManager.onResourceLoadComplete() }
+            Logger.info("🎮 Game resources loaded")
         })
     )
 
-    // 4. Create ServerConfig
+    // Configuration
     val config = ServerConfig(
-        adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull()
-            ?: false,
+        adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull() ?: false,
         useMongo = true,
         mongoUrl = environment.config.propertyOrNull("mongo.url")?.getString() ?: "",
-        isProd = developmentMode,
+        isProd = !developmentMode,
     )
 
-    // 5. Configure Database
-    Logger.info { "Configuring database..." }
-
-    lateinit var database: BigDB
-
-    try {
+    // Database
+    Logger.info("🗃️ Connecting to MongoDB...")
+    val database = try {
         val mongoc = MongoClient.create(config.mongoUrl)
         val db = mongoc.getDatabase("admin")
         val commandResult = db.runCommand(Document("ping", 1))
-        Logger.info { "MongoDB connection successful: $commandResult" }
-        database = BigDBMongoImpl(mongoc.getDatabase("tlsdz"), config.adminEnabled)
+        Logger.info("🟢 MongoDB connected (${commandResult["ok"]})")
+        BigDBMongoImpl(mongoc.getDatabase("tlsdz"), config.adminEnabled)
     } catch (e: Exception) {
-        Logger.error { "MongoDB connection failed inside timeout: ${e.message}" }
+        Logger.error("🔴 MongoDB connection failed: ${e.message}")
+        throw e
     }
 
-    // 6. Initialize ServerContext components
+    // Server components
     val sessionManager = SessionManager()
-    val playerAccountRepository: PlayerAccountRepository = if (config.useMongo) {
-        PlayerAccountRepositoryMongo(
-            userCollection = database.getCollection(CollectionName.PLAYER_ACCOUNT_COLLECTION)
-        )
-    } else {
-        // substitute with something else
-        PlayerAccountRepositoryMongo(
-            userCollection = database.getCollection(CollectionName.PLAYER_ACCOUNT_COLLECTION)
-        )
-    }
+    val playerAccountRepository = PlayerAccountRepositoryMongo(
+        userCollection = database.getCollection(CollectionName.PLAYER_ACCOUNT_COLLECTION)
+    )
     val onlinePlayerRegistry = OnlinePlayerRegistry()
     val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
     val taskDispatcher = ServerTaskDispatcher()
     val playerContextTracker = PlayerContextTracker()
+
     val saveHandlers = listOf(
-        ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(),
-        CommandSaveHandler(), BuildingSaveHandler(), CmpMiscSaveHandler(),
-        TaskSaveHandler(), CrateSaveHandler(), ItemSaveHandler(),
-        MiscSaveHandler(), MissionSaveHandler(), PurchaseSaveHandler(),
-        QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler(),
+        ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(), CommandSaveHandler(),
+        BuildingSaveHandler(), CmpMiscSaveHandler(), TaskSaveHandler(), CrateSaveHandler(),
+        ItemSaveHandler(), MiscSaveHandler(), MissionSaveHandler(), PurchaseSaveHandler(),
+        QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler()
     )
 
-    // 7. Create ServerContext
     val serverContext = ServerContext(
         db = database,
         playerAccountRepository = playerAccountRepository,
@@ -183,24 +160,26 @@ suspend fun Application.module() {
         config = config,
     )
 
-    // 8. Configure HTTP
+    // HTTP configuration
     install(CORS) {
         allowHost(API_SERVER_HOST, schemes = listOf("http"))
         allowHost(SOCKET_SERVER_HOST, schemes = listOf("http"))
         allowHeader(HttpHeaders.ContentType)
         allowMethod(HttpMethod.Get)
     }
+
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
+            Logger.error("⚠️ Server error: ${cause.message}")
+            call.respondText(text = "500: ${cause.message}", status = HttpStatusCode.InternalServerError)
         }
     }
 
-    // 9. Configure Logging
+    // Logging
+    Logger.level = LogLevel.DEBUG
     install(CallLogging)
-    Logger.level = LogLevel.DEBUG // use LogLevel.NOTHING to disable logging
     Logger.init { logMessage ->
-        for ((clientId, session) in wsManager.getAllClients()) {
+        wsManager.getAllClients().forEach { (clientId, session) ->
             try {
                 val logJson = Json.encodeToJsonElement(logMessage)
                 session.send(
@@ -214,13 +193,14 @@ suspend fun Application.module() {
                     )
                 )
             } catch (e: Exception) {
-                println("Failed to send log to client $session: $e")
+                Logger.error("📡 Failed to send log to client $clientId: ${e.message}")
                 wsManager.removeClient(clientId)
             }
         }
     }
+    Logger.info("📜 Real-time logging enabled")
 
-    // 10. Configure API routes
+    // Routing
     routing {
         fileRoutes()
         caseInsensitiveStaticResources("/game/data", File("static"))
@@ -229,10 +209,15 @@ suspend fun Application.module() {
         debugLogRoutes(wsManager)
     }
 
-    // 11. Start the game socket server
-    val server = Server(context = serverContext)
-    server.start()
+    // Start server
+    val server = Server(context = serverContext).also { it.start() }
+    Logger.info("🎉 Server started successfully")
+    Logger.info("📡 Socket server listening on $SOCKET_SERVER_HOST")
+    Logger.info("🌐 API server available at $API_SERVER_HOST")
+
+    // Shutdown hook
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
+        Logger.info("🛑 Server shutdown complete")
     })
 }

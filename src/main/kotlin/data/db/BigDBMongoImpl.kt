@@ -29,7 +29,6 @@ class BigDBMongoImpl(db: MongoDatabase, private val adminEnabled: Boolean) : Big
     private val inventoryCollection = db.getCollection<Inventory>("inventory")
 
     init {
-        Logger.info { "Initializing MongoDB..." }
         CoroutineScope(Dispatchers.IO).launch {
             setupCollections()
         }
