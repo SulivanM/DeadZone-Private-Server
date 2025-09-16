@@ -1,7 +1,8 @@
-package dev.deadzone.core.survivor
+package core.survivor
 
-import dev.deadzone.core.PlayerService
+import core.PlayerService
 import dev.deadzone.core.model.game.data.Survivor
+import dev.deadzone.core.survivor.SurvivorRepository
 import dev.deadzone.utils.LogConfigSocketToClient
 import dev.deadzone.utils.Logger
 

@@ -1,7 +1,7 @@
 package dev.deadzone.socket.handler
 
 import dev.deadzone.context.ServerContext
-import dev.deadzone.core.LoginStateBuilder
+import core.LoginStateBuilder
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.messaging.NetworkMessage
 import dev.deadzone.socket.messaging.SocketMessage

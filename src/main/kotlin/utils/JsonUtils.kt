@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package dev.deadzone.utils
 
 import kotlinx.serialization.json.Json

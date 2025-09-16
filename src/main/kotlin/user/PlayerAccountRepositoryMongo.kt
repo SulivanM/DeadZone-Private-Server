@@ -5,10 +5,10 @@ import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.toxicbakery.bcrypt.Bcrypt
-import dev.deadzone.core.auth.model.UserProfile
+import dev.deadzone.user.model.UserProfile
 import dev.deadzone.data.collection.PlayerAccount
 import dev.deadzone.context.GlobalContext
-import dev.deadzone.core.data.runMongoCatching
+import data.db.runMongoCatching
 import kotlinx.coroutines.flow.firstOrNull
 import org.bson.Document
 import kotlin.io.encoding.Base64

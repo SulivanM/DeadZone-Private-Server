@@ -3,7 +3,7 @@ package dev.deadzone.context
 import dev.deadzone.core.compound.CompoundService
 import dev.deadzone.core.items.InventoryService
 import dev.deadzone.core.metadata.PlayerObjectsMetadataService
-import dev.deadzone.core.survivor.SurvivorService
+import core.survivor.SurvivorService
 import dev.deadzone.data.collection.PlayerAccount
 import dev.deadzone.socket.core.Connection
 

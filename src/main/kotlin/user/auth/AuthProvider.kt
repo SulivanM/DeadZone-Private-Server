@@ -1,6 +1,6 @@
 package dev.deadzone.core.auth
 
-import dev.deadzone.core.auth.model.PlayerSession
+import dev.deadzone.user.model.PlayerSession
 
 /**
  * Represent system that provides authentication mechanism

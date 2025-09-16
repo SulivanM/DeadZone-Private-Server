@@ -1,4 +1,4 @@
-package dev.deadzone.core
+package core
 
 /**
  * Represents a player-scoped game service.

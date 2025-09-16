@@ -1,4 +1,4 @@
-package dev.deadzone.core
+package core
 
 import dev.deadzone.core.model.game.data.*
 import io.ktor.util.date.*

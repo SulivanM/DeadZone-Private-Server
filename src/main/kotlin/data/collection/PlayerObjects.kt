@@ -31,7 +31,6 @@ import dev.deadzone.core.model.game.data.skills.SkillState
 import dev.deadzone.core.model.network.RemotePlayerData
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
-import java.util.UUID
 
 /**
  * Also known as `PlayerData` in the client-side, it contains every game related data for a player.
@@ -252,7 +251,7 @@ data class PlayerObjects(
         if (!quests.contentEquals(other.quests)) return false
         if (!questsCollected.contentEquals(other.questsCollected)) return false
         if (!achievements.contentEquals(other.achievements)) return false
-        if (dailyQuest != other.dailyQuest) return false
+        if (!dailyQuest.contentEquals(other.dailyQuest)) return false
         if (questsTracked != other.questsTracked) return false
         if (gQuestsV2 != other.gQuestsV2) return false
         if (dzBounty != other.dzBounty) return false
@@ -270,7 +269,7 @@ data class PlayerObjects(
         result = 31 * result + nextDZBountyIssue.hashCode()
         result = 31 * result + key.hashCode()
         result = 31 * result + user.hashCode()
-        result = 31 * result + (flags?.contentHashCode() ?: 0)
+        result = 31 * result + flags.contentHashCode()
         result = 31 * result + nickname.hashCode()
         result = 31 * result + playerSurvivor.hashCode()
         result = 31 * result + levelPts.hashCode()

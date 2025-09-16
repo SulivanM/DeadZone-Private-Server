@@ -2,7 +2,7 @@ package dev.deadzone.user.auth
 
 import dev.deadzone.core.auth.AuthProvider
 import dev.deadzone.core.auth.SessionManager
-import dev.deadzone.core.auth.model.PlayerSession
+import dev.deadzone.user.model.PlayerSession
 import dev.deadzone.core.data.AdminData
 import dev.deadzone.data.db.BigDB
 import dev.deadzone.user.PlayerAccountRepository

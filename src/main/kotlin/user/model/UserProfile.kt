@@ -1,4 +1,4 @@
-package dev.deadzone.core.auth.model
+package dev.deadzone.user.model
 
 import dev.deadzone.core.data.AdminData
 import io.ktor.util.date.getTimeMillis

@@ -271,12 +271,6 @@ val LogConfigWriteError = LogConfig(
     logFull = true
 )
 
-val LogConfigAPIToClient = LogConfig(
-    src = LogSource.API,
-    targets = setOf(LogTarget.PRINT, LogTarget.CLIENT),
-    logFull = false
-)
-
 val LogConfigAPIError = LogConfig(
     src = LogSource.API,
     targets = setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.API_SERVER_ERROR), LogTarget.CLIENT),

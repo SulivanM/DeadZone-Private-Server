@@ -8,7 +8,7 @@ import dev.deadzone.core.items.InventoryService
 import dev.deadzone.core.metadata.PlayerObjectsMetadataRepositoryMongo
 import dev.deadzone.core.metadata.PlayerObjectsMetadataService
 import dev.deadzone.core.survivor.SurvivorRepositoryMongo
-import dev.deadzone.core.survivor.SurvivorService
+import core.survivor.SurvivorService
 import dev.deadzone.data.collection.Inventory
 import dev.deadzone.data.collection.NeighborHistory
 import dev.deadzone.data.collection.PlayerObjects

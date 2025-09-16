@@ -1,6 +1,6 @@
 package dev.deadzone.core.auth
 
-import dev.deadzone.core.auth.model.PlayerSession
+import dev.deadzone.user.model.PlayerSession
 import dev.deadzone.core.data.AdminData
 import dev.deadzone.utils.UUID
 import io.ktor.util.date.getTimeMillis

@@ -8,7 +8,6 @@ import kotlinx.coroutines.*
 import java.util.UUID
 import kotlin.collections.component1
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
 /**
  * Manages and dispatches registered [ServerTask]s for each playerId or connection
@@ -91,7 +90,7 @@ class ServerTaskDispatcher : TaskScheduler {
 
         val shouldRunInfinitely = cfg.repeatDelay != null
         if (shouldRunInfinitely) {
-            while (coroutineContext.isActive) {
+            while (currentCoroutineContext().isActive) {
                 delay(cfg.repeatDelay)
                 task.run(connection, cfg)
             }

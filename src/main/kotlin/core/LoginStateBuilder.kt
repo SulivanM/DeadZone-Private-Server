@@ -1,4 +1,4 @@
-package dev.deadzone.core
+package core
 
 import dev.deadzone.context.GlobalContext
 import dev.deadzone.context.ServerContext

@@ -12,7 +12,7 @@ class WebsocketManager() {
     private var resourceLoadCompleted: Boolean = false
 
     fun addClient(clientId: String, session: DefaultWebSocketServerSession) {
-        connectedDebugClients.put(clientId, session)
+        connectedDebugClients[clientId] = session
     }
 
     fun removeClient(clientId: String): Boolean {
@@ -22,12 +22,6 @@ class WebsocketManager() {
     fun getAllClients(): ClientSessions {
         return connectedDebugClients
     }
-
-    fun getSessionFromId(clientId: String): DefaultWebSocketServerSession? {
-        return connectedDebugClients[clientId]
-    }
-
-    fun hasResourceLoadFinished() = resourceLoadCompleted
 
     suspend fun onResourceLoadComplete() {
         resourceLoadCompleted = true

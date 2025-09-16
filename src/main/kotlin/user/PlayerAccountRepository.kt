@@ -1,6 +1,6 @@
 package dev.deadzone.user
 
-import dev.deadzone.core.auth.model.UserProfile
+import dev.deadzone.user.model.UserProfile
 import dev.deadzone.data.collection.PlayerAccount
 
 /**

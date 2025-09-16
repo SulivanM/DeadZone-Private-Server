@@ -1,4 +1,4 @@
-package dev.deadzone.core.auth.model
+package dev.deadzone.user.model
 
 /**
  * Representation of a player's authentication session.

@@ -1,6 +1,6 @@
 package dev.deadzone.core.metadata
 
-import dev.deadzone.core.PlayerService
+import core.PlayerService
 import dev.deadzone.core.model.data.PlayerFlags
 import dev.deadzone.utils.LogConfigSocketToClient
 import dev.deadzone.utils.Logger

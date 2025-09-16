@@ -38,8 +38,8 @@ class Server(
             socketDispatcher.register(SaveHandler(this))
             socketDispatcher.register(ZombieAttackHandler())
             socketDispatcher.register(RequestSurvivorCheckHandler())
-            context.taskDispatcher.register(TimeUpdateTask(this))
-            context.taskDispatcher.register(BuildingTask(this))
+            context.taskDispatcher.register(TimeUpdateTask())
+            context.taskDispatcher.register(BuildingTask())
         }
     }
 

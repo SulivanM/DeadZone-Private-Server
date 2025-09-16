@@ -7,7 +7,7 @@ import dev.deadzone.context.PlayerContextTracker
 import dev.deadzone.context.ServerConfig
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.auth.SessionManager
-import dev.deadzone.core.data.BigDBMongoImpl
+import data.db.BigDBMongoImpl
 import dev.deadzone.core.data.GameDefinitions
 import dev.deadzone.core.model.game.data.Building
 import dev.deadzone.core.model.game.data.BuildingLike

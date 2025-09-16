@@ -3,8 +3,8 @@ package dev.deadzone.core.metadata
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import dev.deadzone.core.data.runMongoCatching
-import dev.deadzone.core.data.runMongoCatchingUnit
+import data.db.runMongoCatching
+import data.db.runMongoCatchingUnit
 import dev.deadzone.data.collection.PlayerObjects
 import kotlinx.coroutines.flow.firstOrNull
 

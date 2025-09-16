@@ -1,12 +1,13 @@
-package dev.deadzone.core.data
+package data.db
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.toxicbakery.bcrypt.Bcrypt
-import dev.deadzone.core.auth.model.ServerMetadata
-import dev.deadzone.core.auth.model.UserProfile
+import dev.deadzone.core.data.AdminData
+import dev.deadzone.user.model.ServerMetadata
+import dev.deadzone.user.model.UserProfile
 import dev.deadzone.data.collection.Inventory
 import dev.deadzone.data.collection.NeighborHistory
 import dev.deadzone.data.collection.PlayerAccount
@@ -32,7 +33,6 @@ class BigDBMongoImpl(db: MongoDatabase, private val adminEnabled: Boolean) : Big
         CoroutineScope(Dispatchers.IO).launch {
             setupCollections()
         }
-        // deleteAdminAccount()
     }
 
     private suspend fun setupCollections() {
@@ -130,20 +130,6 @@ class BigDBMongoImpl(db: MongoDatabase, private val adminEnabled: Boolean) : Big
 
     private fun hashPw(password: String): String {
         return Base64.encode(Bcrypt.hash(password, 10))
-    }
-
-    /**
-     * Reset an entire UserDocument collection.
-     */
-    suspend fun resetUserCollection() {
-        accCollection.drop()
-    }
-
-    suspend fun deleteAdminAccount() {
-        accCollection.findOneAndDelete(Filters.eq("playerId", AdminData.PLAYER_ID))
-        objCollection.findOneAndDelete(Filters.eq("playerId", AdminData.PLAYER_ID))
-        neighborCollection.findOneAndDelete(Filters.eq("playerId", AdminData.PLAYER_ID))
-        inventoryCollection.findOneAndDelete(Filters.eq("playerId", AdminData.PLAYER_ID))
     }
 
     override suspend fun shutdown() {

@@ -92,7 +92,7 @@ object PIODeserializer {
                             val padded = buffer.toByteArray().padStart(4)
                             partLength = ByteBuffer.wrap(padded).order(ByteOrder.LITTLE_ENDIAN).int
 
-                            if (partLength < 0 || partLength > 10_000_000) {
+                            if (partLength !in 0..10_000_000) {
                                 throw IllegalArgumentException("Invalid partLength = $partLength")
                             }
 

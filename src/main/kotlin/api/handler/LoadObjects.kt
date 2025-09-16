@@ -5,7 +5,7 @@ import dev.deadzone.api.message.db.LoadObjectsArgs
 import dev.deadzone.api.message.db.LoadObjectsOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.context.ServerContext
-import dev.deadzone.core.LazyDataUpdater
+import core.LazyDataUpdater
 import dev.deadzone.data.collection.NeighborHistory
 import dev.deadzone.utils.LogConfigAPIError
 import dev.deadzone.utils.LogConfigSocketToClient

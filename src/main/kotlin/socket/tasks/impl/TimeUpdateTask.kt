@@ -1,6 +1,5 @@
 package dev.deadzone.socket.tasks.impl
 
-import dev.deadzone.context.ServerContext
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.messaging.NetworkMessage
 import dev.deadzone.socket.tasks.ServerTask
@@ -16,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * The game registers callback for such message, though not sure how frequent should we send the message.
  */
-class TimeUpdateTask(serverContext: ServerContext) : ServerTask {
+class TimeUpdateTask() : ServerTask {
     override val key: TaskTemplate
         get() = TaskTemplate.TIME_UPDATE
 
