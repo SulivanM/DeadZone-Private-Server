@@ -12,7 +12,7 @@ data class Survivor(
     val id: String = UUID.new(),
     val title: String,
     val firstName: String = "",
-    val lastName: String = "",
+    val lastName: String = "DZ",
     val gender: String,
     val portrait: String? = null,
     val classId: String,

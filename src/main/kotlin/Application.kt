@@ -21,7 +21,7 @@ import dev.deadzone.socket.handler.save.chat.ChatSaveHandler
 import dev.deadzone.socket.handler.save.command.CommandSaveHandler
 import dev.deadzone.socket.handler.save.compound.building.BuildingSaveHandler
 import dev.deadzone.socket.handler.save.compound.misc.CmpMiscSaveHandler
-import dev.deadzone.socket.handler.save.compound.task.TaskSaveHandler
+import socket.handler.save.compound.task.TaskSaveHandler
 import dev.deadzone.socket.handler.save.crate.CrateSaveHandler
 import dev.deadzone.socket.handler.save.item.ItemSaveHandler
 import dev.deadzone.socket.handler.save.misc.MiscSaveHandler
