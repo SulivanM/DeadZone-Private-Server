@@ -22,36 +22,56 @@ class Connection(
     val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     private val output: ByteWriteChannel,
 ) {
+    private var lastActivity = System.currentTimeMillis()
+
+    /**
+     * Update the last activity timestamp
+     */
+    fun updateActivity() {
+        lastActivity = System.currentTimeMillis()
+    }
+
     /**
      * Send raw unserialized message (non-PIO) to client
-     *
-     * @param b raw message in bytearray
      */
     suspend fun sendRaw(b: ByteArray, logFull: Boolean = false) {
-        Logger.debug(logFull = logFull) { "Sending raw: ${b.decodeToString()}" }
-        output.writeFully(b)
+        try {
+            Logger.debug(logFull = logFull) { "Sending raw: ${b.decodeToString()}" }
+            output.writeFully(b)
+            updateActivity()
+        } catch (e: Exception) {
+            Logger.warn { "Failed to send raw message to ${socket.remoteAddress}: ${e.message}" }
+            throw e
+        }
     }
 
     /**
      * Send a serialized PIO message
-     *
-     * @param type The type of the message (e.g., "gr", "ic")
-     * @param args Any number of message content
      */
     suspend fun sendMessage(type: String, vararg args: Any, logFull: Boolean = false) {
-        val msg = buildList {
-            add(type)
-            addAll(args)
-        }
-        val bytes = PIOSerializer.serialize(msg)
+        try {
+            val msg = buildList {
+                add(type)
+                addAll(args)
+            }
+            val bytes = PIOSerializer.serialize(msg)
 
-        Logger.debug(logFull = logFull) { "Sending message of type '$type' | raw message: ${bytes.decodeToString()}" }
-        output.writeFully(bytes)
+            Logger.debug(logFull = logFull) { "Sending message of type '$type' | raw message: ${bytes.decodeToString()}" }
+            output.writeFully(bytes)
+            updateActivity()
+        } catch (e: Exception) {
+            Logger.warn { "Failed to send message of type '$type' to ${socket.remoteAddress}: ${e.message}" }
+            throw e
+        }
     }
 
     fun shutdown() {
-        scope.cancel()
-        socket.close()
+        try {
+            scope.cancel()
+            socket.close()
+        } catch (e: Exception) {
+            Logger.debug { "Exception during connection shutdown: ${e.message}" }
+        }
     }
 
     override fun toString(): String {

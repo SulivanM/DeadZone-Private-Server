@@ -107,19 +107,37 @@ class Server(
 
                     Logger.info("<------------ SOCKET MESSAGE END ------------>")
                 }
+            } catch (e: io.ktor.utils.io.ClosedByteChannelException) {
+                // Handle connection reset gracefully - this is expected when clients disconnect abruptly
+                Logger.info { "Client ${connection.socket.remoteAddress} disconnected abruptly (connection reset)" }
+            } catch (e: java.net.SocketException) {
+                // Handle other socket-related exceptions gracefully
+                when {
+                    e.message?.contains("Connection reset") == true -> {
+                        Logger.info { "Client ${connection.socket.remoteAddress} connection was reset by peer" }
+                    }
+                    e.message?.contains("Broken pipe") == true -> {
+                        Logger.info { "Client ${connection.socket.remoteAddress} connection broken (broken pipe)" }
+                    }
+                    else -> {
+                        Logger.warn { "Socket exception for ${connection.socket.remoteAddress}: ${e.message}" }
+                    }
+                }
             } catch (e: Exception) {
-                Logger.error { "Error in socket for ${connection.socket.remoteAddress}: $e" }
+                Logger.error { "Unexpected error in socket for ${connection.socket.remoteAddress}: $e" }
                 e.printStackTrace()
-                context.onlinePlayerRegistry.markOffline(connection.playerId)
-                context.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
-                context.playerContextTracker.removePlayer(connection.playerId)
-//                context.taskDispatcher.stopAllTasksForPlayer(connection.playerId)
             } finally {
-                Logger.info { "Client ${connection.socket.remoteAddress} disconnected" }
-                context.onlinePlayerRegistry.markOffline(connection.playerId)
-                context.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
-                context.playerContextTracker.removePlayer(connection.playerId)
-                context.taskDispatcher.stopAllTasksForPlayer(connection.playerId)
+                // Cleanup logic - this will run regardless of how the connection ended
+                Logger.info { "Cleaning up connection for ${connection.socket.remoteAddress}" }
+
+                // Only perform cleanup if playerId is set (client was authenticated)
+                if (connection.playerId.isNotEmpty()) {
+                    context.onlinePlayerRegistry.markOffline(connection.playerId)
+                    context.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
+                    context.playerContextTracker.removePlayer(connection.playerId)
+                    context.taskDispatcher.stopAllTasksForPlayer(connection.playerId)
+                }
+
                 connection.shutdown()
             }
         }
