@@ -141,13 +141,9 @@ function doesUserExist(username) {
         isUsernameValid = false;
       } else if (result === "yes") {
         infoDiv
-          .text(
-            "Username already exists. Input the correct password if you are trying to log in."
-          )
-          .css("color", "#7a8bac");
-        infoDiv.append(
-          '<p style="color:#b86b5f">If you are trying to register, choose another name.</p>'
-        );
+          .html(
+            '<span style="color:#7a8bac">Username taken.<br>Enter the password to log in.</span>'
+          );
         isUsernameValid = true;
       } else if (result == "no") {
         infoDiv
@@ -198,7 +194,11 @@ function login(username, password) {
     .then(async (response) => {
       if (!response.ok) {
         const error = await response.json();
-        loginDiv.text(`Login failed: ${error.reason}`).css("color", "red");
+        if (error.reason === "wrong password") {
+          loginDiv.text("Incorrect password. Please try again.").css("color", "red");
+        } else {
+          loginDiv.text(`Login failed: ${error.reason || "Unknown error"}`).css("color", "red");
+        }
         return false;
       }
       return response.json();

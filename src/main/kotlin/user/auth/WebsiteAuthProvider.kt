@@ -19,15 +19,18 @@ class WebsiteAuthProvider(
         return sessionManager.create(playerId = pid)
     }
 
-    override suspend fun login(username: String, password: String): PlayerSession {
+    override suspend fun login(username: String, password: String): PlayerSession? {
         val result = playerAccountRepository.verifyCredentials(username, password)
         result.onFailure {
             Logger.error(LogConfigAPIError) { "Failure on verifyCredentials for username=$username: ${it.message}" }
+            return null
         }
-        val pid = requireNotNull(result.getOrThrow()) {
-            "verifyCredentials succeed but returned pid is null"
+        val pid = result.getOrThrow()
+        return if (pid != null) {
+            sessionManager.create(pid)
+        } else {
+            null
         }
-        return sessionManager.create(pid)
     }
 
     override suspend fun adminLogin(): PlayerSession {

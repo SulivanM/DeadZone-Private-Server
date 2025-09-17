@@ -12,7 +12,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import kotlin.io.encoding.Base64
 
-
 class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAccountRepository {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -22,8 +21,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun verifyCredentials(username: String, password: String): Result<String?> {
         return try {
             transaction(database) {
-                val row =
-                    PlayerAccounts.selectAll().where { PlayerAccounts.profileJson like "%\"username\":\"$username\"%" }
+                val row = PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
                     .singleOrNull()
                 if (row == null) {
                     Logger.info { "No account found for username=$username" }
@@ -47,7 +46,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun doesUserExist(username: String): Result<Boolean> {
         return try {
             transaction(database) {
-                PlayerAccounts.selectAll().where { PlayerAccounts.profileJson like "%\"username\":\"$username\"%" }
+                PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
                     .count() > 0
             }.let { Result.success(it) }
         } catch (e: Exception) {
@@ -59,7 +59,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun getProfileOfPlayerId(playerId: String): Result<UserProfile?> {
         return try {
             transaction(database) {
-                PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
+                PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val profileJson = row[PlayerAccounts.profileJson]
                         if (profileJson.isNotEmpty()) {
@@ -89,7 +90,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun getUserDocByUsername(username: String): Result<PlayerAccount?> {
         return try {
             transaction(database) {
-                PlayerAccounts.selectAll().where { PlayerAccounts.profileJson like "%\"username\":\"$username\"%" }
+                PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
                     .singleOrNull()?.let { row ->
                         PlayerAccount(
                             playerId = row[PlayerAccounts.playerId],
@@ -108,7 +110,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun getUserDocByPlayerId(playerId: String): Result<PlayerAccount?> {
         return try {
             transaction(database) {
-                PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
+                PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         PlayerAccount(
                             playerId = row[PlayerAccounts.playerId],
@@ -127,7 +130,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun getPlayerIdOfUsername(username: String): Result<String?> {
         return try {
             transaction(database) {
-                PlayerAccounts.selectAll().where { PlayerAccounts.profileJson like "%\"username\":\"$username\"%" }
+                PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
                     .singleOrNull()?.let { row ->
                         row[PlayerAccounts.playerId]
                     }
@@ -162,7 +166,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun updateLastLogin(playerId: String, lastLogin: Long): Result<Unit> {
         return try {
             transaction(database) {
-                val row = PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
+                val row = PlayerAccounts.selectAll()
+                    .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()
                 if (row == null) {
                     Logger.warn { "No account found to update last login for playerId=$playerId" }

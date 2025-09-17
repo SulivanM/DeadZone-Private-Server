@@ -59,7 +59,7 @@ object PlayerFlags {
     }
 }
 fun List<Boolean>.toByteArray(): ByteArray {
-    val bytes = ByteArray((this.size + 7) / 8)
+    val bytes = ByteArray(this.size)
     for (i in this.indices) {
         if (this[i]) {
             val byteIndex = i / 8
