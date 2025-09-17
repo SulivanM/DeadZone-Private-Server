@@ -33,7 +33,6 @@ class PlayerObjectsMetadataService(
     }
 
     fun getPlayerFlags() = flags
-    fun getPlayerNickname() = nickname
 
     override suspend fun init(playerId: String): Result<Unit> {
         return runCatching {

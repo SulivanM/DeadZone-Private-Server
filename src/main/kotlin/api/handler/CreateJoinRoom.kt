@@ -1,5 +1,4 @@
 package dev.deadzone.api.handler
-
 import dev.deadzone.api.message.client.CreateJoinRoomArgs
 import dev.deadzone.api.message.client.CreateJoinRoomOutput
 import dev.deadzone.api.utils.pioFraming
@@ -14,26 +13,15 @@ import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
-/**
- * CreateJoinRoom (API 27)
- *
- * Input: `CreateJoinRoomArgs`
- *
- * Output: `CreateJoinRoomOutput`
- */
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.createJoinRoom() {
     val createJoinRoomArgs = ProtoBuf.decodeFromByteArray<CreateJoinRoomArgs>(
         call.receiveChannel().toByteArray()
     )
-
     logInput(createJoinRoomArgs)
-
     val createJoinRoomOutput = ProtoBuf.encodeToByteArray<CreateJoinRoomOutput>(
         CreateJoinRoomOutput.defaultRoom()
     )
-
     logOutput(createJoinRoomOutput)
-
     call.respondBytes(createJoinRoomOutput.pioFraming())
 }

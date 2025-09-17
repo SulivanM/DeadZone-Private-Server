@@ -1,5 +1,4 @@
 package dev.deadzone.api.handler
-
 import dev.deadzone.api.message.social.SocialProfile
 import dev.deadzone.api.message.social.SocialRefreshOutput
 import dev.deadzone.api.utils.pioFraming
@@ -17,32 +16,18 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
-/**
- * SocialRefresh (API 601)
- *
- * Input: `SocialRefreshArgs` (empty)
- *
- * Output: `SocialRefreshOutput`
- */
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: String) {
     val socialRefreshArgs = call.receiveChannel().toByteArray() // Actually no input is given
-
     logInput(socialRefreshArgs.decodeToString())
-
-    // social features not implemented yet
-    // likely we shouldn't bother with PIO publishing network and instead implement ourselves
     val pid = serverContext.sessionManager.getPlayerId(token)!!
-
     val result = serverContext.playerAccountRepository.getProfileOfPlayerId(pid)
     result.onFailure {
         Logger.error(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$pid: ${it.message}" }
     }
-
     val userProfile = requireNotNull(result.getOrThrow()) {
         "getProfileOfPlayerId succeed but returned profile is null"
     }
-
     val socialRefreshOutput = if (pid == AdminData.PLAYER_ID) {
         SocialRefreshOutput.admin()
     } else {
@@ -59,10 +44,7 @@ suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: St
             blocked = ""
         )
     }
-
     val encodedOutput = ProtoBuf.encodeToByteArray<SocialRefreshOutput>(socialRefreshOutput)
-
     logOutput(encodedOutput)
-
     call.respondBytes(encodedOutput.pioFraming())
 }

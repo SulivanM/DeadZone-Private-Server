@@ -100,9 +100,9 @@ data class Building(
     val name: String? = null,
     val type: String,  // building's ID in buildings.xml, not to be confused with type in XML
     val level: Int = 0,
-    val rotation: Int,
-    val tx: Int,
-    val ty: Int,
+    val rotation: Int = 0,
+    val tx: Int = 0,
+    val ty: Int = 0,
     val destroyed: Boolean = false,
     val resourceValue: Double = 0.0,
     val upgrade: TimerData? = null,

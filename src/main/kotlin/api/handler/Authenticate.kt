@@ -1,5 +1,4 @@
 package dev.deadzone.api.handler
-
 import dev.deadzone.API_SERVER_HOST
 import dev.deadzone.api.message.auth.AuthenticateArgs
 import dev.deadzone.api.message.auth.AuthenticateOutput
@@ -19,31 +18,20 @@ import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
-/**
- * Authenticate (API 13)
- *
- * Input: `AuthenticateArgs`
- *
- * Output: `AuthenticateOutput`
- */
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
     val authenticateArgs = ProtoBuf.decodeFromByteArray<AuthenticateArgs>(
         call.receiveChannel().toByteArray()
     )
-
     logInput(authenticateArgs)
-
     val userToken = authenticateArgs
         .authenticationArguments
         .find { it.key == "userToken" }?.value
-
     if (userToken == null) {
         Logger.error { "Missing userToken in API 13 request" }
         call.respond(HttpStatusCode.BadRequest, "userToken is missing")
         return
     }
-
     val authenticateOutput = if (userToken == AdminData.TOKEN) {
         Logger.info { "auth by admin" }
         AuthenticateOutput.admin()
@@ -60,12 +48,9 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
             null
         }
     } ?: return
-
     val encodedOutput = ProtoBuf.encodeToByteArray<AuthenticateOutput>(
         authenticateOutput
     )
-
     logOutput(encodedOutput)
-
     call.respondBytes(encodedOutput.pioFraming())
 }
