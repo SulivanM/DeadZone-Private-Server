@@ -258,7 +258,7 @@
             const second = pad(now.getSeconds());
 
             return `${year}-${month}-${day} ${hour}-${minute}-${second}`;
-        };
+        }
 
         socket.onerror = () => appendTextLine("[Websocket error]", false)
         socket.onclose = () => appendTextLine("[Connection closed]", false)

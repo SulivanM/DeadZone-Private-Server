@@ -8,9 +8,6 @@ import dev.deadzone.socket.handler.save.SaveSubHandler
 import dev.deadzone.socket.tasks.ServerTaskDispatcher
 import dev.deadzone.user.PlayerAccountRepository
 
-/**
- * Holds the global server components. Only single instance of this class is needed in the server.
- */
 data class ServerContext(
     val db: BigDB,
     val playerAccountRepository: PlayerAccountRepository,
@@ -32,7 +29,9 @@ fun ServerContext.requirePlayerContext(playerId: String): PlayerContext =
 
 data class ServerConfig(
     val adminEnabled: Boolean,
-    val useMongo: Boolean,
-    val mongoUrl: String,
+    val useMaria: Boolean,
+    val mariaUrl: String,
+    val mariaUser: String,
+    val mariaPassword: String,
     val isProd: Boolean,
 )

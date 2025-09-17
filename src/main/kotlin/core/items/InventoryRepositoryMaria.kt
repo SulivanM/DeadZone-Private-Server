@@ -1,7 +1,6 @@
 package dev.deadzone.core.items
 
-class InventoryRepositoryMongo: InventoryRepository {
+class InventoryRepositoryMaria: InventoryRepository {
     override fun placeholder() {
-
     }
 }

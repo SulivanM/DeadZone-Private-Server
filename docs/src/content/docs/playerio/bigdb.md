@@ -8,7 +8,7 @@ description: BigDB
 Part of PlayerIO backend services. Source: https://playerio.com/documentation/services/bigdb/.
 :::
 
-PlayerIO implementation of database, which is similar to a NoSQL database like MongoDB. BigDB data is stored in tables, with each data being a key-value pair object that is similar to JSON.
+PlayerIO implementation of database, which is similar to a NoSQL database like MariaDB. BigDB data is stored in tables, with each data being a key-value pair object that is similar to JSON.
 
 Exchange of data between game and the server is done with protobuf format via APIs.
 

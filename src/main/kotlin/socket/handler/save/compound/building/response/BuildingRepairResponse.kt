@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 data class BuildingRepairResponse(
     val success: Boolean = true,
     val items: Map<String, Int>? = emptyMap(),
-    val timer: TimerData
+    val timer: TimerData?
 )

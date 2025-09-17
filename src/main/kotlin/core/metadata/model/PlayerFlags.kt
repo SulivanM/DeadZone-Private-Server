@@ -1,25 +1,14 @@
-package dev.deadzone.core.model.data
-
-import kotlinx.serialization.ExperimentalSerializationApi
+package core.metadata.model
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.bson.BsonBinary
-import org.bson.codecs.kotlinx.BsonDecoder
-import org.bson.codecs.kotlinx.BsonEncoder
 import kotlin.experimental.or
-
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 object PlayerFlags {
-    // nicknameVerified is a flag sent by server if user's nickname is bad
-    // with nicknameVerified = true, this will prompt the game to edit the leader's nickname
-    // usually the prompt is on compound screen with title of "Leader Update"
-    // nicknameVerified is initially false when player registers.
-
     fun create(
         nicknameVerified: Boolean = false, refreshNeighbors: Boolean = false,
         tutorialComplete: Boolean = false, injurySustained: Boolean = false,
@@ -36,7 +25,6 @@ object PlayerFlags {
         )
         return flags.toByteArray()
     }
-
     fun newgame(
         nicknameVerified: Boolean = false, refreshNeighbors: Boolean = false,
         tutorialComplete: Boolean = false, injurySustained: Boolean = false,
@@ -53,7 +41,6 @@ object PlayerFlags {
         )
         return flags.toByteArray()
     }
-
     fun skipTutorial(
         nicknameVerified: Boolean = true, refreshNeighbors: Boolean = false,
         tutorialComplete: Boolean = true, injurySustained: Boolean = true,
@@ -68,14 +55,11 @@ object PlayerFlags {
             tutorialCrateFound, tutorialCrateUnlocked, tutorialSchematicFound,
             tutorialEffectFound, tutorialPvPPractice,
         )
-
         return flags.toByteArray()
     }
 }
-
 fun List<Boolean>.toByteArray(): ByteArray {
-    val bytes = ByteArray(this.size)
-
+    val bytes = ByteArray((this.size + 7) / 8)
     for (i in this.indices) {
         if (this[i]) {
             val byteIndex = i / 8
@@ -83,46 +67,19 @@ fun List<Boolean>.toByteArray(): ByteArray {
             bytes[byteIndex] = bytes[byteIndex] or (1 shl bitIndex).toByte()
         }
     }
-
     return bytes
 }
-
-@OptIn(ExperimentalSerializationApi::class)
-object ByteArrayAsBinarySerializer : KSerializer<ByteArray> {
+@OptIn(ExperimentalEncodingApi::class)
+object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
     override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("ByteArrayAsBinary", PrimitiveKind.STRING)
-
+        PrimitiveSerialDescriptor("ByteArrayAsBase64", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: ByteArray) {
-        if (encoder is BsonEncoder) {
-            encoder.encodeBsonValue(BsonBinary(value))
-        } else {
-            encoder.encodeSerializableValue(ByteArraySerializer(), value)
-        }
+        encoder.encodeString(Base64.encode(value))
     }
-
     override fun deserialize(decoder: Decoder): ByteArray {
-        if (decoder is BsonDecoder) {
-            val bsonValue = decoder.decodeBsonValue()
-            if (bsonValue !is BsonBinary)
-                throw SerializationException("Expected BsonBinary but found ${bsonValue.bsonType}")
-            return bsonValue.data
-        } else {
-            return decoder.decodeSerializableValue(ByteArraySerializer())
-        }
+        return Base64.decode(decoder.decodeString())
     }
 }
-
-
 object PlayerFlags_Constants {
-    val NicknameVerified = 0u
-    val RefreshNeighbors = 1u
     val TutorialComplete = 2u
-    val InjurySustained = 3u
-    val InjuryHelpComplete = 4u
-    val AutoProtectionApplied = 5u
-    val TutorialCrateFound = 6u
-    val TutorialCrateUnlocked = 7u
-    val TutorialSchematicFound = 8u
-    val TutorialEffectFound = 9u
-    val TutorialPvPPractice = 10u
 }

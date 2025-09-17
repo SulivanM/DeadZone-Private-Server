@@ -3,7 +3,7 @@ package dev.deadzone.socket.handler.save.survivor
 import dev.deadzone.context.GlobalContext
 import dev.deadzone.context.ServerContext
 import dev.deadzone.context.requirePlayerContext
-import dev.deadzone.core.model.data.PlayerFlags
+import core.metadata.model.PlayerFlags
 import dev.deadzone.core.model.game.data.HumanAppearance
 import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.handler.buildMsg

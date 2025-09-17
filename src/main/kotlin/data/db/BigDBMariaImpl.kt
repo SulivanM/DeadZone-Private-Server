@@ -1,0 +1,222 @@
+package dev.deadzone.data.db
+import com.toxicbakery.bcrypt.Bcrypt
+import dev.deadzone.core.data.AdminData
+import core.metadata.model.ByteArrayAsBase64Serializer
+import dev.deadzone.data.collection.Inventory
+import dev.deadzone.data.collection.NeighborHistory
+import dev.deadzone.data.collection.PlayerAccount
+import dev.deadzone.data.collection.PlayerObjects
+import dev.deadzone.user.model.ServerMetadata
+import dev.deadzone.user.model.UserProfile
+import dev.deadzone.utils.Logger
+import dev.deadzone.utils.UUID
+import io.ktor.util.date.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.io.encoding.Base64
+
+object PlayerAccounts : Table("player_accounts") {
+    val playerId = varchar("player_id", 36).uniqueIndex()
+    val hashedPassword = text("hashed_password")
+    val profileJson = text("profile_json")
+    val serverMetadataJson = text("server_metadata_json")
+    override val primaryKey = PrimaryKey(playerId)
+}
+
+object PlayerObjectsTable : Table("player_objects") {
+    val playerId = varchar("player_id", 36).uniqueIndex()
+    val dataJson = text("data_json")
+    override val primaryKey = PrimaryKey(playerId)
+}
+
+object NeighborHistoryTable : Table("neighbor_history") {
+    val playerId = varchar("player_id", 36).uniqueIndex()
+    val dataJson = text("data_json")
+    override val primaryKey = PrimaryKey(playerId)
+}
+
+object InventoryTable : Table("inventory") {
+    val playerId = varchar("player_id", 36).uniqueIndex()
+    val dataJson = text("data_json")
+    override val primaryKey = PrimaryKey(playerId)
+}
+
+class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) : BigDB {
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        serializersModule = SerializersModule {
+            contextual(ByteArray::class, ByteArrayAsBase64Serializer)
+        }
+    }
+
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            setupDatabase()
+        }
+    }
+
+    private suspend fun setupDatabase() {
+        try {
+            transaction(database) {
+                SchemaUtils.create(PlayerAccounts, PlayerObjectsTable, NeighborHistoryTable, InventoryTable)
+            }
+            val count = transaction(database) {
+                PlayerAccounts.selectAll().count()
+            }
+            Logger.info { "MariaDB: User table ready, contains $count users." }
+            if (adminEnabled) {
+                val adminExists = transaction(database) {
+                    PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq AdminData.PLAYER_ID }.count() > 0
+                }
+                if (!adminExists) {
+                    val start = getTimeMillis()
+                    transaction(database) {
+                        val adminAccount = PlayerAccount.admin()
+                        val adminObjects = PlayerObjects.admin()
+                        val adminNeighbor = NeighborHistory.empty(AdminData.PLAYER_ID)
+                        val adminInventory = Inventory.admin()
+                        PlayerAccounts.insert {
+                            it[playerId] = adminAccount.playerId
+                            it[hashedPassword] = adminAccount.hashedPassword
+                            it[profileJson] = json.encodeToString(adminAccount.profile)
+                            it[serverMetadataJson] = json.encodeToString(adminAccount.serverMetadata)
+                        }
+                        PlayerObjectsTable.insert {
+                            it[playerId] = adminObjects.playerId
+                            it[dataJson] = json.encodeToString(adminObjects)
+                        }
+                        NeighborHistoryTable.insert {
+                            it[playerId] = adminNeighbor.playerId
+                            it[dataJson] = json.encodeToString(adminNeighbor)
+                        }
+                        InventoryTable.insert {
+                            it[playerId] = adminInventory.playerId
+                            it[dataJson] = json.encodeToString(adminInventory)
+                        }
+                    }
+                    Logger.info { "MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
+                } else {
+                    Logger.info { "MariaDB: Admin account already exists." }
+                }
+            }
+        } catch (e: Exception) {
+            Logger.error { "MariaDB: Failed during setup: $e" }
+            throw e
+        }
+    }
+
+    override suspend fun loadPlayerAccount(playerId: String): PlayerAccount? {
+        return transaction(database) {
+            PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
+                .singleOrNull()?.let { row ->
+                    PlayerAccount(
+                        playerId = row[PlayerAccounts.playerId],
+                        hashedPassword = row[PlayerAccounts.hashedPassword],
+                        profile = json.decodeFromString(row[PlayerAccounts.profileJson]),
+                        serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
+                    )
+                }
+        }
+    }
+
+    override suspend fun loadPlayerObjects(playerId: String): PlayerObjects? {
+        return transaction(database) {
+            PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
+                .singleOrNull()?.let { row ->
+                    json.decodeFromString(row[PlayerObjectsTable.dataJson])
+                }
+        }
+    }
+
+    override suspend fun loadNeighborHistory(playerId: String): NeighborHistory? {
+        return transaction(database) {
+            NeighborHistoryTable.selectAll().where { NeighborHistoryTable.playerId eq playerId }
+                .singleOrNull()?.let { row ->
+                    json.decodeFromString(row[NeighborHistoryTable.dataJson])
+                }
+        }
+    }
+
+    override suspend fun loadInventory(playerId: String): Inventory? {
+        return transaction(database) {
+            InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
+                .singleOrNull()?.let { row ->
+                    json.decodeFromString(row[InventoryTable.dataJson])
+                }
+        }
+    }
+
+    override suspend fun <T> updatePlayerObjectsField(playerId: String, path: String, value: T) {
+        transaction(database) {
+            val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
+                .singleOrNull()?.let { row ->
+                    json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
+                }
+            currentData?.let { playerObjects ->
+                val updatedJson = json.encodeToString(playerObjects)
+                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
+                    it[dataJson] = updatedJson
+                }
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun <T> getCollection(name: CollectionName): T {
+        return when (name) {
+            CollectionName.PLAYER_ACCOUNT_COLLECTION -> PlayerAccounts
+            CollectionName.PLAYER_OBJECTS_COLLECTION -> PlayerObjectsTable
+            CollectionName.NEIGHBOR_HISTORY_COLLECTION -> NeighborHistoryTable
+            CollectionName.INVENTORY_COLLECTION -> InventoryTable
+        } as T
+    }
+
+    override suspend fun createUser(username: String, password: String): String {
+        val pid = UUID.new()
+        val profile = UserProfile.default(username = username, pid = pid)
+        val playerSrvId = UUID.new()
+        transaction(database) {
+            val account = PlayerAccount(
+                playerId = pid,
+                hashedPassword = hashPw(password),
+                profile = profile,
+                serverMetadata = ServerMetadata()
+            )
+            val objects = PlayerObjects.newgame(pid, username, playerSrvId)
+            val neighbor = NeighborHistory.empty(pid)
+            val inventory = Inventory.newgame(pid)
+            PlayerAccounts.insert {
+                it[playerId] = account.playerId
+                it[hashedPassword] = account.hashedPassword
+                it[profileJson] = json.encodeToString(account.profile)
+                it[serverMetadataJson] = json.encodeToString(account.serverMetadata)
+            }
+            PlayerObjectsTable.insert {
+                it[playerId] = objects.playerId
+                it[dataJson] = json.encodeToString(objects)
+            }
+            NeighborHistoryTable.insert {
+                it[playerId] = neighbor.playerId
+                it[dataJson] = json.encodeToString(neighbor)
+            }
+            InventoryTable.insert {
+                it[playerId] = inventory.playerId
+                it[dataJson] = json.encodeToString(inventory)
+            }
+        }
+        return pid
+    }
+
+    private fun hashPw(password: String): String {
+        return Base64.encode(Bcrypt.hash(password, 10))
+    }
+
+    override suspend fun shutdown() {
+    }
+}

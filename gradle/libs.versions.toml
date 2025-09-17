@@ -1,9 +1,6 @@
 [versions]
 kotlin-version = "2.2.0"
 ktor-version = "3.2.1"
-logback-version = "1.4.14"
-kotlin-mongodb-version = "5.5.1"
-bson-kotlinx-version = "5.5.0"
 bcrypt-version = "1.0.9"
 
 [libraries]
@@ -18,12 +15,9 @@ ktor-server-host-common = { module = "io.ktor:ktor-server-host-common", version.
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor-version" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor-version" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor-version" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-version" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor-version" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor-version" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin-version" }
-mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "kotlin-mongodb-version" }
-mongodb-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "bson-kotlinx-version" }
 library-bcrypt = { module = "com.ToxicBakery.library.bcrypt:bcrypt", version.ref = "bcrypt-version" }
 
 [plugins]

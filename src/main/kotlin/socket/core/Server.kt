@@ -148,7 +148,6 @@ class Server(
         context.sessionManager.shutdown()
         context.taskDispatcher.shutdown()
         socketDispatcher.shutdown()
-        Logger.info { "Server closed." }
     }
 }
 

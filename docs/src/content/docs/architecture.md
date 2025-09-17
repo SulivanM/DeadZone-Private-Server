@@ -10,7 +10,7 @@ TLSDZ uses [PlayerIO backend service](playerio.com) for their server.
 
 Non-real-time data is fetched to the [API server](/api-server). The API server uses Protobuf serialization on top of PlayerIO custom messages.
 
-PlayerIO uses [BigDB](/playerio/bigdb) as their database. BigDB is a document database like MongoDB whose data look like JSON. Data is stored as plain object in the database (this is called [`DatabaseObject`](/playerio/databaseobject) in the client side). Whether the data is retrieved locally or received from the server, it is [converted](/playerio/utils/converter) into game-level data model representation such as [`PlayerData`](/thelaststand/app/data/playerdata) and [`Survivor`](/thelaststand/app/game/data/survivor).
+PlayerIO uses [BigDB](/playerio/bigdb) as their database. BigDB is a document database like MariaDB whose data look like JSON. Data is stored as plain object in the database (this is called [`DatabaseObject`](/playerio/databaseobject) in the client side). Whether the data is retrieved locally or received from the server, it is [converted](/playerio/utils/converter) into game-level data model representation such as [`PlayerData`](/thelaststand/app/data/playerdata) and [`Survivor`](/thelaststand/app/game/data/survivor).
 
 Data transfer for the game is done via the API server. If a `PlayerData` object were to be transferred over the network, the data model needs to converted into [`BigDBObject` of protobuf definition](/api-server#api-85). Then, wrapped in another protobuf definition of `LoadObjectsOutput` (for loading object from server to client).
 

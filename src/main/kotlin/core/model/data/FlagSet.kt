@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * Bytearray of booleans
  *
- * Content of booleans depend on [PlayerFlags]
+ * Content of booleans depend on [core.metadata.model.PlayerFlags]
  */
 @Serializable
 data class FlagSet(

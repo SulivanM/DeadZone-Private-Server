@@ -1,18 +1,15 @@
 package dev.deadzone
-
-import com.mongodb.kotlin.client.coroutine.MongoClient
 import dev.deadzone.api.routes.*
 import dev.deadzone.context.GlobalContext
 import dev.deadzone.context.PlayerContextTracker
 import dev.deadzone.context.ServerConfig
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.auth.SessionManager
-import data.db.BigDBMongoImpl
 import dev.deadzone.core.data.GameDefinitions
 import dev.deadzone.core.model.game.data.Building
 import dev.deadzone.core.model.game.data.BuildingLike
 import dev.deadzone.core.model.game.data.JunkBuilding
-import dev.deadzone.data.db.CollectionName
+import dev.deadzone.data.db.BigDBMariaImpl
 import dev.deadzone.socket.core.OnlinePlayerRegistry
 import dev.deadzone.socket.core.Server
 import dev.deadzone.socket.handler.save.arena.ArenaSaveHandler
@@ -21,7 +18,6 @@ import dev.deadzone.socket.handler.save.chat.ChatSaveHandler
 import dev.deadzone.socket.handler.save.command.CommandSaveHandler
 import dev.deadzone.socket.handler.save.compound.building.BuildingSaveHandler
 import dev.deadzone.socket.handler.save.compound.misc.CmpMiscSaveHandler
-import socket.handler.save.compound.task.TaskSaveHandler
 import dev.deadzone.socket.handler.save.crate.CrateSaveHandler
 import dev.deadzone.socket.handler.save.item.ItemSaveHandler
 import dev.deadzone.socket.handler.save.misc.MiscSaveHandler
@@ -31,7 +27,7 @@ import dev.deadzone.socket.handler.save.quest.QuestSaveHandler
 import dev.deadzone.socket.handler.save.raid.RaidSaveHandler
 import dev.deadzone.socket.handler.save.survivor.SurvivorSaveHandler
 import dev.deadzone.socket.tasks.ServerTaskDispatcher
-import dev.deadzone.user.PlayerAccountRepositoryMongo
+import dev.deadzone.user.PlayerAccountRepositoryMaria
 import dev.deadzone.user.auth.WebsiteAuthProvider
 import dev.deadzone.utils.LogLevel
 import dev.deadzone.utils.Logger
@@ -57,29 +53,25 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.bson.Document
+import org.jetbrains.exposed.sql.Database
+import socket.handler.save.compound.task.TaskSaveHandler
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) = EngineMain.main(args)
-
 const val SERVER_HOST = "127.0.0.1"
 const val API_SERVER_HOST = "127.0.0.1:8080"
 const val SOCKET_SERVER_HOST = "127.0.0.1:7777"
 const val SOCKET_SERVER_PORT = 7777
 
-suspend fun Application.module() {
-    // Core setup
+fun Application.module() {
     install(WebSockets) {
         pingPeriod = 15.seconds
         timeout = 15.seconds
         masking = true
     }
     Logger.info("🚀 Starting DeadZone server")
-
     val wsManager = WebsocketManager()
-
-    // Serialization
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
@@ -94,14 +86,11 @@ suspend fun Application.module() {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
-
     @OptIn(ExperimentalSerializationApi::class)
     install(ContentNegotiation) {
         json(json)
         protobuf(ProtoBuf)
     }
-
-    // Global context
     GlobalContext.init(
         json = json,
         gameDefinitions = GameDefinitions(onResourceLoadComplete = {
@@ -109,45 +98,40 @@ suspend fun Application.module() {
             Logger.info("🎮 Game resources loaded")
         })
     )
-
-    // Configuration
     val config = ServerConfig(
         adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull() ?: false,
-        useMongo = true,
-        mongoUrl = environment.config.propertyOrNull("mongo.url")?.getString() ?: "",
+        useMaria = true,
+        mariaUrl = environment.config.propertyOrNull("maria.url")?.getString() ?: "jdbc:mariadb://localhost:3306/deadzone",
+        mariaUser = environment.config.propertyOrNull("maria.user")?.getString() ?: "root",
+        mariaPassword = environment.config.propertyOrNull("maria.password")?.getString() ?: "",
         isProd = !developmentMode,
     )
-
-    // Database
-    Logger.info("🗃️ Connecting to MongoDB...")
+    Logger.info("🗃️ Connecting to MariaDB...")
     val database = try {
-        val mongoc = MongoClient.create(config.mongoUrl)
-        val db = mongoc.getDatabase("admin")
-        val commandResult = db.runCommand(Document("ping", 1))
-        Logger.info("🟢 MongoDB connected (${commandResult["ok"]})")
-        BigDBMongoImpl(mongoc.getDatabase("tlsdz"), config.adminEnabled)
+        val mariaDb = Database.connect(
+            url = config.mariaUrl,
+            driver = "org.mariadb.jdbc.Driver",
+            user = config.mariaUser,
+            password = config.mariaPassword
+        )
+        Logger.info("🟢 MariaDB connected")
+        BigDBMariaImpl(mariaDb, config.adminEnabled)
     } catch (e: Exception) {
-        Logger.error("🔴 MongoDB connection failed: ${e.message}")
+        Logger.error("🔴 MariaDB connection failed: ${e.message}")
         throw e
     }
-
-    // Server components
     val sessionManager = SessionManager()
-    val playerAccountRepository = PlayerAccountRepositoryMongo(
-        userCollection = database.getCollection(CollectionName.PLAYER_ACCOUNT_COLLECTION)
-    )
+    val playerAccountRepository = PlayerAccountRepositoryMaria(database.database)
     val onlinePlayerRegistry = OnlinePlayerRegistry()
     val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
     val taskDispatcher = ServerTaskDispatcher()
     val playerContextTracker = PlayerContextTracker()
-
     val saveHandlers = listOf(
         ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(), CommandSaveHandler(),
         BuildingSaveHandler(), CmpMiscSaveHandler(), TaskSaveHandler(), CrateSaveHandler(),
         ItemSaveHandler(), MiscSaveHandler(), MissionSaveHandler(), PurchaseSaveHandler(),
         QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler()
     )
-
     val serverContext = ServerContext(
         db = database,
         playerAccountRepository = playerAccountRepository,
@@ -159,23 +143,18 @@ suspend fun Application.module() {
         saveHandlers = saveHandlers,
         config = config,
     )
-
-    // HTTP configuration
     install(CORS) {
         allowHost(API_SERVER_HOST, schemes = listOf("http"))
         allowHost(SOCKET_SERVER_HOST, schemes = listOf("http"))
         allowHeader(HttpHeaders.ContentType)
         allowMethod(HttpMethod.Get)
     }
-
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             Logger.error("⚠️ Server error: ${cause.message}")
             call.respondText(text = "500: ${cause.message}", status = HttpStatusCode.InternalServerError)
         }
     }
-
-    // Logging
     Logger.level = LogLevel.DEBUG
     install(CallLogging)
     Logger.init { logMessage ->
@@ -199,8 +178,6 @@ suspend fun Application.module() {
         }
     }
     Logger.info("📜 Real-time logging enabled")
-
-    // Routing
     routing {
         fileRoutes()
         caseInsensitiveStaticResources("/game/data", File("static"))
@@ -208,14 +185,10 @@ suspend fun Application.module() {
         apiRoutes(serverContext)
         debugLogRoutes(wsManager)
     }
-
-    // Start server
     val server = Server(context = serverContext).also { it.start() }
     Logger.info("🎉 Server started successfully")
     Logger.info("📡 Socket server listening on $SOCKET_SERVER_HOST")
     Logger.info("🌐 API server available at $API_SERVER_HOST")
-
-    // Shutdown hook
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
         Logger.info("🛑 Server shutdown complete")

@@ -1,11 +1,13 @@
 ktor:
-    application:
-        modules:
-            - dev.deadzone.ApplicationKt.module
-    development: true
-    deployment:
-        port: 8080
-mongo:
-    url: "$MONGO_URL:mongodb://localhost:27017"
+  application:
+    modules:
+      - dev.deadzone.ApplicationKt.module
+  development: true
+  deployment:
+    port: 8080
 game:
-    enableAdmin: true
+  enableAdmin: true
+maria:
+  url: jdbc:mariadb://localhost:3306/deadzone
+  user: root
+  password: ""

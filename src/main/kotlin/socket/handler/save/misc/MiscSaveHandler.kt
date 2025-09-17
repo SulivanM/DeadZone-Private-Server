@@ -7,7 +7,7 @@ import dev.deadzone.socket.messaging.SaveDataMethod
 import dev.deadzone.utils.LogConfigSocketToClient
 import dev.deadzone.utils.Logger
 import dev.deadzone.context.requirePlayerContext
-import dev.deadzone.core.model.data.PlayerFlags_Constants
+import core.metadata.model.PlayerFlags_Constants
 import kotlin.experimental.inv
 
 class MiscSaveHandler : SaveSubHandler {

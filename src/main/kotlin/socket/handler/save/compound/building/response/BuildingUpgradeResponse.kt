@@ -8,6 +8,6 @@ import kotlinx.serialization.Serializable
 data class BuildingUpgradeResponse(
     val success: Boolean = true,
     val items: Map<String, Int>? = emptyMap(),
-    val timer: TimerData,
+    val timer: TimerData?,
     val xp: Int = 0,
 ): BaseResponse()

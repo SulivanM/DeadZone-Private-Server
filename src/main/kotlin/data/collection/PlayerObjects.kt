@@ -1,11 +1,11 @@
 package dev.deadzone.data.collection
 
 import dev.deadzone.core.data.AdminData
-import dev.deadzone.core.model.data.ByteArrayAsBinarySerializer
+import core.metadata.model.ByteArrayAsBase64Serializer
 import dev.deadzone.core.model.data.HighActivity
 import dev.deadzone.core.model.data.Notification
-import dev.deadzone.core.model.data.PlayerFlags
-import dev.deadzone.core.model.data.toByteArray
+import core.metadata.model.PlayerFlags
+import core.metadata.model.toByteArray
 import dev.deadzone.core.model.data.user.AbstractUser
 import dev.deadzone.core.model.game.data.Attributes
 import dev.deadzone.core.model.game.data.BatchRecycleJob
@@ -32,19 +32,14 @@ import dev.deadzone.core.model.network.RemotePlayerData
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 
-/**
- * Also known as `PlayerData` in the client-side, it contains every game related data for a player.
- */
 @Serializable
 data class PlayerObjects(
-    val playerId: String, // reference to UserDocument
-
-    val key: String,                                  // unknown what key is used for
-    val user: Map<String, AbstractUser> = emptyMap(), // unknown what user is used for
+    val playerId: String,
+    val key: String,
+    val user: Map<String, AbstractUser> = emptyMap(),
     val admin: Boolean,
-
-    @Serializable(with = ByteArrayAsBinarySerializer::class)
-    val flags: ByteArray = PlayerFlags.newgame(),     // deserialized to flagset (see PlayerFlags), indicates tutorial stuff
+    @Serializable(with = ByteArrayAsBase64Serializer::class)
+    val flags: ByteArray = PlayerFlags.newgame(),
     val nickname: String?,
     val playerSurvivor: String?,
     val levelPts: UInt = 0u,
@@ -54,35 +49,31 @@ data class PlayerObjects(
     val friends: Map<String, RemotePlayerData>?,
     val research: ResearchState?,
     val skills: Map<String, SkillState>?,
-
-    // data like resources and survivors isn't needed here, they are set from loginstate.
-    // but useful because client-side playerdata keeps them
-    // and its better to store this in playerobjects than making separate loginstate collection
     val resources: GameResources,
     val survivors: List<Survivor>,
     val playerAttributes: Attributes,
     val buildings: List<BuildingLike>,
-    val rally: Map<String, List<String>>?,  // key building id, value list of survivor ids
+    val rally: Map<String, List<String>>?,
     val tasks: List<Task>,
     val missions: List<MissionData>?,
     val assignments: List<AssignmentData>?,
-    val effects: List<ByteArray>?,       // can also be map<string, string>
-    val globalEffects: List<ByteArray>?, // can also be map<string, string>
+    val effects: List<ByteArray>?,
+    val globalEffects: List<ByteArray>?,
     val cooldowns: Map<String, ByteArray>?,
     val batchRecycles: List<BatchRecycleJob>?,
     val offenceLoadout: Map<String, SurvivorLoadoutEntry>?,
     val defenceLoadout: Map<String, SurvivorLoadoutEntry>?,
-    val quests: ByteArray?,              // parsed by booleanArrayFromByteArray
-    val questsCollected: ByteArray?,     // parsed by booleanArrayFromByteArray
-    val achievements: ByteArray?,        // parsed by booleanArrayFromByteArray
-    val dailyQuest: ByteArray?,          // parsed to DynamicQuest via constructor
-    val questsTracked: String?,          // each quest separated with |
+    val quests: ByteArray?,
+    val questsCollected: ByteArray?,
+    val achievements: ByteArray?,
+    val dailyQuest: ByteArray?,
+    val questsTracked: String?,
     val gQuestsV2: Map<String, GQDataObj>?,
     val bountyCap: Int,
     val lastLogout: Long?,
     val dzBounty: InfectedBounty?,
     val nextDZBountyIssue: Long,
-    val highActivity: HighActivity?,  // unknown which class is this so we make custom class
+    val highActivity: HighActivity?,
     val notifications: List<Notification?>?,
 ) {
     companion object {
@@ -151,7 +142,7 @@ data class PlayerObjects(
                 id = playerSrvId,
                 title = nickname,
                 firstName = nickname,
-                lastName = "",
+                lastName = "DZ",
                 gender = Gender_Constants.MALE.value,
                 portrait = null,
                 classId = SurvivorClassConstants_Constants.PLAYER.value,
