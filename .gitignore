@@ -45,3 +45,4 @@ logs/
 data/db/
 deploy/
 src/main/dump.py
+src/main/dump.txt
