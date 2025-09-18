@@ -1,4 +1,5 @@
 package dev.deadzone.api.handler
+
 import dev.deadzone.api.message.db.BigDBObject
 import dev.deadzone.api.message.db.LoadObjectsArgs
 import dev.deadzone.api.message.db.LoadObjectsOutput
@@ -19,6 +20,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
+import kotlin.math.max
 
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
@@ -45,9 +47,16 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
             "PlayerObjects" -> {
                 val updatedBuildings = LazyDataUpdater.updateBuildingTimers(playerObjects.buildings)
                 val depletedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
+                val updatedSurvivors = playerObjects.survivors.map { srv ->
+                    srv.copy(
+                        lastName = srv.lastName.takeIf { it.isNotEmpty() } ?: "DZ",
+                        level = max(srv.level, 1)
+                    )
+                }
                 try {
                     serverContext.db.updatePlayerObjectsField(playerId, "buildings", updatedBuildings)
                     serverContext.db.updatePlayerObjectsField(playerId, "resources", depletedResources)
+                    serverContext.db.updatePlayerObjectsField(playerId, "survivors", updatedSurvivors)
                 } catch (e: Exception) {
                     Logger.error(LogConfigSocketToClient) { "Error while updating time-dynamic data: ${e.message}" }
                     return
@@ -55,7 +64,8 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
                 LoadObjectsOutput.fromData(
                     playerObjects.copy(
                         buildings = updatedBuildings,
-                        resources = depletedResources
+                        resources = depletedResources,
+                        survivors = updatedSurvivors
                     )
                 )
             }

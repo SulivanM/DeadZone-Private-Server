@@ -1,4 +1,5 @@
 package dev.deadzone.api.handler
+
 import dev.deadzone.api.message.social.SocialProfile
 import dev.deadzone.api.message.social.SocialRefreshOutput
 import dev.deadzone.api.utils.pioFraming
@@ -44,7 +45,7 @@ suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: St
             blocked = ""
         )
     }
-    val encodedOutput = ProtoBuf.encodeToByteArray<SocialRefreshOutput>(socialRefreshOutput)
+    val encodedOutput = ProtoBuf.encodeToByteArray(socialRefreshOutput)
     logOutput(encodedOutput)
     call.respondBytes(encodedOutput.pioFraming())
 }

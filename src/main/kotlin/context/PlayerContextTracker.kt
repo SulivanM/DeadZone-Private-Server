@@ -6,12 +6,11 @@ import dev.deadzone.core.items.InventoryRepositoryMaria
 import dev.deadzone.core.items.InventoryService
 import dev.deadzone.core.metadata.PlayerObjectsMetadataRepositoryMaria
 import dev.deadzone.core.metadata.PlayerObjectsMetadataService
-import dev.deadzone.core.survivor.SurvivorRepositoryMaria
+import core.survivor.SurvivorRepositoryMaria
 import core.survivor.SurvivorService
 import dev.deadzone.data.db.BigDB
 import dev.deadzone.socket.core.Connection
 import io.ktor.util.date.getTimeMillis
-import org.jetbrains.exposed.sql.Database
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerContextTracker {
