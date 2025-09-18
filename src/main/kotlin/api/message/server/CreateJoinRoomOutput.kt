@@ -1,6 +1,5 @@
-package dev.deadzone.api.message.client
+package api.message.server
 
-import dev.deadzone.api.message.server.ServerEndpoint
 import kotlinx.serialization.Serializable
 
 @Serializable

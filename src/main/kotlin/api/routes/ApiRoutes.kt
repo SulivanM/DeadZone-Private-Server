@@ -1,6 +1,6 @@
 package dev.deadzone.api.routes
 
-import dev.deadzone.api.handler.authenticate
+import api.handler.authenticate
 import dev.deadzone.api.handler.createJoinRoom
 import dev.deadzone.api.handler.loadObjects
 import dev.deadzone.api.handler.loadIndexRange

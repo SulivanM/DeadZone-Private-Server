@@ -1,4 +1,4 @@
-package dev.deadzone.api.message.client
+package api.message.server
 
 import dev.deadzone.api.message.utils.KeyValuePair
 import kotlinx.serialization.Serializable

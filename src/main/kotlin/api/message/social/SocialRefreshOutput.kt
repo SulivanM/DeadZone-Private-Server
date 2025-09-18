@@ -1,4 +1,4 @@
-package dev.deadzone.api.message.social
+package api.message.social
 
 import kotlinx.serialization.Serializable
 

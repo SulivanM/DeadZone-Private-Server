@@ -1,7 +1,7 @@
 package dev.deadzone.api.handler
 
-import dev.deadzone.api.message.social.SocialProfile
-import dev.deadzone.api.message.social.SocialRefreshOutput
+import api.message.social.SocialProfile
+import api.message.social.SocialRefreshOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.data.AdminData

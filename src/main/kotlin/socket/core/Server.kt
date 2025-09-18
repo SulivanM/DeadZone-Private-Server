@@ -1,8 +1,9 @@
-package dev.deadzone.socket.core
+package socket.core
 
 import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
 import dev.deadzone.context.ServerContext
+import dev.deadzone.socket.core.Connection
 import dev.deadzone.socket.handler.*
 import dev.deadzone.socket.messaging.SocketMessage
 import dev.deadzone.socket.messaging.SocketMessageDispatcher
@@ -16,6 +17,7 @@ import io.ktor.network.sockets.*
 import io.ktor.util.date.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
+import java.net.SocketException
 
 const val POLICY_FILE_REQUEST = "<policy-file-request/>"
 const val POLICY_FILE_RESPONSE =
@@ -109,7 +111,7 @@ class Server(
             } catch (_: ClosedByteChannelException) {
                 // Handle connection reset gracefully - this is expected when clients disconnect abruptly
                 Logger.info { "Client ${connection.socket.remoteAddress} disconnected abruptly (connection reset)" }
-            } catch (e: java.net.SocketException) {
+            } catch (e: SocketException) {
                 // Handle other socket-related exceptions gracefully
                 when {
                     e.message?.contains("Connection reset") == true -> {

@@ -1,10 +1,10 @@
 package dev.deadzone.api.utils
 
-import dev.deadzone.api.message.db.ArrayProperty
-import dev.deadzone.api.message.db.BigDBObject
-import dev.deadzone.api.message.db.ObjectProperty
-import dev.deadzone.api.message.db.ValueObject
-import dev.deadzone.api.message.db.ValueType
+import api.message.db.ArrayProperty
+import api.message.db.BigDBObject
+import api.message.db.ObjectProperty
+import api.message.db.ValueObject
+import api.message.db.ValueType
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KVisibility
 

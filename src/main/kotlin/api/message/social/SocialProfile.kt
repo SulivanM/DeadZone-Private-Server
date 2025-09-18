@@ -1,4 +1,4 @@
-package dev.deadzone.api.message.social
+package api.message.social
 
 import dev.deadzone.core.data.AdminData
 import io.ktor.util.date.getTimeMillis

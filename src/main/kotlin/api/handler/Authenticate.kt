@@ -1,7 +1,7 @@
-package dev.deadzone.api.handler
-import dev.deadzone.API_SERVER_HOST
-import dev.deadzone.api.message.auth.AuthenticateArgs
-import dev.deadzone.api.message.auth.AuthenticateOutput
+package api.handler
+import dev.deadzone.SERVER_HOST
+import api.message.auth.AuthenticateArgs
+import api.message.auth.AuthenticateOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.data.AdminData
@@ -41,7 +41,7 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
             AuthenticateOutput(
                 token = userToken,
                 userId = serverContext.sessionManager.getPlayerId(userToken)!!,
-                apiServerHosts = listOf(API_SERVER_HOST)
+                apiServerHosts = listOf(SERVER_HOST)
             )
         } else {
             call.respond(HttpStatusCode.Unauthorized, "token is invalid")

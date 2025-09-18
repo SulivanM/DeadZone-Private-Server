@@ -11,7 +11,7 @@ import dev.deadzone.core.model.game.data.BuildingLike
 import dev.deadzone.core.model.game.data.JunkBuilding
 import dev.deadzone.data.db.BigDBMariaImpl
 import dev.deadzone.socket.core.OnlinePlayerRegistry
-import dev.deadzone.socket.core.Server
+import socket.core.Server
 import dev.deadzone.socket.handler.save.arena.ArenaSaveHandler
 import dev.deadzone.socket.handler.save.bounty.BountySaveHandler
 import dev.deadzone.socket.handler.save.chat.ChatSaveHandler
@@ -61,8 +61,7 @@ import kotlin.time.Duration.Companion.seconds
 fun main(args: Array<String>) = EngineMain.main(args)
 
 const val SERVER_HOST = "127.0.0.1"
-const val API_SERVER_HOST = "127.0.0.1:8080"
-const val SOCKET_SERVER_HOST = "127.0.0.1:7777"
+const val API_SERVER_PORT = 8080
 const val SOCKET_SERVER_PORT = 7777
 
 fun Application.module() {
@@ -145,8 +144,8 @@ fun Application.module() {
         config = config,
     )
     install(CORS) {
-        allowHost(API_SERVER_HOST, schemes = listOf("http"))
-        allowHost(SOCKET_SERVER_HOST, schemes = listOf("http"))
+        allowHost("$SERVER_HOST:$API_SERVER_PORT", schemes = listOf("http"))
+        allowHost("$SERVER_HOST:$SOCKET_SERVER_PORT", schemes = listOf("http"))
         allowHeader(HttpHeaders.ContentType)
         allowMethod(HttpMethod.Get)
     }
@@ -188,8 +187,8 @@ fun Application.module() {
     }
     val server = Server(context = serverContext).also { it.start() }
     Logger.info("🎉 Server started successfully")
-    Logger.info("📡 Socket server listening on $SOCKET_SERVER_HOST")
-    Logger.info("🌐 API server available at $API_SERVER_HOST")
+    Logger.info("📡 Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
+    Logger.info("🌐 API server available at $SERVER_HOST:$API_SERVER_PORT")
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
         Logger.info("🛑 Server shutdown complete")

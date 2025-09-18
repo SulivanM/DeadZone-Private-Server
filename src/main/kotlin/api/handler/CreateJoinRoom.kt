@@ -1,6 +1,6 @@
 package dev.deadzone.api.handler
-import dev.deadzone.api.message.client.CreateJoinRoomArgs
-import dev.deadzone.api.message.client.CreateJoinRoomOutput
+import api.message.server.CreateJoinRoomArgs
+import api.message.server.CreateJoinRoomOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.utils.logInput
 import dev.deadzone.utils.logOutput

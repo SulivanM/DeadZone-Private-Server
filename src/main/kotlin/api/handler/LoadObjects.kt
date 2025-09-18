@@ -1,8 +1,8 @@
 package dev.deadzone.api.handler
 
-import dev.deadzone.api.message.db.BigDBObject
-import dev.deadzone.api.message.db.LoadObjectsArgs
-import dev.deadzone.api.message.db.LoadObjectsOutput
+import api.message.db.BigDBObject
+import api.message.db.LoadObjectsArgs
+import api.message.db.LoadObjectsOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.context.ServerContext
 import core.LazyDataUpdater

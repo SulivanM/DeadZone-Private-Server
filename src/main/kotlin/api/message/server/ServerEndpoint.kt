@@ -1,4 +1,4 @@
-package dev.deadzone.api.message.server
+package api.message.server
 
 import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
