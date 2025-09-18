@@ -5,7 +5,7 @@ import dev.deadzone.core.model.game.data.Survivor
 import kotlinx.serialization.Serializable
 
 /**
- * Player login state is needed for [dev.deadzone.socket.handler.JoinHandler] result
+ * Player login state is needed for [socket.handler.JoinHandler] result
  *
  * Structure still empty and assumption. See Network.as onGameReady and onPlayerDataLoaded
  */

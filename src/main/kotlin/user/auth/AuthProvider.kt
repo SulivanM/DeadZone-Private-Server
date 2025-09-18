@@ -1,10 +1,7 @@
-package dev.deadzone.core.auth
+package user.auth
 
-import dev.deadzone.user.model.PlayerSession
+import user.model.PlayerSession
 
-/**
- * Represent system that provides authentication mechanism
- */
 interface AuthProvider {
     /**
      * Register a new account with [username] and [password].

@@ -4,7 +4,7 @@ import dev.deadzone.core.data.assets.ItemResource
 import dev.deadzone.core.items.model.Item
 import dev.deadzone.core.items.model.ItemQualityType
 import dev.deadzone.context.GlobalContext
-import dev.deadzone.utils.UUID
+import utils.UUID
 import org.w3c.dom.Element
 
 object ItemFactory {

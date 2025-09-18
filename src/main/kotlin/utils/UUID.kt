@@ -1,4 +1,4 @@
-package dev.deadzone.utils
+package utils
 
 import java.util.UUID
 

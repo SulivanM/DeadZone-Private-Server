@@ -1,7 +1,7 @@
 package dev.deadzone.data.collection
 
-import dev.deadzone.user.model.ServerMetadata
-import dev.deadzone.user.model.UserProfile
+import user.model.ServerMetadata
+import user.model.UserProfile
 import dev.deadzone.core.data.AdminData
 import kotlinx.serialization.Serializable
 

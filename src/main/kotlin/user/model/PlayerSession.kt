@@ -1,4 +1,4 @@
-package dev.deadzone.user.model
+package user.model
 
 /**
  * Representation of a player's authentication session.

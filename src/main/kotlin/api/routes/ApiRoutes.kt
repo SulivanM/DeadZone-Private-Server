@@ -7,8 +7,8 @@ import dev.deadzone.api.handler.loadIndexRange
 import dev.deadzone.api.handler.socialRefresh
 import dev.deadzone.api.handler.writeError
 import dev.deadzone.context.ServerContext
-import dev.deadzone.utils.LogConfigAPIError
-import dev.deadzone.utils.Logger
+import utils.LogConfigAPIError
+import utils.Logger
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route

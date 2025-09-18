@@ -1,7 +1,7 @@
 package dev.deadzone.socket.tasks.impl
 
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.messaging.NetworkMessage
+import socket.core.Connection
+import socket.messaging.NetworkMessage
 import dev.deadzone.socket.tasks.ServerTask
 import dev.deadzone.socket.tasks.TaskConfig
 import dev.deadzone.socket.tasks.TaskTemplate

@@ -1,10 +1,10 @@
-package dev.deadzone.socket.handler
+package socket.handler
 
-import dev.deadzone.socket.protocol.PIOSerializer
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.messaging.NetworkMessage
-import dev.deadzone.socket.messaging.SocketMessage
-import dev.deadzone.socket.messaging.SocketMessageHandler
+import socket.protocol.PIOSerializer
+import socket.core.Connection
+import socket.messaging.NetworkMessage
+import socket.messaging.SocketMessage
+import socket.messaging.SocketMessageHandler
 
 /**
  * Handle `qp` message by:

@@ -6,10 +6,10 @@ import dev.deadzone.data.collection.Inventory
 import dev.deadzone.data.collection.NeighborHistory
 import dev.deadzone.data.collection.PlayerAccount
 import dev.deadzone.data.collection.PlayerObjects
-import dev.deadzone.user.model.ServerMetadata
-import dev.deadzone.user.model.UserProfile
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.UUID
+import user.model.ServerMetadata
+import user.model.UserProfile
+import utils.Logger
+import utils.UUID
 import io.ktor.util.date.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

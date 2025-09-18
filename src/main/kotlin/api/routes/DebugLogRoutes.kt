@@ -1,8 +1,8 @@
 package dev.deadzone.api.routes
 
-import dev.deadzone.utils.Logger
-import dev.deadzone.websocket.WebsocketManager
-import dev.deadzone.websocket.WsMessage
+import utils.Logger
+import websocket.WebsocketManager
+import websocket.WsMessage
 import io.ktor.http.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

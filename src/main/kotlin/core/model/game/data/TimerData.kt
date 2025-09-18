@@ -1,6 +1,6 @@
 package dev.deadzone.core.model.game.data
 
-import dev.deadzone.utils.AnyMapSerializer
+import utils.AnyMapSerializer
 import io.ktor.util.date.*
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration

@@ -2,8 +2,8 @@ package dev.deadzone.core.compound
 
 import core.PlayerService
 import dev.deadzone.core.model.game.data.*
-import dev.deadzone.utils.LogConfigSocketError
-import dev.deadzone.utils.Logger
+import utils.LogConfigSocketError
+import utils.Logger
 import io.ktor.util.date.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds

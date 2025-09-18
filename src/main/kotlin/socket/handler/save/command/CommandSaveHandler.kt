@@ -5,14 +5,14 @@ import dev.deadzone.context.ServerContext
 import dev.deadzone.core.items.model.CrateItem
 import dev.deadzone.core.items.model.Item
 import dev.deadzone.core.items.model.SchematicItem
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.handler.buildMsg
+import socket.core.Connection
+import socket.handler.buildMsg
 import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.messaging.CommandMessage
-import dev.deadzone.socket.protocol.PIOSerializer
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.UUID
+import socket.messaging.CommandMessage
+import socket.protocol.PIOSerializer
+import utils.LogConfigSocketToClient
+import utils.Logger
+import utils.UUID
 
 class CommandSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = CommandMessage.COMMAND_SAVES

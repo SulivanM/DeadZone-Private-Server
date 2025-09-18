@@ -1,4 +1,4 @@
-package dev.deadzone.utils
+package utils
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer

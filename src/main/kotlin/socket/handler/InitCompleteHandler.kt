@@ -1,10 +1,10 @@
-package dev.deadzone.socket.handler
+package socket.handler
 
 import dev.deadzone.context.ServerContext
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.messaging.NetworkMessage
-import dev.deadzone.socket.messaging.SocketMessage
-import dev.deadzone.socket.messaging.SocketMessageHandler
+import socket.core.Connection
+import socket.messaging.NetworkMessage
+import socket.messaging.SocketMessage
+import socket.messaging.SocketMessageHandler
 import dev.deadzone.socket.tasks.TaskTemplate
 
 /**

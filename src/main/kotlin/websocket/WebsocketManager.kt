@@ -1,4 +1,4 @@
-package dev.deadzone.websocket
+package websocket
 
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame

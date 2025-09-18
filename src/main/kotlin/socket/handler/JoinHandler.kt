@@ -1,14 +1,14 @@
-package dev.deadzone.socket.handler
+package socket.handler
 
 import dev.deadzone.context.ServerContext
 import core.LoginStateBuilder
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.messaging.NetworkMessage
-import dev.deadzone.socket.messaging.SocketMessage
-import dev.deadzone.socket.messaging.SocketMessageHandler
-import dev.deadzone.socket.protocol.PIOSerializer
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.Time
+import socket.core.Connection
+import socket.messaging.NetworkMessage
+import socket.messaging.SocketMessage
+import socket.messaging.SocketMessageHandler
+import socket.protocol.PIOSerializer
+import utils.Logger
+import utils.Time
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer

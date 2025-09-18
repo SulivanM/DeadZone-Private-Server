@@ -1,8 +1,8 @@
-package dev.deadzone.socket.core
+package socket.core
 
-import dev.deadzone.socket.protocol.PIOSerializer
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.UUID
+import socket.protocol.PIOSerializer
+import utils.Logger
+import utils.UUID
 import io.ktor.network.sockets.Socket
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeFully

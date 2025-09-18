@@ -1,4 +1,4 @@
-package dev.deadzone.socket.messaging
+package socket.messaging
 
 /**
  * Network message constants used by the game.

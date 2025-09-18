@@ -5,9 +5,9 @@ import api.message.auth.AuthenticateOutput
 import dev.deadzone.api.utils.pioFraming
 import dev.deadzone.context.ServerContext
 import dev.deadzone.core.data.AdminData
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.logInput
-import dev.deadzone.utils.logOutput
+import utils.Logger
+import utils.logInput
+import utils.logOutput
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*

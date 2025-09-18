@@ -1,4 +1,4 @@
-package dev.deadzone.utils
+package utils
 
 import io.ktor.util.date.getTimeMillis
 

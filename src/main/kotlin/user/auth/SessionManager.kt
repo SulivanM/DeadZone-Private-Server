@@ -1,8 +1,8 @@
-package dev.deadzone.core.auth
+package user.auth
 
-import dev.deadzone.user.model.PlayerSession
+import user.model.PlayerSession
 import dev.deadzone.core.data.AdminData
-import dev.deadzone.utils.UUID
+import utils.UUID
 import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,11 +24,11 @@ import java.util.concurrent.ConcurrentHashMap
  * - Session refreshes is limited to 6 hours. This means player will not be able to make API requests after 6 hours online.
  */
 class SessionManager {
-    private val sessions = ConcurrentHashMap<String, PlayerSession>() // token -> session
-    private val CLEANUP_INTERVAL_MS = 5 * 60 * 1000L // 5 minutes
+    private val sessions = ConcurrentHashMap<String, PlayerSession>()
+    private val CLEANUP_INTERVAL_MS = 5 * 60 * 1000L
     private val cleanupJob = Job()
-    private val SESSION_DURATION_MS = 1 * 60 * 60 * 1000L // 2 hours
-    private val SESSION_LIFETIME_MS = 6 * 60 * 60 * 1000L // 6 hours
+    private val SESSION_DURATION_MS = 1 * 60 * 60 * 1000L
+    private val SESSION_LIFETIME_MS = 6 * 60 * 60 * 1000L
     private val scope = CoroutineScope(Dispatchers.IO + cleanupJob)
 
     init {
@@ -62,11 +62,9 @@ class SessionManager {
     }
 
     fun verify(token: String): Boolean {
-        // token invalid
         val session = sessions[token] ?: return false
         val now = getTimeMillis()
 
-        // token expired
         if (now >= session.expiresAt) {
             sessions.remove(token)
             return false
@@ -75,40 +73,22 @@ class SessionManager {
         return true
     }
 
-    // refreshed every 50 minutes by client
     fun refresh(token: String): Boolean {
         val session = sessions[token] ?: return false
         val now = getTimeMillis()
 
-        // max lifetime exceeded
         val lifetime = now - session.issuedAt
         if (lifetime > SESSION_LIFETIME_MS) {
             sessions.remove(token)
             return false
         }
 
-        session.expiresAt = now + 1 * 60 * 60 * 1000 // refresh to 1 hour
+        session.expiresAt = now + 1 * 60 * 60 * 1000
         return true
     }
 
     fun getPlayerId(token: String): String? {
         return sessions[token]?.takeIf { getTimeMillis() < it.expiresAt }?.playerId
-    }
-
-    fun getSession(token: String): PlayerSession? {
-        val session = sessions[token] ?: return null
-        val now = getTimeMillis()
-
-        return if (now >= session.expiresAt) {
-            sessions.remove(token)
-            null
-        } else {
-            session
-        }
-    }
-
-    fun invalidate(playerId: String) {
-        sessions.remove(playerId)
     }
 
     fun cleanupExpiredSessions() {
@@ -117,9 +97,6 @@ class SessionManager {
         expiredKeys.forEach { sessions.remove(it) }
     }
 
-    /**
-     * Shutdown [cleanupExpiredSessions] task and clear sessions.
-     */
     fun shutdown() {
         sessions.clear()
         cleanupJob.cancel()

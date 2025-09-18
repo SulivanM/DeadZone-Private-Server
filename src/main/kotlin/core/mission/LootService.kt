@@ -5,7 +5,7 @@ import dev.deadzone.context.GlobalContext
 import dev.deadzone.core.data.GameDefinitions
 import dev.deadzone.core.mission.model.LootContent
 import dev.deadzone.core.mission.model.LootParameter
-import dev.deadzone.utils.UUID
+import utils.UUID
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.StringReader

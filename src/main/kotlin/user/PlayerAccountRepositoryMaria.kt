@@ -3,9 +3,8 @@ package user
 import com.toxicbakery.bcrypt.Bcrypt
 import dev.deadzone.data.collection.PlayerAccount
 import dev.deadzone.data.db.PlayerAccounts
-import dev.deadzone.user.PlayerAccountRepository
-import dev.deadzone.user.model.UserProfile
-import dev.deadzone.utils.Logger
+import user.model.UserProfile
+import utils.Logger
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll

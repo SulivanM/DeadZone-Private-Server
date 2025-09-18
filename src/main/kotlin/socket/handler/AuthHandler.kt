@@ -1,10 +1,10 @@
-package dev.deadzone.socket.handler
+package socket.handler
 
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.messaging.SocketMessage
-import dev.deadzone.socket.messaging.SocketMessageHandler
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
+import socket.core.Connection
+import socket.messaging.SocketMessage
+import socket.messaging.SocketMessageHandler
+import utils.LogConfigSocketToClient
+import utils.Logger
 
 /**
  * Auth message is send after game ready message.

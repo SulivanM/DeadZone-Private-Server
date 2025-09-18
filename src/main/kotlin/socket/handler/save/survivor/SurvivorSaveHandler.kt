@@ -5,14 +5,14 @@ import dev.deadzone.context.ServerContext
 import dev.deadzone.context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import dev.deadzone.core.model.game.data.HumanAppearance
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.socket.handler.buildMsg
+import socket.core.Connection
+import socket.handler.buildMsg
 import dev.deadzone.socket.handler.save.SaveSubHandler
 import dev.deadzone.socket.handler.save.survivor.response.PlayerCustomResponse
-import dev.deadzone.socket.messaging.SaveDataMethod
-import dev.deadzone.socket.protocol.PIOSerializer
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
+import socket.messaging.SaveDataMethod
+import socket.protocol.PIOSerializer
+import utils.LogConfigSocketToClient
+import utils.Logger
 
 class SurvivorSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.SURVIVOR_SAVES

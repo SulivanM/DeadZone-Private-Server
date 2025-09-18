@@ -1,4 +1,4 @@
-package dev.deadzone.websocket
+package websocket
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement

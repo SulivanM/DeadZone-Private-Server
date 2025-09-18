@@ -1,4 +1,4 @@
-package dev.deadzone.socket.messaging
+package socket.messaging
 
 /**
  * Save data method constants used by the game.

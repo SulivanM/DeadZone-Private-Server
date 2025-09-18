@@ -1,4 +1,4 @@
-package dev.deadzone.socket.messaging
+package socket.messaging
 
 /**
  * CC commands constants used by the game.

@@ -12,7 +12,7 @@ import dev.deadzone.context.PlayerContext
 import dev.deadzone.context.PlayerServices
 import dev.deadzone.data.db.BigDB
 import dev.deadzone.data.db.BigDBMariaImpl
-import dev.deadzone.socket.core.Connection
+import socket.core.Connection
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap

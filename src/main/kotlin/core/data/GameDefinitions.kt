@@ -1,7 +1,7 @@
 package dev.deadzone.core.data
 
 import dev.deadzone.core.data.assets.*
-import dev.deadzone.utils.Logger
+import utils.Logger
 import io.ktor.util.date.getTimeMillis
 import java.io.File
 import java.util.zip.GZIPInputStream

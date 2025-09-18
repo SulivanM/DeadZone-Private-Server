@@ -1,13 +1,11 @@
-package dev.deadzone.user.auth
+package user.auth
 
-import dev.deadzone.core.auth.AuthProvider
-import dev.deadzone.core.auth.SessionManager
-import dev.deadzone.user.model.PlayerSession
+import user.model.PlayerSession
 import dev.deadzone.core.data.AdminData
 import dev.deadzone.data.db.BigDB
-import dev.deadzone.user.PlayerAccountRepository
-import dev.deadzone.utils.LogConfigAPIError
-import dev.deadzone.utils.Logger
+import user.PlayerAccountRepository
+import utils.LogConfigAPIError
+import utils.Logger
 
 class WebsiteAuthProvider(
     private val db: BigDB,

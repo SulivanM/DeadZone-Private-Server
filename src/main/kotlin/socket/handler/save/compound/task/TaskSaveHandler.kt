@@ -1,12 +1,12 @@
 package socket.handler.save.compound.task
 
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
-import dev.deadzone.socket.core.Connection
+import utils.LogConfigSocketToClient
+import utils.Logger
+import socket.core.Connection
 import dev.deadzone.context.ServerContext
-import dev.deadzone.socket.messaging.SaveDataMethod
-import dev.deadzone.socket.handler.buildMsg
-import dev.deadzone.socket.protocol.PIOSerializer
+import socket.messaging.SaveDataMethod
+import socket.handler.buildMsg
+import socket.protocol.PIOSerializer
 import dev.deadzone.context.GlobalContext
 import dev.deadzone.socket.handler.save.SaveSubHandler
 import kotlinx.serialization.Serializable

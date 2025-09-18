@@ -1,7 +1,7 @@
 package dev.deadzone.socket.handler.save
 
 import dev.deadzone.context.ServerContext
-import dev.deadzone.socket.core.Connection
+import socket.core.Connection
 
 interface SaveSubHandler {
     val supportedTypes: Set<String>

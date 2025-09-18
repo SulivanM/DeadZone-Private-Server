@@ -1,6 +1,6 @@
 package dev.deadzone.socket.tasks
 
-import dev.deadzone.socket.core.Connection
+import socket.core.Connection
 
 /**
  * Entity that can schedule task.

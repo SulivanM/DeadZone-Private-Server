@@ -1,13 +1,13 @@
 package dev.deadzone.context
 
 import context.PlayerContextTracker
-import dev.deadzone.core.auth.AuthProvider
-import dev.deadzone.core.auth.SessionManager
+import user.auth.AuthProvider
+import user.auth.SessionManager
 import dev.deadzone.data.db.BigDB
-import dev.deadzone.socket.core.OnlinePlayerRegistry
+import socket.core.OnlinePlayerRegistry
 import dev.deadzone.socket.handler.save.SaveSubHandler
 import dev.deadzone.socket.tasks.ServerTaskDispatcher
-import dev.deadzone.user.PlayerAccountRepository
+import user.PlayerAccountRepository
 
 data class ServerContext(
     val db: BigDB,

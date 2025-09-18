@@ -2,8 +2,8 @@ package dev.deadzone.core.metadata
 
 import core.PlayerService
 import core.metadata.model.PlayerFlags
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
+import utils.LogConfigSocketToClient
+import utils.Logger
 
 class PlayerObjectsMetadataService(
     private val playerObjectsMetadataRepository: PlayerObjectsMetadataRepository

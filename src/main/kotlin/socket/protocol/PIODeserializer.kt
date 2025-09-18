@@ -1,9 +1,9 @@
-package dev.deadzone.socket.protocol
+package socket.protocol
 
-import dev.deadzone.utils.LogConfigSocketError
-import dev.deadzone.utils.LogSource
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.parseJsonToMap
+import utils.LogConfigSocketError
+import utils.LogSource
+import utils.Logger
+import utils.parseJsonToMap
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

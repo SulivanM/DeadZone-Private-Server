@@ -1,4 +1,4 @@
-package dev.deadzone.socket.protocol
+package socket.protocol
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

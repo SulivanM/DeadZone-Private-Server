@@ -1,13 +1,13 @@
-package dev.deadzone.socket.messaging
+package socket.messaging
 
-import dev.deadzone.socket.core.Connection
+import socket.core.Connection
 
 /**
  * A template for socket message handler
  *
  * See example
- * - [dev.deadzone.socket.handler.JoinHandler]
- * - [dev.deadzone.socket.handler.DefaultHandler]
+ * - [socket.handler.JoinHandler]
+ * - [socket.handler.DefaultHandler]
  */
 interface SocketMessageHandler {
     fun match(message: SocketMessage): Boolean

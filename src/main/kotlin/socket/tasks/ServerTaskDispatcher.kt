@@ -1,9 +1,9 @@
 package dev.deadzone.socket.tasks
 
-import dev.deadzone.socket.core.Connection
-import dev.deadzone.utils.LogConfigSocketError
-import dev.deadzone.utils.LogSource
-import dev.deadzone.utils.Logger
+import socket.core.Connection
+import utils.LogConfigSocketError
+import utils.LogSource
+import utils.Logger
 import kotlinx.coroutines.*
 import java.util.UUID
 import kotlin.collections.component1

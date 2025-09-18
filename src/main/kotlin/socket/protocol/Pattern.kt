@@ -1,4 +1,4 @@
-package dev.deadzone.socket.protocol
+package socket.protocol
 
 internal enum class Pattern(val value: Int) {
     STRING_SHORT_PATTERN(0xC0),

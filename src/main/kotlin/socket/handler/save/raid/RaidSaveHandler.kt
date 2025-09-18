@@ -1,11 +1,11 @@
 package dev.deadzone.socket.handler.save.raid
 
 import dev.deadzone.context.ServerContext
-import dev.deadzone.socket.core.Connection
+import socket.core.Connection
 import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.messaging.SaveDataMethod
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
+import socket.messaging.SaveDataMethod
+import utils.LogConfigSocketToClient
+import utils.Logger
 
 class RaidSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.RAID_SAVES

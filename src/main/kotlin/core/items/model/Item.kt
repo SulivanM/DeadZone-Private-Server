@@ -3,7 +3,7 @@
 package dev.deadzone.core.items.model
 
 import dev.deadzone.core.model.game.data.CraftingInfo
-import dev.deadzone.utils.UUID
+import utils.UUID
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable

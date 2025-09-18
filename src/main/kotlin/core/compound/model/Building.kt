@@ -1,9 +1,9 @@
 package dev.deadzone.core.model.game.data
 
 import dev.deadzone.core.items.model.Item
-import dev.deadzone.utils.LogConfigSocketToClient
-import dev.deadzone.utils.Logger
-import dev.deadzone.utils.UUID
+import utils.LogConfigSocketToClient
+import utils.Logger
+import utils.UUID
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
