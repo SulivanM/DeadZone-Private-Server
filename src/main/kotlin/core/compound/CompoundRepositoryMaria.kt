@@ -5,122 +5,85 @@ import dev.deadzone.core.model.game.data.GameResources
 import dev.deadzone.core.model.game.data.id
 import dev.deadzone.data.collection.PlayerObjects
 import dev.deadzone.data.db.PlayerObjectsTable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
-class CompoundRepositoryMaria(private val database: Database) : CompoundRepository {
-    private val json = Json { ignoreUnknownKeys = true }
+class CompoundRepositoryMaria(
+    private val database: Database,
+    private val json: Json
+) : CompoundRepository {
 
-    override suspend fun getGameResources(playerId: String): Result<GameResources> {
+    private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return runCatching {
             transaction(database) {
                 PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson]).resources
+                        val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                        transform(playerObjects)
                     } ?: throw NoSuchElementException("No player found with id=$playerId")
             }
         }
+    }
+
+    private suspend fun updatePlayerObjectsData(playerId: String, updateAction: (PlayerObjects) -> PlayerObjects): Result<Unit> {
+        return runCatching {
+            transaction(database) {
+                val currentRow = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                    .singleOrNull() ?: throw NoSuchElementException("No player found with id=$playerId")
+
+                val currentData = json.decodeFromString(PlayerObjects.serializer(), currentRow[PlayerObjectsTable.dataJson])
+                val updatedData = updateAction(currentData)
+
+                val updateResult = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
+                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                }
+
+                if (updateResult == 0) {
+                    throw Exception("Failed to update player objects for playerId=$playerId")
+                }
+            }
+        }
+    }
+
+    override suspend fun getGameResources(playerId: String): Result<GameResources> {
+        return getPlayerObjectsData(playerId) { it.resources }
     }
 
     override suspend fun updateGameResources(playerId: String, newResources: GameResources): Result<Unit> {
-        return runCatching {
-            transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                    .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
-                    } ?: throw NoSuchElementException("No player found with id=$playerId")
-                val updatedData = currentData.copy(resources = newResources)
-                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
-                }
-            }
-        }
+        return updatePlayerObjectsData(playerId) { it.copy(resources = newResources) }
     }
 
     override suspend fun createBuilding(playerId: String, newBuilding: BuildingLike): Result<Unit> {
-        return runCatching {
-            transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                    .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
-                    } ?: throw NoSuchElementException("No player found with id=$playerId")
-                val updatedBuildings = currentData.buildings.toMutableList().apply { add(newBuilding) }
-                val updatedData = currentData.copy(buildings = updatedBuildings)
-                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
-                }
-            }
+        return updatePlayerObjectsData(playerId) { currentData ->
+            currentData.copy(buildings = currentData.buildings + newBuilding)
         }
     }
 
     override suspend fun getBuildings(playerId: String): Result<List<BuildingLike>> {
-        return runCatching {
-            transaction(database) {
-                PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                    .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson]).buildings
-                    } ?: throw NoSuchElementException("No player found with id=$playerId")
-            }
-        }
+        return getPlayerObjectsData(playerId) { it.buildings }
     }
 
     override suspend fun updateBuilding(playerId: String, bldId: String, updatedBuilding: BuildingLike): Result<Unit> {
-        return runCatching {
-            transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                    .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
-                    } ?: throw NoSuchElementException("No player found with id=$playerId")
-                val updatedBuildings = currentData.buildings.toMutableList()
-                val buildingIndex = updatedBuildings.indexOfFirst { it.id == bldId }
-                if (buildingIndex == -1) {
-                    throw NoSuchElementException("No building found for bldId=$bldId on playerId=$playerId")
-                }
-                updatedBuildings[buildingIndex] = updatedBuilding
-                val updatedData = currentData.copy(buildings = updatedBuildings)
-                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
-                }
+        return updatePlayerObjectsData(playerId) { currentData ->
+            val updatedBuildings = currentData.buildings.toMutableList()
+            val buildingIndex = updatedBuildings.indexOfFirst { it.id == bldId }
+            if (buildingIndex == -1) {
+                throw NoSuchElementException("No building found for bldId=$bldId on playerId=$playerId")
             }
+            updatedBuildings[buildingIndex] = updatedBuilding
+            currentData.copy(buildings = updatedBuildings)
         }
     }
 
     override suspend fun deleteBuilding(playerId: String, bldId: String): Result<Unit> {
-        return runCatching {
-            transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                    .singleOrNull()?.let { row ->
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
-                    } ?: throw NoSuchElementException("No player found with id=$playerId")
-                val updatedBuildings = currentData.buildings.toMutableList()
-                val removed = updatedBuildings.removeIf { it.id == bldId }
-                if (!removed) {
-                    throw NoSuchElementException("No building found for bldId=$bldId on playerId=$playerId")
-                }
-                val updatedData = currentData.copy(buildings = updatedBuildings)
-                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
-                }
-            }
-        }
-    }
-
-    suspend fun getPlayerObjects(playerId: String): Result<PlayerObjects> = runCatching {
-        transaction(database) {
-            PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
-                .singleOrNull()?.let { row ->
-                    json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
-                } ?: throw NoSuchElementException("No player found with id=$playerId")
-        }
-    }
-
-    suspend fun updatePlayerObjects(playerId: String, playerObjects: PlayerObjects): Result<Unit> = runCatching {
-        transaction(database) {
-            PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(PlayerObjects.serializer(), playerObjects)
-            }
+        return updatePlayerObjectsData(playerId) { currentData ->
+            val updatedBuildings = currentData.buildings.filterNot { it.id == bldId }
+            currentData.copy(buildings = updatedBuildings)
         }
     }
 }
