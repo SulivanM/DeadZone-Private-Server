@@ -1,23 +1,19 @@
 package dev.deadzone.data.collection
 
-import user.model.ServerMetadata
-import user.model.UserProfile
 import dev.deadzone.core.data.AdminData
+import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 
-/**
- * Database-level representation of a user data
- *
- * @property playerId internal ID, also known as userId in PIO login.
- * This is also used to uniquely identify a user document.
- *
- * @property hashedPassword using particular hash system
- */
 @Serializable
 data class PlayerAccount(
-    val playerId: String, // referenced by other collections
+    val playerId: String,
     val hashedPassword: String,
-    val profile: UserProfile,
+    val email: String = "",
+    val displayName: String,
+    val avatarUrl: String,
+    val createdAt: Long,
+    val lastLogin: Long,
+    val countryCode: String? = null,
     val serverMetadata: ServerMetadata,
 ) {
     companion object {
@@ -25,15 +21,21 @@ data class PlayerAccount(
             return PlayerAccount(
                 playerId = AdminData.PLAYER_ID,
                 hashedPassword = AdminData.PASSWORD,
-                profile = UserProfile.admin(),
+                email = AdminData.EMAIL,
+                displayName = AdminData.DISPLAY_NAME,
+                avatarUrl = AdminData.AVATAR_URL,
+                createdAt = getTimeMillis(),
+                lastLogin = getTimeMillis(),
+                countryCode = AdminData.COUNTRY_CODE,
                 serverMetadata = ServerMetadata()
             )
         }
     }
 }
 
-/*
-List of common field in PlayerAccount and PlayerObjects
-- UserProfile:
-    - displayName -> nickname
-*/
+@Serializable
+data class ServerMetadata(
+    val notes: String? = null,
+    val flags: Map<String, Boolean> = emptyMap(),
+    val extra: Map<String, String> = emptyMap(),
+)

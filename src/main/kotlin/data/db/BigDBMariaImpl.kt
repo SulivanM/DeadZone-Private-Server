@@ -1,4 +1,5 @@
 package dev.deadzone.data.db
+
 import com.toxicbakery.bcrypt.Bcrypt
 import dev.deadzone.core.data.AdminData
 import core.metadata.model.ByteArrayAsBase64Serializer
@@ -6,8 +7,7 @@ import dev.deadzone.data.collection.Inventory
 import dev.deadzone.data.collection.NeighborHistory
 import dev.deadzone.data.collection.PlayerAccount
 import dev.deadzone.data.collection.PlayerObjects
-import user.model.ServerMetadata
-import user.model.UserProfile
+import dev.deadzone.data.collection.ServerMetadata
 import utils.Logger
 import utils.UUID
 import io.ktor.util.date.*
@@ -23,7 +23,12 @@ import kotlin.io.encoding.Base64
 object PlayerAccounts : Table("player_accounts") {
     val playerId = varchar("player_id", 36).uniqueIndex()
     val hashedPassword = text("hashed_password")
-    val profileJson = text("profile_json")
+    val email = varchar("email", 255)
+    val displayName = varchar("display_name", 100)
+    val avatarUrl = varchar("avatar_url", 500)
+    val createdAt = long("created_at")
+    val lastLogin = long("last_login")
+    val countryCode = varchar("country_code", 10).nullable()
     val serverMetadataJson = text("server_metadata_json")
     override val primaryKey = PrimaryKey(playerId)
 }
@@ -69,7 +74,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
             val count = transaction(database) {
                 PlayerAccounts.selectAll().count()
             }
-            Logger.info { "MariaDB: User table ready, contains $count users." }
+            Logger.info { "🟢 MariaDB: User table ready, contains $count users." }
             if (adminEnabled) {
                 val adminExists = transaction(database) {
                     PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq AdminData.PLAYER_ID }.count() > 0
@@ -81,32 +86,41 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                         val adminObjects = PlayerObjects.admin()
                         val adminNeighbor = NeighborHistory.empty(AdminData.PLAYER_ID)
                         val adminInventory = Inventory.admin()
+
                         PlayerAccounts.insert {
                             it[playerId] = adminAccount.playerId
                             it[hashedPassword] = adminAccount.hashedPassword
-                            it[profileJson] = json.encodeToString(adminAccount.profile)
+                            it[email] = adminAccount.email
+                            it[displayName] = adminAccount.displayName
+                            it[avatarUrl] = adminAccount.avatarUrl
+                            it[createdAt] = adminAccount.createdAt
+                            it[lastLogin] = adminAccount.lastLogin
+                            it[countryCode] = adminAccount.countryCode
                             it[serverMetadataJson] = json.encodeToString(adminAccount.serverMetadata)
                         }
+
                         PlayerObjectsTable.insert {
                             it[playerId] = adminObjects.playerId
                             it[dataJson] = json.encodeToString(adminObjects)
                         }
+
                         NeighborHistoryTable.insert {
                             it[playerId] = adminNeighbor.playerId
                             it[dataJson] = json.encodeToString(adminNeighbor)
                         }
+
                         InventoryTable.insert {
                             it[playerId] = adminInventory.playerId
                             it[dataJson] = json.encodeToString(adminInventory)
                         }
                     }
-                    Logger.info { "MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
+                    Logger.info { "🟢 MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
                 } else {
-                    Logger.info { "MariaDB: Admin account already exists." }
+                    Logger.info { "🟢 MariaDB: Admin account already exists." }
                 }
             }
         } catch (e: Exception) {
-            Logger.error { "MariaDB: Failed during setup: $e" }
+            Logger.error { "🔴 MariaDB: Failed during setup: $e" }
             throw e
         }
     }
@@ -118,7 +132,12 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                     PlayerAccount(
                         playerId = row[PlayerAccounts.playerId],
                         hashedPassword = row[PlayerAccounts.hashedPassword],
-                        profile = json.decodeFromString(row[PlayerAccounts.profileJson]),
+                        email = row[PlayerAccounts.email],
+                        displayName = row[PlayerAccounts.displayName],
+                        avatarUrl = row[PlayerAccounts.avatarUrl],
+                        createdAt = row[PlayerAccounts.createdAt],
+                        lastLogin = row[PlayerAccounts.lastLogin],
+                        countryCode = row[PlayerAccounts.countryCode],
                         serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
                     )
                 }
@@ -179,32 +198,48 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
 
     override suspend fun createUser(username: String, password: String): String {
         val pid = UUID.new()
-        val profile = UserProfile.default(username = username, pid = pid)
-        val playerSrvId = UUID.new()
+        val now = getTimeMillis()
+
         transaction(database) {
             val account = PlayerAccount(
                 playerId = pid,
                 hashedPassword = hashPw(password),
-                profile = profile,
+                email = "dummyemail@email.com",
+                displayName = username,
+                avatarUrl = "https://picsum.photos/200",
+                createdAt = now,
+                lastLogin = now,
+                countryCode = null,
                 serverMetadata = ServerMetadata()
             )
+
+            val playerSrvId = UUID.new()
             val objects = PlayerObjects.newgame(pid, username, playerSrvId)
             val neighbor = NeighborHistory.empty(pid)
             val inventory = Inventory.newgame(pid)
+
             PlayerAccounts.insert {
                 it[playerId] = account.playerId
                 it[hashedPassword] = account.hashedPassword
-                it[profileJson] = json.encodeToString(account.profile)
+                it[email] = account.email
+                it[displayName] = account.displayName
+                it[avatarUrl] = account.avatarUrl
+                it[createdAt] = account.createdAt
+                it[lastLogin] = account.lastLogin
+                it[countryCode] = account.countryCode
                 it[serverMetadataJson] = json.encodeToString(account.serverMetadata)
             }
+
             PlayerObjectsTable.insert {
                 it[playerId] = objects.playerId
                 it[dataJson] = json.encodeToString(objects)
             }
+
             NeighborHistoryTable.insert {
                 it[playerId] = neighbor.playerId
                 it[dataJson] = json.encodeToString(neighbor)
             }
+
             InventoryTable.insert {
                 it[playerId] = inventory.playerId
                 it[dataJson] = json.encodeToString(inventory)

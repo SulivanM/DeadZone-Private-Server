@@ -2,14 +2,15 @@ package user
 
 import com.toxicbakery.bcrypt.Bcrypt
 import dev.deadzone.data.collection.PlayerAccount
+import dev.deadzone.data.collection.ServerMetadata
 import dev.deadzone.data.db.PlayerAccounts
-import user.model.UserProfile
 import utils.Logger
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import user.model.UserProfile
 import kotlin.io.encoding.Base64
 
 class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAccountRepository {
@@ -22,7 +23,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
         return try {
             transaction(database) {
                 val row = PlayerAccounts.selectAll()
-                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
+                    .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()
                 if (row == null) {
                     Logger.info { "No account found for username=$username" }
@@ -47,7 +48,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
         return try {
             transaction(database) {
                 PlayerAccounts.selectAll()
-                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
+                    .where { PlayerAccounts.displayName eq username }
                     .count() > 0
             }.let { Result.success(it) }
         } catch (e: Exception) {
@@ -62,13 +63,17 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()?.let { row ->
-                        val profileJson = row[PlayerAccounts.profileJson]
-                        if (profileJson.isNotEmpty()) {
-                            json.decodeFromString<UserProfile>(profileJson)
-                        } else {
-                            Logger.warn { "Profile JSON is empty for playerId=$playerId" }
-                            null
-                        }
+                        UserProfile(
+                            playerId = row[PlayerAccounts.playerId],
+                            email = row[PlayerAccounts.email],
+                            displayName = row[PlayerAccounts.displayName],
+                            avatarUrl = row[PlayerAccounts.avatarUrl],
+                            createdAt = row[PlayerAccounts.createdAt],
+                            lastLogin = row[PlayerAccounts.lastLogin],
+                            countryCode = row[PlayerAccounts.countryCode],
+                            friends = emptySet(),
+                            enemies = emptySet()
+                        )
                     } ?: run {
                     Logger.info { "No profile found for playerId=$playerId" }
                     null
@@ -91,12 +96,17 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
         return try {
             transaction(database) {
                 PlayerAccounts.selectAll()
-                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
+                    .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()?.let { row ->
                         PlayerAccount(
                             playerId = row[PlayerAccounts.playerId],
                             hashedPassword = row[PlayerAccounts.hashedPassword],
-                            profile = json.decodeFromString(row[PlayerAccounts.profileJson]),
+                            email = row[PlayerAccounts.email],
+                            displayName = row[PlayerAccounts.displayName],
+                            avatarUrl = row[PlayerAccounts.avatarUrl],
+                            createdAt = row[PlayerAccounts.createdAt],
+                            lastLogin = row[PlayerAccounts.lastLogin],
+                            countryCode = row[PlayerAccounts.countryCode],
                             serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
                         )
                     }
@@ -116,7 +126,12 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
                         PlayerAccount(
                             playerId = row[PlayerAccounts.playerId],
                             hashedPassword = row[PlayerAccounts.hashedPassword],
-                            profile = json.decodeFromString(row[PlayerAccounts.profileJson]),
+                            email = row[PlayerAccounts.email],
+                            displayName = row[PlayerAccounts.displayName],
+                            avatarUrl = row[PlayerAccounts.avatarUrl],
+                            createdAt = row[PlayerAccounts.createdAt],
+                            lastLogin = row[PlayerAccounts.lastLogin],
+                            countryCode = row[PlayerAccounts.countryCode],
                             serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
                         )
                     }
@@ -131,7 +146,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
         return try {
             transaction(database) {
                 PlayerAccounts.selectAll()
-                    .where { PlayerAccounts.profileJson like "%\"displayName\":\"$username\"%" }
+                    .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()?.let { row ->
                         row[PlayerAccounts.playerId]
                     }
@@ -147,7 +162,12 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
             transaction(database) {
                 val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
                     it[hashedPassword] = account.hashedPassword
-                    it[profileJson] = json.encodeToString(account.profile)
+                    it[email] = account.email
+                    it[displayName] = account.displayName
+                    it[avatarUrl] = account.avatarUrl
+                    it[createdAt] = account.createdAt
+                    it[lastLogin] = account.lastLogin
+                    it[countryCode] = account.countryCode
                     it[serverMetadataJson] = json.encodeToString(account.serverMetadata)
                 }
                 if (rowsUpdated == 0) {
@@ -166,17 +186,8 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
     override suspend fun updateLastLogin(playerId: String, lastLogin: Long): Result<Unit> {
         return try {
             transaction(database) {
-                val row = PlayerAccounts.selectAll()
-                    .where { PlayerAccounts.playerId eq playerId }
-                    .singleOrNull()
-                if (row == null) {
-                    Logger.warn { "No account found to update last login for playerId=$playerId" }
-                    return@transaction Result.failure(Exception("No account found for playerId=$playerId"))
-                }
-                val profile = json.decodeFromString<UserProfile>(row[PlayerAccounts.profileJson])
-                val updatedProfile = profile.copy(lastLogin = lastLogin)
                 val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
-                    it[profileJson] = json.encodeToString(updatedProfile)
+                    it[PlayerAccounts.lastLogin] = lastLogin
                 }
                 if (rowsUpdated == 0) {
                     Logger.warn { "Failed to update last login for playerId=$playerId" }

@@ -177,7 +177,6 @@ fun Application.module() {
             }
         }
     }
-    Logger.info("📜 Real-time logging enabled")
     routing {
         fileRoutes()
         caseInsensitiveStaticResources("/game/data", File("static"))

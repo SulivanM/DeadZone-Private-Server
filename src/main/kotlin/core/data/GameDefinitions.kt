@@ -72,7 +72,7 @@ class GameDefinitions(onResourceLoadComplete: () -> Unit) {
             val end = getTimeMillis()
             val resName = path.removePrefix("static/game/data/xml/").removeSuffix(".gz")
 
-            Logger.info { "Finished parsing $resName in ${(end - start).milliseconds}" }
+            Logger.info { "📦 Finished parsing $resName in ${(end - start).milliseconds}" }
         }
         onResourceLoadComplete()
     }
