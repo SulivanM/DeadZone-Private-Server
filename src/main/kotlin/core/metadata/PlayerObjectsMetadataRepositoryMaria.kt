@@ -1,8 +1,8 @@
 package core.metadata
 
-import dev.deadzone.core.metadata.PlayerObjectsMetadataRepository
-import dev.deadzone.data.collection.PlayerObjects
-import dev.deadzone.data.db.PlayerObjectsTable
+import core.metadata.PlayerObjectsMetadataRepository
+import data.collection.PlayerObjects
+import data.db.PlayerObjectsTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll

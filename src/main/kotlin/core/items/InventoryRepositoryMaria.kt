@@ -1,4 +1,4 @@
-package dev.deadzone.core.items
+package core.items
 
 class InventoryRepositoryMaria: InventoryRepository {
     override fun placeholder() {

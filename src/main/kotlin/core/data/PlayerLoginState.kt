@@ -1,7 +1,7 @@
-package dev.deadzone.core.data
+package core.data
 
-import dev.deadzone.core.model.game.data.GameResources
-import dev.deadzone.core.model.game.data.Survivor
+import core.model.game.data.GameResources
+import core.model.game.data.Survivor
 import kotlinx.serialization.Serializable
 
 /**

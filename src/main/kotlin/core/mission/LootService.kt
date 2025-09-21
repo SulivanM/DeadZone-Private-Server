@@ -1,10 +1,10 @@
-package dev.deadzone.core.mission
+package core.mission
 
-import dev.deadzone.core.data.assets.ItemResource
-import dev.deadzone.context.GlobalContext
-import dev.deadzone.core.data.GameDefinitions
-import dev.deadzone.core.mission.model.LootContent
-import dev.deadzone.core.mission.model.LootParameter
+import core.data.assets.ItemResource
+import context.GlobalContext
+import core.data.GameDefinitions
+import core.mission.model.LootContent
+import core.mission.model.LootParameter
 import utils.UUID
 import org.w3c.dom.Document
 import org.w3c.dom.Element

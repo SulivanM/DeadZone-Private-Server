@@ -1,6 +1,6 @@
 package api.message.db
 
-import dev.deadzone.api.utils.BigDBConverter
+import api.utils.BigDBConverter
 import kotlinx.serialization.Serializable
 
 @Serializable

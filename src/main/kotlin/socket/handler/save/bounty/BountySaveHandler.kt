@@ -1,8 +1,8 @@
-package dev.deadzone.socket.handler.save.bounty
+package socket.handler.save.bounty
 
-import dev.deadzone.context.ServerContext
+import context.ServerContext
 import socket.core.Connection
-import dev.deadzone.socket.handler.save.SaveSubHandler
+import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger

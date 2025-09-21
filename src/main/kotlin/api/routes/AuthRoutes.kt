@@ -1,7 +1,7 @@
-package dev.deadzone.api.routes
+package api.routes
 
-import dev.deadzone.context.ServerContext
-import dev.deadzone.core.data.AdminData
+import context.ServerContext
+import core.data.AdminData
 import utils.Logger
 import io.ktor.http.*
 import io.ktor.server.request.*

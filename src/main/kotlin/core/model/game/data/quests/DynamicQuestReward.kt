@@ -1,8 +1,8 @@
-package dev.deadzone.core.model.game.data.quests
+package core.model.game.data.quests
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.quests.DynamicQuestRewardEnum
-import dev.deadzone.core.model.game.data.MoraleConstants
+import core.model.game.data.quests.DynamicQuestRewardEnum
+import core.model.game.data.MoraleConstants
 
 @Serializable
 data class DynamicQuestReward(

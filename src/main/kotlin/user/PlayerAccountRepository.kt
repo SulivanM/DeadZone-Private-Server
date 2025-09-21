@@ -1,7 +1,7 @@
 package user
 
 import user.model.UserProfile
-import dev.deadzone.data.collection.PlayerAccount
+import data.collection.PlayerAccount
 
 /**
  * Player account repository, analogous to game service's repo

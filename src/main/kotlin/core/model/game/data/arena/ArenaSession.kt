@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.arena
+package core.model.game.data.arena
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.assignment.AssignmentStageState
+import core.model.game.data.assignment.AssignmentStageState
 
 @Serializable
 data class ArenaSession(

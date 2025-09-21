@@ -1,4 +1,4 @@
-package dev.deadzone.core.survivor.model.injury
+package core.survivor.model.injury
 
 import kotlinx.serialization.Serializable
 

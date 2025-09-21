@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.data.collection.PlayerObjects
+import data.collection.PlayerObjects
 
 @Serializable
 data class CompoundData(

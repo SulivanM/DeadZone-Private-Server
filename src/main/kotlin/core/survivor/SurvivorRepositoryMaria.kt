@@ -1,7 +1,7 @@
 package core.survivor
-import dev.deadzone.core.model.game.data.Survivor
-import dev.deadzone.data.collection.PlayerObjects
-import dev.deadzone.data.db.PlayerObjectsTable
+import core.model.game.data.Survivor
+import data.collection.PlayerObjects
+import data.db.PlayerObjectsTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.select

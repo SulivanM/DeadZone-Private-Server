@@ -1,4 +1,4 @@
-package dev.deadzone.api.utils
+package api.utils
 
 /**
  * Adds a PlayerIO framing prefix to the byte array.

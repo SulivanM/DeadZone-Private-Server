@@ -1,5 +1,5 @@
 package core.survivor
-import dev.deadzone.core.model.game.data.Survivor
+import core.model.game.data.Survivor
 interface SurvivorRepository {
     suspend fun getSurvivors(playerId: String): Result<List<Survivor>>
     suspend fun updateSurvivor(

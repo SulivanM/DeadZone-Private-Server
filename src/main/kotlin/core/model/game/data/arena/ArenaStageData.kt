@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.arena
+package core.model.game.data.arena
 
 import kotlinx.serialization.Serializable
 

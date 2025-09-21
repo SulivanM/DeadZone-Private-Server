@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.raid
+package core.model.game.data.raid
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.assignment.AssignmentData
+import core.model.game.data.assignment.AssignmentData
 
 @Serializable
 data class RaidData(

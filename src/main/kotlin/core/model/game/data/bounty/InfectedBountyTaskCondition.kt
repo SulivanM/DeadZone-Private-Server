@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.bounty
+package core.model.game.data.bounty
 
 import kotlinx.serialization.Serializable
 

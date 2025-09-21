@@ -2,12 +2,12 @@ package socket.core
 
 import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
-import dev.deadzone.context.ServerContext
+import context.ServerContext
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageDispatcher
 import socket.protocol.PIODeserializer
-import dev.deadzone.socket.tasks.impl.BuildingTask
-import dev.deadzone.socket.tasks.impl.TimeUpdateTask
+import socket.tasks.impl.BuildingTask
+import socket.tasks.impl.TimeUpdateTask
 import utils.Logger
 import utils.UUID
 import io.ktor.network.selector.*

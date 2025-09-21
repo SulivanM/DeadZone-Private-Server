@@ -1,6 +1,6 @@
-package dev.deadzone.context
+package context
 
-import dev.deadzone.core.data.GameDefinitions
+import core.data.GameDefinitions
 import kotlinx.serialization.json.Json
 
 /**

@@ -1,11 +1,11 @@
-package dev.deadzone.core.model.game.data.quests
+package core.model.game.data.quests
 
-import dev.deadzone.core.model.game.data.MoraleConstants_Constants
+import core.model.game.data.MoraleConstants_Constants
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.quests.DynamicQuestGoal
-import dev.deadzone.core.model.game.data.quests.DynamicQuestPenalty
-import dev.deadzone.core.model.game.data.quests.DynamicQuestReward
-import dev.deadzone.core.model.game.data.quests.Quest
+import core.model.game.data.quests.DynamicQuestGoal
+import core.model.game.data.quests.DynamicQuestPenalty
+import core.model.game.data.quests.DynamicQuestReward
+import core.model.game.data.quests.Quest
 import io.ktor.util.date.getTimeMillis
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream

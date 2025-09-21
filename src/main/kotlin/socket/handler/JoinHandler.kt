@@ -1,6 +1,6 @@
 package socket.handler
 
-import dev.deadzone.context.ServerContext
+import context.ServerContext
 import core.LoginStateBuilder
 import socket.core.Connection
 import socket.messaging.NetworkMessage

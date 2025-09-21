@@ -1,6 +1,6 @@
-package dev.deadzone.core.data.assets
+package core.data.assets
 
-import dev.deadzone.core.data.GameDefinitions
+import core.data.GameDefinitions
 import org.w3c.dom.Document
 
 class CraftingParser() : GameResourcesParser {

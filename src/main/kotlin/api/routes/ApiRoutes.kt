@@ -1,12 +1,12 @@
-package dev.deadzone.api.routes
+package api.routes
 
 import api.handler.authenticate
-import dev.deadzone.api.handler.createJoinRoom
-import dev.deadzone.api.handler.loadObjects
-import dev.deadzone.api.handler.loadIndexRange
-import dev.deadzone.api.handler.socialRefresh
-import dev.deadzone.api.handler.writeError
-import dev.deadzone.context.ServerContext
+import api.handler.createJoinRoom
+import api.handler.loadObjects
+import api.handler.loadIndexRange
+import api.handler.socialRefresh
+import api.handler.writeError
+import context.ServerContext
 import utils.LogConfigAPIError
 import utils.Logger
 import io.ktor.http.HttpStatusCode

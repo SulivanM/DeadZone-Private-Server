@@ -1,7 +1,7 @@
-package dev.deadzone.core.compound
+package core.compound
 
-import dev.deadzone.core.model.game.data.BuildingLike
-import dev.deadzone.core.model.game.data.GameResources
+import core.model.game.data.BuildingLike
+import core.model.game.data.GameResources
 
 interface CompoundRepository {
     // Resource C_U_

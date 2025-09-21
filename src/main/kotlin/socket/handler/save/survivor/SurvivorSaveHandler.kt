@@ -1,14 +1,14 @@
-package dev.deadzone.socket.handler.save.survivor
+package socket.handler.save.survivor
 
-import dev.deadzone.context.GlobalContext
-import dev.deadzone.context.ServerContext
-import dev.deadzone.context.requirePlayerContext
+import context.GlobalContext
+import context.ServerContext
+import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
-import dev.deadzone.core.model.game.data.HumanAppearance
+import core.model.game.data.HumanAppearance
 import socket.core.Connection
 import socket.handler.buildMsg
-import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.handler.save.survivor.response.PlayerCustomResponse
+import socket.handler.save.SaveSubHandler
+import socket.handler.save.survivor.response.PlayerCustomResponse
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient

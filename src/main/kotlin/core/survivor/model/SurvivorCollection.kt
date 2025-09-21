@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.Survivor
+import core.model.game.data.Survivor
 
 @Serializable
 data class SurvivorCollection(

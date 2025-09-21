@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.bounty
+package core.model.game.data.bounty
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.bounty.InfectedBountyTaskCondition
+import core.model.game.data.bounty.InfectedBountyTaskCondition
 
 @Serializable
 data class InfectedBountyTask(

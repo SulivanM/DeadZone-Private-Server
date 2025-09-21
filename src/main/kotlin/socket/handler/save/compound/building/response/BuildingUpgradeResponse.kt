@@ -1,7 +1,7 @@
-package dev.deadzone.socket.handler.save.compound.building.response
+package socket.handler.save.compound.building.response
 
-import dev.deadzone.core.model.game.data.TimerData
-import dev.deadzone.socket.handler.save.BaseResponse
+import core.model.game.data.TimerData
+import socket.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 @Serializable

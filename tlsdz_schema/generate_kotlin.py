@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from schema_model import BASIC_TYPES, COMPOSITE_TYPES, TYPE_NULLABLE, Schema, SchemaType
 
-BASE_PACKAGE = "dev.deadzone.core.model"
+BASE_PACKAGE = "core.model"
 
 
 def kotlin_type(schema_type: SchemaType) -> str:

@@ -1,7 +1,7 @@
 package user.auth
 
 import user.model.PlayerSession
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import utils.UUID
 import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.CoroutineScope

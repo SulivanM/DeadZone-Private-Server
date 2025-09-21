@@ -1,4 +1,4 @@
-package dev.deadzone.core.items
+package core.items
 
 interface InventoryRepository {
     fun placeholder()

@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.skills
+package core.model.game.data.skills
 
 import kotlinx.serialization.Serializable
 

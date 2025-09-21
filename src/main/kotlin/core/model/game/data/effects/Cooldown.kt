@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.effects
+package core.model.game.data.effects
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.TimerData
+import core.model.game.data.TimerData
 
 @Serializable
 data class Cooldown(

@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.enemies
+package core.model.game.data.enemies
 
 import kotlinx.serialization.Serializable
 

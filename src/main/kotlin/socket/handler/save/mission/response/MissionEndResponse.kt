@@ -1,10 +1,10 @@
-package dev.deadzone.socket.handler.save.mission.response
+package socket.handler.save.mission.response
 
-import dev.deadzone.core.items.model.Item
-import dev.deadzone.core.model.game.data.Morale
-import dev.deadzone.core.model.game.data.TimerData
-import dev.deadzone.core.model.game.data.assignment.AssignmentResult
-import dev.deadzone.core.survivor.model.injury.Injury
+import core.items.model.Item
+import core.model.game.data.Morale
+import core.model.game.data.TimerData
+import core.model.game.data.assignment.AssignmentResult
+import core.survivor.model.injury.Injury
 import kotlinx.serialization.Serializable
 
 @Serializable

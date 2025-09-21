@@ -1,6 +1,6 @@
-package dev.deadzone.socket.handler.save
+package socket.handler.save
 
-import dev.deadzone.core.model.game.data.skills.SkillState
+import core.model.game.data.skills.SkillState
 
 /**
  * Most save message expects coins and skills update from server, which can be left null

@@ -1,6 +1,6 @@
 package api.message.social
 
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 

@@ -1,9 +1,9 @@
 package user
 
 import com.toxicbakery.bcrypt.Bcrypt
-import dev.deadzone.data.collection.PlayerAccount
-import dev.deadzone.data.collection.ServerMetadata
-import dev.deadzone.data.db.PlayerAccounts
+import data.collection.PlayerAccount
+import data.collection.ServerMetadata
+import data.db.PlayerAccounts
 import utils.Logger
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database

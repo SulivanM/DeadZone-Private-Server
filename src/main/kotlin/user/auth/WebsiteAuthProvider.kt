@@ -1,8 +1,8 @@
 package user.auth
 
 import user.model.PlayerSession
-import dev.deadzone.core.data.AdminData
-import dev.deadzone.data.db.BigDB
+import core.data.AdminData
+import data.db.BigDB
 import user.PlayerAccountRepository
 import utils.LogConfigAPIError
 import utils.Logger

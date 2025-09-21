@@ -1,6 +1,6 @@
-package dev.deadzone.core.data.assets
+package core.data.assets
 
-import dev.deadzone.core.data.GameDefinitions
+import core.data.GameDefinitions
 import org.w3c.dom.Document
 
 /**
@@ -10,7 +10,7 @@ import org.w3c.dom.Document
  *
  * As an example, [ItemsParser] reads the `items.xml` and depending on the item type
  * (e.g., `type="weapon"`, `type="junk"`), it chooses subparser (i.e., [WeaponItemParser])
- * and creates the corresponding [dev.deadzone.core.items.model.Item] object.
+ * and creates the corresponding [core.items.model.Item] object.
  */
 interface GameResourcesParser {
     fun parse(doc: Document, gameDefinitions: GameDefinitions)

@@ -1,9 +1,9 @@
-package dev.deadzone.data.db
+package data.db
 
-import dev.deadzone.data.collection.Inventory
-import dev.deadzone.data.collection.NeighborHistory
-import dev.deadzone.data.collection.PlayerAccount
-import dev.deadzone.data.collection.PlayerObjects
+import data.collection.Inventory
+import data.collection.NeighborHistory
+import data.collection.PlayerAccount
+import data.collection.PlayerObjects
 
 enum class CollectionName {
     PLAYER_ACCOUNT_COLLECTION, PLAYER_OBJECTS_COLLECTION,

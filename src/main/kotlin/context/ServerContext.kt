@@ -1,12 +1,12 @@
-package dev.deadzone.context
+package context
 
 import context.PlayerContextTracker
 import user.auth.AuthProvider
 import user.auth.SessionManager
-import dev.deadzone.data.db.BigDB
+import data.db.BigDB
 import socket.core.OnlinePlayerRegistry
-import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.tasks.ServerTaskDispatcher
+import socket.handler.save.SaveSubHandler
+import socket.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepository
 
 data class ServerContext(

@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.quests
+package core.model.game.data.quests
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.quests.DynamicQuestGoalEnum
+import core.model.game.data.quests.DynamicQuestGoalEnum
 
 @Serializable
 data class DynamicQuestGoal(

@@ -1,6 +1,6 @@
-package dev.deadzone.data.collection
+package data.collection
 
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 

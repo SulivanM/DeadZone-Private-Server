@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.alliance
+package core.model.game.data.alliance
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.effects.Effect
+import core.model.game.data.effects.Effect
 
 @Serializable
 data class AllianceRound(

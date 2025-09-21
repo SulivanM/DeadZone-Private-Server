@@ -1,6 +1,6 @@
 package core
 
-import dev.deadzone.core.model.game.data.*
+import core.model.game.data.*
 import io.ktor.util.date.*
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds

@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.quests
+package core.model.game.data.quests
 
 import kotlinx.serialization.Serializable
 

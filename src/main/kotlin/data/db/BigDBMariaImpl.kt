@@ -1,13 +1,13 @@
-package dev.deadzone.data.db
+package data.db
 
 import com.toxicbakery.bcrypt.Bcrypt
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import core.metadata.model.ByteArrayAsBase64Serializer
-import dev.deadzone.data.collection.Inventory
-import dev.deadzone.data.collection.NeighborHistory
-import dev.deadzone.data.collection.PlayerAccount
-import dev.deadzone.data.collection.PlayerObjects
-import dev.deadzone.data.collection.ServerMetadata
+import data.collection.Inventory
+import data.collection.NeighborHistory
+import data.collection.PlayerAccount
+import data.collection.PlayerObjects
+import data.collection.ServerMetadata
 import utils.Logger
 import utils.UUID
 import io.ktor.util.date.*

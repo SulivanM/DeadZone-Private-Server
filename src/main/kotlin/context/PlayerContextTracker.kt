@@ -1,17 +1,17 @@
 package context
 
-import dev.deadzone.core.compound.CompoundRepositoryMaria
-import dev.deadzone.core.compound.CompoundService
-import dev.deadzone.core.items.InventoryRepositoryMaria
-import dev.deadzone.core.items.InventoryService
+import core.compound.CompoundRepositoryMaria
+import core.compound.CompoundService
+import core.items.InventoryRepositoryMaria
+import core.items.InventoryService
 import core.metadata.PlayerObjectsMetadataRepositoryMaria
-import dev.deadzone.core.metadata.PlayerObjectsMetadataService
+import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorRepositoryMaria
 import core.survivor.SurvivorService
-import dev.deadzone.context.PlayerContext
-import dev.deadzone.context.PlayerServices
-import dev.deadzone.data.db.BigDB
-import dev.deadzone.data.db.BigDBMariaImpl
+import context.PlayerContext
+import context.PlayerServices
+import data.db.BigDB
+import data.db.BigDBMariaImpl
 import socket.core.Connection
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.json.Json

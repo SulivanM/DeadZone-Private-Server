@@ -1,10 +1,10 @@
-package dev.deadzone.api.handler
+package api.handler
 
 import api.message.social.SocialProfile
 import api.message.social.SocialRefreshOutput
-import dev.deadzone.api.utils.pioFraming
-import dev.deadzone.context.ServerContext
-import dev.deadzone.core.data.AdminData
+import api.utils.pioFraming
+import context.ServerContext
+import core.data.AdminData
 import utils.LogConfigAPIError
 import utils.Logger
 import utils.logInput

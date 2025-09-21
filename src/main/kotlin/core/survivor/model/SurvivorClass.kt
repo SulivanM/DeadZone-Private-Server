@@ -1,8 +1,8 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.Attributes
-import dev.deadzone.core.model.game.data.SurvivorClassWeapons
+import core.model.game.data.Attributes
+import core.model.game.data.SurvivorClassWeapons
 
 @Serializable
 data class SurvivorClass(

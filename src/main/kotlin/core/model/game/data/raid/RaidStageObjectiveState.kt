@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.game.data.raid
+package core.model.game.data.raid
 
 import kotlinx.serialization.Serializable
 

@@ -1,12 +1,12 @@
-package dev.deadzone.socket.handler.save.crate
+package socket.handler.save.crate
 
-import dev.deadzone.context.GlobalContext
-import dev.deadzone.context.ServerContext
-import dev.deadzone.core.items.ItemFactory
+import context.GlobalContext
+import context.ServerContext
+import core.items.ItemFactory
 import socket.core.Connection
 import socket.handler.buildMsg
-import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.handler.save.crate.response.CrateUnlockResponse
+import socket.handler.save.SaveSubHandler
+import socket.handler.save.crate.response.CrateUnlockResponse
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient

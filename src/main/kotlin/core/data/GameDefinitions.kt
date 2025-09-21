@@ -1,6 +1,6 @@
-package dev.deadzone.core.data
+package core.data
 
-import dev.deadzone.core.data.assets.*
+import core.data.assets.*
 import utils.Logger
 import io.ktor.util.date.getTimeMillis
 import java.io.File

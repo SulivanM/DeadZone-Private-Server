@@ -1,4 +1,4 @@
-package dev.deadzone.socket.tasks
+package socket.tasks
 
 enum class TaskTemplate {
     TIME_UPDATE, BUILDING

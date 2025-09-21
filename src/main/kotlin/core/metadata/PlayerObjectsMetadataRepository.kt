@@ -1,4 +1,4 @@
-package dev.deadzone.core.metadata
+package core.metadata
 
 /**
  * Repository for uncategorized fields in PlayerObjects like nickname, flags

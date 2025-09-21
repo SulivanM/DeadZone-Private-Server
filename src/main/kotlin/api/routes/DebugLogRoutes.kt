@@ -1,4 +1,4 @@
-package dev.deadzone.api.routes
+package api.routes
 
 import utils.Logger
 import websocket.WebsocketManager

@@ -1,8 +1,8 @@
 package core
 
-import dev.deadzone.context.GlobalContext
-import dev.deadzone.context.ServerContext
-import dev.deadzone.core.data.PlayerLoginState
+import context.GlobalContext
+import context.ServerContext
+import core.data.PlayerLoginState
 
 /**
  * Per-player dynamic updates.

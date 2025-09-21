@@ -1,4 +1,4 @@
-package dev.deadzone.core.items.model
+package core.items.model
 
 object ItemAttributesConstants {
     const val GEAR = "gear"

@@ -1,7 +1,7 @@
-package dev.deadzone.socket.handler.save.crate.response
+package socket.handler.save.crate.response
 
-import dev.deadzone.core.items.ItemFactory
-import dev.deadzone.core.items.model.Item
+import core.items.ItemFactory
+import core.items.model.Item
 import kotlinx.serialization.Serializable
 
 @Serializable

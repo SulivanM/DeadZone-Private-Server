@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.assignment
+package core.model.game.data.assignment
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.assignment.AssignmentStageData
+import core.model.game.data.assignment.AssignmentStageData
 
 @Serializable
 data class AssignmentData(

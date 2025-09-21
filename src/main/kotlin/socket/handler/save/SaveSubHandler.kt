@@ -1,6 +1,6 @@
-package dev.deadzone.socket.handler.save
+package socket.handler.save
 
-import dev.deadzone.context.ServerContext
+import context.ServerContext
 import socket.core.Connection
 
 interface SaveSubHandler {

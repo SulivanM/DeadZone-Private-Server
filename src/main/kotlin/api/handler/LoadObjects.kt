@@ -1,12 +1,12 @@
-package dev.deadzone.api.handler
+package api.handler
 
 import api.message.db.BigDBObject
 import api.message.db.LoadObjectsArgs
 import api.message.db.LoadObjectsOutput
-import dev.deadzone.api.utils.pioFraming
-import dev.deadzone.context.ServerContext
+import api.utils.pioFraming
+import context.ServerContext
 import core.LazyDataUpdater
-import dev.deadzone.data.collection.NeighborHistory
+import data.collection.NeighborHistory
 import utils.LogConfigAPIError
 import utils.LogConfigSocketToClient
 import utils.LogSource

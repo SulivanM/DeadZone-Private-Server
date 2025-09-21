@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.store
+package core.model.game.data.store
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.items.model.Item
+import core.items.model.Item
 
 @Serializable
 data class StoreItem(

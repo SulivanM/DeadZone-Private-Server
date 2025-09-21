@@ -1,7 +1,7 @@
-package dev.deadzone.api.handler
+package api.handler
 import api.message.server.CreateJoinRoomArgs
 import api.message.server.CreateJoinRoomOutput
-import dev.deadzone.api.utils.pioFraming
+import api.utils.pioFraming
 import utils.logInput
 import utils.logOutput
 import io.ktor.server.request.*

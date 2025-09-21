@@ -1,10 +1,10 @@
-package dev.deadzone.core.compound
+package core.compound
 
-import dev.deadzone.core.model.game.data.BuildingLike
-import dev.deadzone.core.model.game.data.GameResources
-import dev.deadzone.core.model.game.data.id
-import dev.deadzone.data.collection.PlayerObjects
-import dev.deadzone.data.db.PlayerObjectsTable
+import core.model.game.data.BuildingLike
+import core.model.game.data.GameResources
+import core.model.game.data.id
+import data.collection.PlayerObjects
+import data.db.PlayerObjectsTable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database

@@ -1,9 +1,9 @@
-package dev.deadzone.core.items
+package core.items
 
-import dev.deadzone.core.data.assets.ItemResource
-import dev.deadzone.core.items.model.Item
-import dev.deadzone.core.items.model.ItemQualityType
-import dev.deadzone.context.GlobalContext
+import core.data.assets.ItemResource
+import core.items.model.Item
+import core.items.model.ItemQualityType
+import context.GlobalContext
 import utils.UUID
 import org.w3c.dom.Element
 

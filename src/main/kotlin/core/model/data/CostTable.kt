@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.data
+package core.model.data
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.data.CostEntry
+import core.model.data.CostEntry
 
 @Serializable
 data class CostTable(

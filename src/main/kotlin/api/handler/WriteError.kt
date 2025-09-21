@@ -1,7 +1,7 @@
-package dev.deadzone.api.handler
-import dev.deadzone.api.message.utils.WriteErrorArgs
-import dev.deadzone.api.message.utils.WriteErrorError
-import dev.deadzone.api.utils.pioFraming
+package api.handler
+import api.message.utils.WriteErrorArgs
+import api.message.utils.WriteErrorError
+import api.utils.pioFraming
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*

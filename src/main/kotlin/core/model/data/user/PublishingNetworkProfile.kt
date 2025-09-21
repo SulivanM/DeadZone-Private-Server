@@ -1,4 +1,4 @@
-package dev.deadzone.core.model.data.user
+package core.model.data.user
 
 import kotlinx.serialization.Serializable
 

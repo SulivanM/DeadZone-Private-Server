@@ -1,6 +1,6 @@
-package dev.deadzone.data.collection
+package data.collection
 
-import dev.deadzone.core.model.network.RemotePlayerData
+import core.model.network.RemotePlayerData
 import kotlinx.serialization.Serializable
 
 /**

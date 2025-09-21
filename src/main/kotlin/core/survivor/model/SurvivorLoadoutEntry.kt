@@ -1,6 +1,6 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import kotlinx.serialization.Serializable
 
 @Serializable

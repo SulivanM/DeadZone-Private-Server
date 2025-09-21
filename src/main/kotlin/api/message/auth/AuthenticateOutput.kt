@@ -2,7 +2,7 @@ package api.message.auth
 
 import dev.deadzone.SERVER_HOST
 import api.message.social.PlayerInsightState
-import dev.deadzone.core.data.AdminData
+import core.data.AdminData
 import kotlinx.serialization.Serializable
 
 @Serializable

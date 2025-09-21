@@ -1,8 +1,8 @@
-package dev.deadzone.core.model.data.user
+package core.model.data.user
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.data.Currency
-import dev.deadzone.core.model.data.user.UserData
+import core.model.data.Currency
+import core.model.data.user.UserData
 
 @Serializable
 data class AbstractUser(

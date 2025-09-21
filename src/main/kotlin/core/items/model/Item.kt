@@ -1,8 +1,8 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package dev.deadzone.core.items.model
+package core.items.model
 
-import dev.deadzone.core.model.game.data.CraftingInfo
+import core.model.game.data.CraftingInfo
 import utils.UUID
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi

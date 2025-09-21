@@ -9,7 +9,7 @@ package user.model
  * When the game client connects to the game socket using a `playerId`,
  * the server must verify that a valid session with a matching token exists.
  *
- * @property playerId The internal ID, used for linking session to [dev.deadzone.data.collection.PlayerAccount].
+ * @property playerId The internal ID, used for linking session to [data.collection.PlayerAccount].
  * @property token A unique prove for authentication; currently not much used.
  * @property issuedAt Epoch millis when this session was created.
  * @property expiresAt Epoch millis when this session is no longer valid.

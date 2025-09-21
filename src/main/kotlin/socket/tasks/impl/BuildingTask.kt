@@ -1,11 +1,11 @@
-package dev.deadzone.socket.tasks.impl
+package socket.tasks.impl
 
 import socket.core.Connection
 import socket.messaging.NetworkMessage
-import dev.deadzone.socket.tasks.ServerTask
-import dev.deadzone.socket.tasks.TaskConfig
-import dev.deadzone.socket.tasks.TaskTemplate
-import dev.deadzone.socket.tasks.TaskScheduler
+import socket.tasks.ServerTask
+import socket.tasks.TaskConfig
+import socket.tasks.TaskTemplate
+import socket.tasks.TaskScheduler
 import kotlin.time.Duration.Companion.seconds
 
 class BuildingTask() : ServerTask {

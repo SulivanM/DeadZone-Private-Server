@@ -1,4 +1,4 @@
-package dev.deadzone.api.routes
+package api.routes
 
 import io.ktor.http.*
 import io.ktor.server.http.content.*

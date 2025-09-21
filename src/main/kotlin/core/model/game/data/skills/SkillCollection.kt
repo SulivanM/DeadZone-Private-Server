@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data.skills
+package core.model.game.data.skills
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.skills.SkillState
+import core.model.game.data.skills.SkillState
 
 @Serializable
 data class SkillCollection(

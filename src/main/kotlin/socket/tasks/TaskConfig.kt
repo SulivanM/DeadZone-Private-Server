@@ -1,4 +1,4 @@
-package dev.deadzone.socket.tasks
+package socket.tasks
 
 import kotlin.time.Duration
 

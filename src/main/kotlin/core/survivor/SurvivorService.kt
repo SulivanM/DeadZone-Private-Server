@@ -1,6 +1,6 @@
 package core.survivor
 import core.PlayerService
-import dev.deadzone.core.model.game.data.Survivor
+import core.model.game.data.Survivor
 import utils.LogConfigSocketError
 import utils.Logger
 import kotlin.Result.Companion.failure

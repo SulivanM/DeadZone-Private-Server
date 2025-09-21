@@ -1,8 +1,8 @@
-package dev.deadzone.data.collection
+package data.collection
 
-import dev.deadzone.core.data.AdminData
-import dev.deadzone.core.items.ItemFactory
-import dev.deadzone.core.items.model.Item
+import core.data.AdminData
+import core.items.ItemFactory
+import core.items.model.Item
 import kotlinx.serialization.Serializable
 
 /**

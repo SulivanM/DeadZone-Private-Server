@@ -1,4 +1,4 @@
-package dev.deadzone.api.utils
+package api.utils
 
 import api.message.db.ArrayProperty
 import api.message.db.BigDBObject

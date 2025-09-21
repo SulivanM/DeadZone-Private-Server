@@ -1,12 +1,12 @@
-package dev.deadzone.core.model.game.data.alliance
+package core.model.game.data.alliance
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.model.game.data.alliance.AllianceDataSummary
-import dev.deadzone.core.model.game.data.alliance.AllianceList
-import dev.deadzone.core.model.game.data.alliance.AllianceMemberList
-import dev.deadzone.core.model.game.data.alliance.AllianceMessageList
-import dev.deadzone.core.model.game.data.effects.Effect
-import dev.deadzone.core.model.game.data.alliance.TargetRecord
+import core.model.game.data.alliance.AllianceDataSummary
+import core.model.game.data.alliance.AllianceList
+import core.model.game.data.alliance.AllianceMemberList
+import core.model.game.data.alliance.AllianceMessageList
+import core.model.game.data.effects.Effect
+import core.model.game.data.alliance.TargetRecord
 
 @Serializable
 data class AllianceData(

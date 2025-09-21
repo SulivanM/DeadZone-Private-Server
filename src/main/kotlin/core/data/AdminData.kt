@@ -1,4 +1,4 @@
-package dev.deadzone.core.data
+package core.data
 
 /**
  * Dummy data ready to use, typically for admin account.

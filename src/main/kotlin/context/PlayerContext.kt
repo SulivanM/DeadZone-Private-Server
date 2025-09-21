@@ -1,10 +1,10 @@
-package dev.deadzone.context
+package context
 
-import dev.deadzone.core.compound.CompoundService
-import dev.deadzone.core.items.InventoryService
-import dev.deadzone.core.metadata.PlayerObjectsMetadataService
+import core.compound.CompoundService
+import core.items.InventoryService
+import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorService
-import dev.deadzone.data.collection.PlayerAccount
+import data.collection.PlayerAccount
 import socket.core.Connection
 
 /**

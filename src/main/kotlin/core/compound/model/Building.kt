@@ -1,6 +1,6 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
-import dev.deadzone.core.items.model.Item
+import core.items.model.Item
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -112,8 +112,8 @@ data class Building(
 object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(BuildingLike::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BuildingLike> {
         return when (val discriminator = element.jsonObject["_t"]?.jsonPrimitive?.contentOrNull) {
-            "dev.deadzone.core.model.game.data.Building" -> Building.serializer()
-            "dev.deadzone.core.model.game.data.JunkBuilding" -> JunkBuilding.serializer()
+            "core.model.game.data.Building" -> Building.serializer()
+            "core.model.game.data.JunkBuilding" -> JunkBuilding.serializer()
             null -> {
                 val obj = element.jsonObject
                 return when {

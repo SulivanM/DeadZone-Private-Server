@@ -1,17 +1,17 @@
-package dev.deadzone.socket.handler.save.compound.building
+package socket.handler.save.compound.building
 
-import dev.deadzone.context.GlobalContext
-import dev.deadzone.context.ServerContext
-import dev.deadzone.context.requirePlayerContext
-import dev.deadzone.core.model.game.data.*
+import context.GlobalContext
+import context.ServerContext
+import context.requirePlayerContext
+import core.model.game.data.*
 import socket.core.Connection
 import socket.handler.buildMsg
-import dev.deadzone.socket.handler.save.SaveSubHandler
-import dev.deadzone.socket.handler.save.compound.building.response.*
+import socket.handler.save.SaveSubHandler
+import socket.handler.save.compound.building.response.*
 import socket.messaging.NetworkMessage
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
-import dev.deadzone.socket.tasks.TaskTemplate
+import socket.tasks.TaskTemplate
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger

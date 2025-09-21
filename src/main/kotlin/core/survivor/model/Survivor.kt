@@ -1,9 +1,9 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
-import dev.deadzone.core.data.AdminData
-import dev.deadzone.core.model.game.data.SurvivorAppearance.Companion.toHumanAppearance
-import dev.deadzone.core.survivor.model.injury.Injury
-import dev.deadzone.core.survivor.model.injury.InjuryList
+import core.data.AdminData
+import core.model.game.data.SurvivorAppearance.Companion.toHumanAppearance
+import core.survivor.model.injury.Injury
+import core.survivor.model.injury.InjuryList
 import utils.UUID
 import kotlinx.serialization.Serializable
 

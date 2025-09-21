@@ -1,7 +1,7 @@
-package dev.deadzone.core.model.game.data
+package core.model.game.data
 
 import kotlinx.serialization.Serializable
-import dev.deadzone.core.items.model.Item
+import core.items.model.Item
 
 @Serializable
 data class Task(

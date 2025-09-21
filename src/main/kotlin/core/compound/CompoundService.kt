@@ -1,7 +1,7 @@
-package dev.deadzone.core.compound
+package core.compound
 
 import core.PlayerService
-import dev.deadzone.core.model.game.data.*
+import core.model.game.data.*
 import utils.LogConfigSocketError
 import utils.Logger
 import io.ktor.util.date.*

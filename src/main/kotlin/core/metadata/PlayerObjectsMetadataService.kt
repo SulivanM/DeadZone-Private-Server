@@ -1,4 +1,4 @@
-package dev.deadzone.core.metadata
+package core.metadata
 
 import core.PlayerService
 import core.metadata.model.PlayerFlags

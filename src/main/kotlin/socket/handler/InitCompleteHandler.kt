@@ -1,11 +1,11 @@
 package socket.handler
 
-import dev.deadzone.context.ServerContext
+import context.ServerContext
 import socket.core.Connection
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
-import dev.deadzone.socket.tasks.TaskTemplate
+import socket.tasks.TaskTemplate
 
 /**
  * Handle `ic` message by:

@@ -1,10 +1,10 @@
 package api.handler
-import dev.deadzone.SERVER_HOST
 import api.message.auth.AuthenticateArgs
 import api.message.auth.AuthenticateOutput
-import dev.deadzone.api.utils.pioFraming
-import dev.deadzone.context.ServerContext
-import dev.deadzone.core.data.AdminData
+import api.utils.pioFraming
+import context.ServerContext
+import core.data.AdminData
+import dev.deadzone.SERVER_HOST
 import utils.Logger
 import utils.logInput
 import utils.logOutput
