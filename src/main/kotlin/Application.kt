@@ -144,10 +144,14 @@ fun Application.module() {
         config = config,
     )
     install(CORS) {
-        allowHost("$SERVER_HOST:$API_SERVER_PORT", schemes = listOf("http"))
-        allowHost("$SERVER_HOST:$SOCKET_SERVER_PORT", schemes = listOf("http"))
+        anyHost()
         allowHeader(HttpHeaders.ContentType)
+        allowHeaders { true }
         allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Options)
     }
     install(StatusPages) {
         exception<Throwable> { call, cause ->

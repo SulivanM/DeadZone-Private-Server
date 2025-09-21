@@ -234,19 +234,7 @@ class BuildingSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.BUILDING_SPEED_UP -> {
-                val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_SPEED_UP' message for $saveId and $bldId" }
-
-                val result = svc.updateBuilding(bldId) { bld -> bld.copy(upgrade = null) }
-                val response = if (result.isSuccess) {
-                    BuildingSpeedUpResponse(success = true, error = "", cost = 0)
-                } else {
-                    Logger.error(LogConfigSocketError) { "Failed to speed up building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingSpeedUpResponse(success = false, error = result.exceptionOrNull()?.message ?: "Unknown error", cost = 0)
-                }
-
-                val responseJson = GlobalContext.json.encodeToString(response)
-                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                Logger.warn(LogConfigSocketToClient) { "Received 'BUILDING_SPEED_UP' message [not implemented]" }
             }
 
             SaveDataMethod.BUILDING_REPAIR -> {

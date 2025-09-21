@@ -87,7 +87,7 @@ class MissionSaveHandler : SaveSubHandler {
                         time = timeSeconds,
                         assignmentType = "None", // 'None' because not a raid or arena. see AssignmentType
                         areaClass = (data["areaClass"] as String?) ?: "", // supposedly depend on the area
-                        automated = false, // this depends on request data
+                        automated = false,
                         sceneXML = sceneXMLWithLoot,
                         z = zombies,
                         allianceAttackerEnlisting = false,

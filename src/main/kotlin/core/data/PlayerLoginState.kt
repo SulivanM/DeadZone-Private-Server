@@ -51,10 +51,5 @@ data class PlayerLoginState(
             )
         }
 
-        fun newgame(): PlayerLoginState {
-            return PlayerLoginState(
-                invsize = 500
-            )
-        }
     }
 }
