@@ -2,9 +2,6 @@ package utils
 
 import io.ktor.server.routing.*
 import io.ktor.util.date.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.text.SimpleDateFormat
@@ -27,12 +24,11 @@ object Logger {
 
     var level: LogLevel = LogLevel.DEBUG
     private const val MAX_LOG_LENGTH = 500
-    private const val MAX_LOG_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+    private const val MAX_LOG_FILE_SIZE = 5 * 1024 * 1024
     private const val MAX_LOG_ROTATES = 5
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
-    private var broadcast: (suspend (LogMessage) -> Unit)? = null
-    fun init(broadcastFunc: suspend (LogMessage) -> Unit) { broadcast = broadcastFunc }
+    fun init(function: () -> Unit) { }
 
     fun debug(msg: String) = debug { msg }
     fun debug(config: LogConfig, forceLogFull: Boolean? = null, msg: () -> String) =
@@ -96,7 +92,7 @@ object Logger {
             when (target) {
                 LogTarget.PRINT -> println(logMessage)
                 is LogTarget.FILE -> writeToFile(target.file, logMessage)
-                LogTarget.CLIENT -> broadcastToClients(LogMessage(level, logMessage))
+                LogTarget.CLIENT -> {}
             }
         }
     }
@@ -107,12 +103,6 @@ object Logger {
                 rotateLogFile(targetFile)
             }
             targetFile.appendText("$message\n")
-        }
-    }
-
-    private fun broadcastToClients(logMsg: LogMessage) {
-        CoroutineScope(Dispatchers.IO).launch {
-            broadcast?.invoke(logMsg)
         }
     }
 
@@ -143,11 +133,11 @@ data class LogConfig(
     val logFull: Boolean = false
 )
 
-val LogConfigWriteError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.CLIENT_WRITE_ERROR), LogTarget.CLIENT), true)
-val LogConfigAPIError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.API_SERVER_ERROR), LogTarget.CLIENT), true)
-val LogConfigSocketToClient = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR), LogTarget.CLIENT))
-val LogConfigSocketError = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR), LogTarget.CLIENT), true)
-val LogConfigAssetsError = LogConfig(LogSource.ANY, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.ASSETS_ERROR), LogTarget.CLIENT), true)
+val LogConfigWriteError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.CLIENT_WRITE_ERROR)), true)
+val LogConfigAPIError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.API_SERVER_ERROR)), true)
+val LogConfigSocketToClient = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)))
+val LogConfigSocketError = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)), true)
+val LogConfigAssetsError = LogConfig(LogSource.ANY, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.ASSETS_ERROR)), true)
 
 @Serializable
 data class LogMessage(val level: LogLevel, val msg: String)

@@ -1,39 +1,47 @@
 package core.model.game.data
 
-import utils.AnyMapSerializer
 import io.ktor.util.date.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class TimerData(
-    val start: Long, // epoch millis
-    val length: Long, // length in seconds!
-    // If sending this via API, the value should be JSONElement. Use Json.encodeToJsonElement()
-    @Serializable(with = AnyMapSerializer::class)
-    val data: Map<String, Any>? // this depends on each response. e.g., building upgrade need level
+    val start: Long,
+    val length: Long,
+    val data: Map<String, JsonElement>? = null
 ) {
     companion object {
         fun runForDuration(
             duration: Duration,
-            data: Map<String, Any>? = emptyMap()
+            data: Map<String, Any>? = null
         ): TimerData {
             return TimerData(
                 start = getTimeMillis(),
                 length = duration.inWholeSeconds,
-                data = data
+                data = data?.mapValues { toJsonElement(it.value) }
             )
+        }
+
+        private fun toJsonElement(value: Any?): JsonElement {
+            return when (value) {
+                null -> kotlinx.serialization.json.JsonNull
+                is String -> JsonPrimitive(value)
+                is Number -> JsonPrimitive(value)
+                is Boolean -> JsonPrimitive(value)
+                else -> JsonPrimitive(value.toString())
+            }
         }
     }
 }
 
+@Serializable
 data class SocketTimerData(
-    val start: Long, // epoch millis
-    val length: Long, // length in seconds!
-    // The value should be JSONElement. Use Json.encodeToJsonElement()
-    @Serializable(with = AnyMapSerializer::class)
-    val data: Map<String, Any>? // this depends on each response. e.g., building upgrade need level
+    val start: Long,
+    val length: Long,
+    val data: Map<String, JsonElement>? = null
 )
 
 fun TimerData.hasEnded(): Boolean {

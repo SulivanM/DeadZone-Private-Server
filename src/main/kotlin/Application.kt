@@ -31,8 +31,6 @@ import user.PlayerAccountRepositoryMaria
 import user.auth.WebsiteAuthProvider
 import utils.LogLevel
 import utils.Logger
-import websocket.WebsocketManager
-import websocket.WsMessage
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.serialization.kotlinx.protobuf.*
@@ -71,7 +69,6 @@ fun Application.module() {
         masking = true
     }
     Logger.info("🚀 Starting DeadZone server")
-    val wsManager = WebsocketManager()
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
@@ -94,7 +91,6 @@ fun Application.module() {
     GlobalContext.init(
         json = json,
         gameDefinitions = GameDefinitions(onResourceLoadComplete = {
-            launch { wsManager.onResourceLoadComplete() }
             Logger.info("🎮 Game resources loaded")
         })
     )
@@ -161,32 +157,11 @@ fun Application.module() {
     }
     Logger.level = LogLevel.DEBUG
     install(CallLogging)
-    Logger.init { logMessage ->
-        wsManager.getAllClients().forEach { (clientId, session) ->
-            try {
-                val logJson = Json.encodeToJsonElement(logMessage)
-                session.send(
-                    Frame.Text(
-                        Json.encodeToString(
-                            WsMessage(
-                                type = "log",
-                                payload = logJson
-                            )
-                        )
-                    )
-                )
-            } catch (e: Exception) {
-                Logger.error("📡 Failed to send log to client $clientId: ${e.message}")
-                wsManager.removeClient(clientId)
-            }
-        }
-    }
     routing {
         fileRoutes()
         caseInsensitiveStaticResources("/game/data", File("static"))
         authRoutes(serverContext)
         apiRoutes(serverContext)
-        debugLogRoutes(wsManager)
     }
     val server = Server(context = serverContext).also { it.start() }
     Logger.info("🎉 Server started successfully")
