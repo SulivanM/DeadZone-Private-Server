@@ -1,11 +1,6 @@
 package api.routes
 
-import api.handler.authenticate
-import api.handler.createJoinRoom
-import api.handler.loadObjects
-import api.handler.loadIndexRange
-import api.handler.socialRefresh
-import api.handler.writeError
+import api.handler.*
 import context.ServerContext
 import utils.LogConfigAPIError
 import utils.Logger
@@ -19,7 +14,7 @@ fun Route.apiRoutes(serverContext: ServerContext) {
     get("/api/status") {
         call.respond(HttpStatusCode.OK, mapOf("status" to "online"))
     }
-    
+
     post("/api/{path}") {
         val path = call.parameters["path"] ?: return@post call.respond(HttpStatusCode.BadRequest)
 
