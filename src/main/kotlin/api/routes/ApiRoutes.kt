@@ -12,9 +12,14 @@ import utils.Logger
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 
 fun Route.apiRoutes(serverContext: ServerContext) {
+    get("/api/status") {
+        call.respond(HttpStatusCode.OK, mapOf("status" to "online"))
+    }
+    
     post("/api/{path}") {
         val path = call.parameters["path"] ?: return@post call.respond(HttpStatusCode.BadRequest)
 

@@ -9,9 +9,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Route.authRoutes(serverContext: ServerContext) {
-    get("/api/status") {
-        call.respond(HttpStatusCode.OK, mapOf("status" to "online"))
-    }
 
     post("/api/login") {
         val data = call.receive<Map<String, String>>()
