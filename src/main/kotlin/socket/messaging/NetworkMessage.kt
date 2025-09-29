@@ -63,7 +63,7 @@ object NetworkMessage {
     const val UPGRADE_FLAG_CHANGED = "ufc"
     const val MISSION_EVENT = "me"
     const val PVP_LIST_UPDATE = "pvplist"
-    const val SCAV_STARTED = "sc =strt"
+    const val SCAV_STARTED = "scvstrt"
     const val SCAV_ENDED = "scvend"
     const val FUEL_UPDATE = "fuel"
     const val TRADE_DISABLED = "td"
