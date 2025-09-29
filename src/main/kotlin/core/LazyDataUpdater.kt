@@ -1,14 +1,20 @@
-package core
+package dev.deadzone.core
 
+import core.*
 import core.model.game.data.*
+import dev.deadzone.core.model.game.data.*
 import io.ktor.util.date.*
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Lazily update player's data based on timer or lastLogin
+ */
 object LazyDataUpdater {
     fun depleteResources(lastLogin: Long, res: GameResources): GameResources {
         val minutesPassed = min(0, (getTimeMillis() - lastLogin).milliseconds.inWholeMinutes)
         val depletionRate = 0.02
+        // depletion formula: each minutes deplete res by 0.05, an hour is 3
 
         val depleted = depletionRate * minutesPassed
 
@@ -20,14 +26,14 @@ object LazyDataUpdater {
 
     @Suppress("CAST_NEVER_SUCCEEDS")
     fun updateBuildingTimers(buildings: List<BuildingLike>): List<BuildingLike> {
-        return buildings.mapNotNull { bld ->
+        return buildings.map { bld ->
             val upgradeDone = bld.upgrade?.hasEnded() ?: false
             val repairDone = bld.repair?.hasEnded() ?: false
 
             when (bld) {
                 is Building -> when {
                     upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
+                        val level = bld.level + 1 // Increment the level by 1 when upgrade is done
                         bld.copy(level = level, upgrade = null)
                     }
                     repairDone -> bld.copy(repair = null)
@@ -35,13 +41,12 @@ object LazyDataUpdater {
                 }
                 is JunkBuilding -> when {
                     upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
+                        val level = bld.level + 1 // Increment the level by 1 when upgrade is done
                         bld.copy(level = level, upgrade = null)
                     }
-                    repairDone -> null
+                    repairDone -> bld.copy(repair = null)
                     else -> bld
                 }
-                else -> bld
             }
         }
     }

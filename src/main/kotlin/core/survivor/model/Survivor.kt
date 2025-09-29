@@ -4,6 +4,7 @@ import core.data.AdminData
 import core.model.game.data.SurvivorAppearance.Companion.toHumanAppearance
 import core.survivor.model.injury.Injury
 import core.survivor.model.injury.InjuryList
+import dev.deadzone.core.model.game.data.TimerData
 import utils.UUID
 import kotlinx.serialization.Serializable
 

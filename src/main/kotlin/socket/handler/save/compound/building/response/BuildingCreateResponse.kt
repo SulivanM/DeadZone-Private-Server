@@ -1,6 +1,6 @@
 package socket.handler.save.compound.building.response
 
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -5,8 +5,8 @@ import api.message.db.LoadObjectsArgs
 import api.message.db.LoadObjectsOutput
 import api.utils.pioFraming
 import context.ServerContext
-import core.LazyDataUpdater
 import data.collection.NeighborHistory
+import dev.deadzone.core.LazyDataUpdater
 import utils.LogConfigAPIError
 import utils.LogConfigSocketToClient
 import utils.LogSource

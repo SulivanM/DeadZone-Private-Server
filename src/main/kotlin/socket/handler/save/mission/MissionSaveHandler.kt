@@ -8,9 +8,9 @@ import core.items.model.Item
 import core.mission.LootService
 import core.mission.model.LootParameter
 import core.model.game.data.MissionStats
-import core.model.game.data.TimerData
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
+import dev.deadzone.core.model.game.data.TimerData
 import socket.core.Connection
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -19,6 +19,8 @@ import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
@@ -126,10 +128,18 @@ class MissionSaveHandler : SaveSubHandler {
                 val leader = svc.survivor.getSurvivorLeader()
 
                 val playerStats = missionStats[connection.playerId] ?: MissionStats()
-                val earnedXp = calculateXp(playerStats.killData)
+                val earnedXp = calculateMissionXp(playerStats.killData)
                 val (itemLooted, quantity) = summarizeLoots(data)
 
-                // some of most important data
+                // Calculate new XP and level
+                val newXp = leader.xp + earnedXp
+                val (newLevel, newLevelPts) = calculateNewLevelAndPoints(leader.level, leader.xp, newXp)
+
+                // Update the leader's XP and level
+                svc.survivor.updateSurvivor(leader.id) { currentLeader ->
+                    currentLeader.copy(xp = newXp, level = newLevel)
+                }
+
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionEndResponse(
                         automated = false,
@@ -138,21 +148,21 @@ class MissionSaveHandler : SaveSubHandler {
                         returnTimer = TimerData.runForDuration(
                             20.seconds,
                             data = mapOf("return" to 20)
-                        ), // TODO replace with realistic time
+                        ),
                         lockTimer = null,
                         loot = itemLooted,
                         itmCounters = quantity,
-                        injuries = null,          // TODO fill injured survivor
-                        survivors = emptyList(),  // TODO fill the survivors that goes into the mission, also increase their lvl or xp
+                        injuries = null,
+                        survivors = emptyList(),
                         player = PlayerSurvivor(
-                            xp = leader.xp + earnedXp,
-                            level = leader.level
-                        ), // TODO level up the leader if needed
-                        levelPts = 0,             // TODO increase when leader level up, I think this is skill points
-                        // base64 encoded string
+                            xp = newXp,
+                            level = newLevel
+                        ),
+                        levelPts = newLevelPts,
                         cooldown = null
                     )
                 )
+
 
                 // TODO change resource with obtained loot...
                 val currentResource = svc.compound.getResources()
@@ -354,16 +364,6 @@ class MissionSaveHandler : SaveSubHandler {
         )
     }
 
-    private fun calculateXp(killData: Map<String, Int>): Int {
-        var totalXp = 0
-        // TO-DO replace
-        // do lookup to zombie.xml to find the zombie xp for particular zombie id
-        for ((zombieId, killAmount) in killData) {
-            totalXp += Random.nextInt(1, 100) * killAmount
-        }
-        return totalXp
-    }
-
     @Suppress("UNCHECKED_CAST")
     private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
         // "loot" must be a list of string which contains items ids
@@ -378,5 +378,43 @@ class MissionSaveHandler : SaveSubHandler {
         }
 
         return items.toList() to itemCounts
+    }
+
+    private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
+        var level = currentLevel
+        var levelPts = 0
+        var xp = currentXp
+
+        while (xp < newXp) {
+            val xpForNextLevel = calculateXpForNextLevel(level)
+            if (newXp >= xp + xpForNextLevel) {
+                level++
+                levelPts++
+                xp += xpForNextLevel
+            } else {
+                break
+            }
+        }
+
+        return Pair(level, levelPts)
+    }
+
+    private fun calculateXpForNextLevel(currentLevel: Int): Int {
+        // This formula creates a more gradual XP curve
+        return (100 * (currentLevel.toDouble().pow(1.5))).toInt()
+    }
+
+    private fun calculateMissionXp(killData: Map<String, Int>): Int {
+        // Base XP for completing a mission
+        var totalXp = 50
+
+        // XP for different types of kills
+        totalXp += (killData["zombie"] ?: 0) * 5  // 5 XP per normal zombie
+        totalXp += (killData["runner"] ?: 0) * 10 // 10 XP per runner
+        totalXp += (killData["fatty"] ?: 0) * 15  // 15 XP per fatty
+        totalXp += (killData["boss"] ?: 0) * 100  // 100 XP per boss
+
+        // Cap the maximum XP that can be earned in a single mission
+        return totalXp.coerceAtMost(1000)
     }
 }

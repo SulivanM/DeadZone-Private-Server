@@ -2,7 +2,7 @@ package core.model.game.data.effects
 
 import kotlinx.serialization.Serializable
 import core.model.game.data.effects.EffectData
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 

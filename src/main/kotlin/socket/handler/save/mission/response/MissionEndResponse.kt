@@ -2,9 +2,9 @@ package socket.handler.save.mission.response
 
 import core.items.model.Item
 import core.model.game.data.Morale
-import core.model.game.data.TimerData
 import core.model.game.data.assignment.AssignmentResult
 import core.survivor.model.injury.Injury
+import dev.deadzone.core.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 
 @Serializable

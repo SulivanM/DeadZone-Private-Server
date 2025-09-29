@@ -1,7 +1,7 @@
 package core.survivor.model.injury
 
 import kotlinx.serialization.Serializable
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 
 @Serializable
 data class Injury(
