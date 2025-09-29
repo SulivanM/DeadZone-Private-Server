@@ -15,9 +15,8 @@ object ItemFactory {
     }
 
     fun createItemFromId(itemId: String = UUID.new(), idInXML: String): Item {
-        val res =
-            gameResourceRegistry.itemsById[idInXML]
-                ?: throw IllegalArgumentException("Failed creating Item id=$itemId from xml id=$idInXML (xml id not found)")
+        val res = gameResourceRegistry.findItem(idInXML)
+            ?: throw IllegalArgumentException("Failed creating Item id=$itemId from xml id=$idInXML (xml id not found)")
         return createItemFromResource(itemId, res)
     }
 

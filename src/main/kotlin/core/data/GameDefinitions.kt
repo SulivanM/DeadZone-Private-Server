@@ -32,6 +32,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class GameDefinitions(onResourceLoadComplete: () -> Unit) {
     val itemsById = mutableMapOf<String, ItemResource>()
+    val itemsByIdUppercased = mutableMapOf<String, ItemResource>()
     val itemsByType = mutableMapOf<String, MutableList<ItemResource>>()
     val itemsByLootable = mutableMapOf<String, MutableList<ItemResource>>()
 
@@ -75,5 +76,11 @@ class GameDefinitions(onResourceLoadComplete: () -> Unit) {
             Logger.info { "📦 Finished parsing $resName in ${(end - start).milliseconds}" }
         }
         onResourceLoadComplete()
+    }
+
+    // in some cases, the game sends the server uppercased id
+    fun findItem(id: String): ItemResource? {
+        // prefer exact match first
+        return itemsById[id] ?: itemsByIdUppercased[id.uppercase()]
     }
 }
