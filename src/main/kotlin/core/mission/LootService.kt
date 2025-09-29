@@ -36,7 +36,6 @@ class LootService(
     val cumulativeLootsPerLoc: MutableMap<String, TreeMap<Double, LootContent>> = mutableMapOf()
     val totalWeightPerLoc: MutableMap<String, Double> = mutableMapOf()
     val insertedLoots: MutableList<LootContent> = mutableListOf()
-    val itemsLootedByPlayer: MutableList<LootContent> = mutableListOf()
 
     init {
         buildIndexOfLootableItems()
@@ -134,9 +133,13 @@ class LootService(
                 val itmsElement = doc.createElement("itms")
 
                 val loots = getRollsFromLocs(srchNode.textContent.split(","))
-                for ((id, type, q) in loots) {
+                for ((_, type, q) in loots) {
                     val itm = doc.createElement("itm")
-                    itm.setAttribute("id", id)
+                    // the id here is not used to construct an Item
+                    // it is used for reference, in which client will send it during mission end
+                    // to let server know which items are looted.
+                    // therefore, we used type for the id
+                    itm.setAttribute("id", type)
                     itm.setAttribute("type", type)
                     itm.setAttribute("q", q.toString())
                     itmsElement.appendChild(itm)
