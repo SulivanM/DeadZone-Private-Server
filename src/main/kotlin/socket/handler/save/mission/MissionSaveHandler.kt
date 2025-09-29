@@ -3,11 +3,14 @@ package socket.handler.save.mission
 import context.GlobalContext
 import context.ServerContext
 import context.requirePlayerContext
+import core.items.ItemFactory
+import core.items.model.Item
 import core.mission.LootService
 import core.mission.model.LootParameter
+import core.model.game.data.MissionStats
+import core.model.game.data.TimerData
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
-import core.model.game.data.MissionStats
 import socket.core.Connection
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -17,9 +20,14 @@ import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 
 class MissionSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISSION_SAVES
+
+    // save stats of playerId: MissionStats
+    // use this to know loots, EXP, kills, etc. after mission ended.
+    private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
 
     override suspend fun handle(
         connection: Connection,
@@ -117,33 +125,42 @@ class MissionSaveHandler : SaveSubHandler {
                 val svc = serverContext.requirePlayerContext(playerId).services
                 val leader = svc.survivor.getSurvivorLeader()
 
+                val playerStats = missionStats[connection.playerId] ?: MissionStats()
+                val earnedXp = calculateXp(playerStats.killData)
+                val (itemLooted, quantity) = summarizeLoots(data)
+
                 // some of most important data
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionEndResponse(
                         automated = false,
-                        xpEarned = 100,
-                        xp = null,
-                        returnTimer = null,
+                        xpEarned = earnedXp,
+                        xp = XpBreakdown(total = earnedXp),
+                        returnTimer = TimerData.runForDuration(
+                            20.seconds,
+                            data = mapOf("return" to 20)
+                        ), // TODO replace with realistic time
                         lockTimer = null,
-                        loot = emptyList(),
-                        // item id to quantity
-                        itmCounters = emptyMap(),
-                        injuries = null,
-                        // the survivors that goes into the mission
-                        survivors = emptyList(),
-                        player = PlayerSurvivor(xp = 100, level = leader.level),
-                        levelPts = 0,
+                        loot = itemLooted,
+                        itmCounters = quantity,
+                        injuries = null,          // TODO fill injured survivor
+                        survivors = emptyList(),  // TODO fill the survivors that goes into the mission, also increase their lvl or xp
+                        player = PlayerSurvivor(
+                            xp = leader.xp + earnedXp,
+                            level = leader.level
+                        ), // TODO level up the leader if needed
+                        levelPts = 0,             // TODO increase when leader level up, I think this is skill points
                         // base64 encoded string
                         cooldown = null
                     )
                 )
 
-                // change resource with obtained loot...
+                // TODO change resource with obtained loot...
                 val currentResource = svc.compound.getResources()
 
                 val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
 
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
+                missionStats.remove(connection.playerId)
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
@@ -201,19 +218,16 @@ class MissionSaveHandler : SaveSubHandler {
 
             // also handle this
             SaveDataMethod.STAT_DATA -> {
-                val stats = data["stats"]
-                Logger.debug(logFull = true) { data["stats"].toString() }
-                Logger.warn(LogConfigSocketToClient) { "Received 'STAT_DATA' message on MissionSaveHandler [not implemented] with stats: $stats" }
-                val missionStats = parseMissionStats(data["stats"])
-                Logger.debug(logFull = true) { "STAT_DATA parsed: $missionStats" }
+                val playerStats = parseMissionStats(data["stats"])
+                Logger.debug(logFull = true) { "STAT_DATA parsed: $playerStats" }
+                missionStats[connection.playerId] = playerStats
                 // TODO: attach missionStats to a running mission context or persist if needed
             }
+
             SaveDataMethod.STAT -> {
-                val stats = data["stats"]
-                Logger.debug(logFull = true) { data["stats"].toString() }
-                Logger.warn(LogConfigSocketToClient) { "Received 'STAT_DATA' message on MissionSaveHandler [not implemented] with stats: $stats" }
-                val missionStats = parseMissionStats(data["stats"])
+                val playerStats = parseMissionStats(data["stats"])
                 Logger.debug(logFull = true) { "STAT parsed: $missionStats" }
+                missionStats[connection.playerId] = playerStats
                 // TODO: attach missionStats to a running mission context or persist if needed
             }
         }
@@ -338,5 +352,31 @@ class MissionSaveHandler : SaveSubHandler {
             killData = killData,
             customData = customData
         )
+    }
+
+    private fun calculateXp(killData: Map<String, Int>): Int {
+        var totalXp = 0
+        // TO-DO replace
+        // do lookup to zombie.xml to find the zombie xp for particular zombie id
+        for ((zombieId, killAmount) in killData) {
+            totalXp += Random.nextInt(1, 100) * killAmount
+        }
+        return totalXp
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
+        // "loot" must be a list of string which contains items ids
+        val itemIdsOfLoots: List<String> =
+            requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
+        val items = mutableSetOf<Item>()
+        val itemCounts = mutableMapOf<String, Int>()
+
+        itemIdsOfLoots.forEach { itemId ->
+            items.add(ItemFactory.createItemFromId(idInXML = itemId))
+            itemCounts[itemId] = itemCounts.getOrDefault(itemId, 0) + 1
+        }
+
+        return items.toList() to itemCounts
     }
 }
