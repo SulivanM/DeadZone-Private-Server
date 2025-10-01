@@ -296,8 +296,8 @@ import api.message.db.LoadObjectsArgs
 import api.message.db.LoadObjectsOutput
 import api.utils.pioFraming
 import context.ServerContext
-import core.LazyDataUpdater
 import data.collection.NeighborHistory
+import dev.deadzone.core.LazyDataUpdater
 import utils.LogConfigAPIError
 import utils.LogConfigSocketToClient
 import utils.LogSource
@@ -1383,13 +1383,18 @@ data class ServerConfig(
 )
 
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\core\LazyDataUpdater.kt =====
-package core
+package dev.deadzone.core
 
+import core.*
 import core.model.game.data.*
+import dev.deadzone.core.model.game.data.*
 import io.ktor.util.date.*
 import kotlin.math.min
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Lazily update player's data based on timer or lastLogin
+ */
 object LazyDataUpdater {
     fun depleteResources(lastLogin: Long, res: GameResources): GameResources {
         val minutesPassed = min(0, (getTimeMillis() - lastLogin).milliseconds.inWholeMinutes)
@@ -1405,14 +1410,14 @@ object LazyDataUpdater {
 
     @Suppress("CAST_NEVER_SUCCEEDS")
     fun updateBuildingTimers(buildings: List<BuildingLike>): List<BuildingLike> {
-        return buildings.mapNotNull { bld ->
+        return buildings.map { bld ->
             val upgradeDone = bld.upgrade?.hasEnded() ?: false
             val repairDone = bld.repair?.hasEnded() ?: false
 
             when (bld) {
                 is Building -> when {
                     upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
+                        val level = bld.level + 1 // Increment the level by 1 when upgrade is done
                         bld.copy(level = level, upgrade = null)
                     }
                     repairDone -> bld.copy(repair = null)
@@ -1420,13 +1425,12 @@ object LazyDataUpdater {
                 }
                 is JunkBuilding -> when {
                     upgradeDone -> {
-                        val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
+                        val level = bld.level + 1 // Increment the level by 1 when upgrade is done
                         bld.copy(level = level, upgrade = null)
                     }
-                    repairDone -> null
+                    repairDone -> bld.copy(repair = null)
                     else -> bld
                 }
-                else -> bld
             }
         }
     }
@@ -1850,6 +1854,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 package core.model.game.data
 
 import core.items.model.Item
+import dev.deadzone.core.model.game.data.TimerData
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -2212,6 +2217,7 @@ package core.model.game.data
 
 import kotlinx.serialization.Serializable
 import core.items.model.Item
+import dev.deadzone.core.model.game.data.TimerData
 import utils.UUID
 
 @Serializable
@@ -3512,6 +3518,7 @@ package core.model.game.data
 
 import kotlinx.serialization.Serializable
 import core.items.model.Item
+import dev.deadzone.core.model.game.data.TimerData
 
 @Serializable
 data class MissionData(
@@ -4108,50 +4115,40 @@ object TaskType_Constants {
 }
 
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\core\model\game\data\TimerData.kt =====
-package core.model.game.data
+package dev.deadzone.core.model.game.data
 
+import dev.deadzone.utils.AnyMapSerializer
 import io.ktor.util.date.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 data class TimerData(
-    val start: Long,
-    val length: Long,
-    val data: Map<String, JsonElement>? = null
+    val start: Long, // epoch millis
+    val length: Long, // length in seconds!
+    @Serializable(with = AnyMapSerializer::class)
+    val data: Map<String, Any>? // this depends on each response. e.g., building upgrade need level
 ) {
     companion object {
         fun runForDuration(
             duration: Duration,
-            data: Map<String, Any>? = null
+            data: Map<String, Any>? = emptyMap()
         ): TimerData {
             return TimerData(
                 start = getTimeMillis(),
                 length = duration.inWholeSeconds,
-                data = data?.mapValues { toJsonElement(it.value) }
+                data = data
             )
-        }
-
-        private fun toJsonElement(value: Any?): JsonElement {
-            return when (value) {
-                null -> kotlinx.serialization.json.JsonNull
-                is String -> JsonPrimitive(value)
-                is Number -> JsonPrimitive(value)
-                is Boolean -> JsonPrimitive(value)
-                else -> JsonPrimitive(value.toString())
-            }
         }
     }
 }
 
-@Serializable
 data class SocketTimerData(
-    val start: Long,
-    val length: Long,
-    val data: Map<String, JsonElement>? = null
+    val start: Long, // epoch millis
+    val length: Long, // length in seconds!
+    @Serializable(with = AnyMapSerializer::class)
+    val data: Map<String, Any>? // this depends on each response. e.g., building upgrade need level
 )
 
 fun TimerData.hasEnded(): Boolean {
@@ -4714,7 +4711,7 @@ data class InfectedBountyTaskCondition(
 package core.model.game.data.effects
 
 import kotlinx.serialization.Serializable
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 
 @Serializable
 data class Cooldown(
@@ -4748,7 +4745,7 @@ package core.model.game.data.effects
 
 import kotlinx.serialization.Serializable
 import core.model.game.data.effects.EffectData
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
@@ -5874,6 +5871,7 @@ import core.data.AdminData
 import core.model.game.data.SurvivorAppearance.Companion.toHumanAppearance
 import core.survivor.model.injury.Injury
 import core.survivor.model.injury.InjuryList
+import dev.deadzone.core.model.game.data.TimerData
 import utils.UUID
 import kotlinx.serialization.Serializable
 
@@ -6275,7 +6273,7 @@ object SurvivorState_Constants {
 package core.survivor.model.injury
 
 import kotlinx.serialization.Serializable
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 
 @Serializable
 data class Injury(
@@ -8249,6 +8247,7 @@ import context.GlobalContext
 import context.ServerContext
 import context.requirePlayerContext
 import core.model.game.data.*
+import dev.deadzone.core.model.game.data.TimerData
 import socket.core.Connection
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -8694,7 +8693,7 @@ data class BuildingCreateBuyResponse(
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\socket\handler\save\compound\building\response\BuildingCreateResponse.kt =====
 package socket.handler.save.compound.building.response
 
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8732,7 +8731,7 @@ data class BuildingRecycleResponse(
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\socket\handler\save\compound\building\response\BuildingRepairResponse.kt =====
 package socket.handler.save.compound.building.response
 
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8769,7 +8768,7 @@ data class BuildingSpeedUpResponse(
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\socket\handler\save\compound\building\response\BuildingUpgradeResponse.kt =====
 package socket.handler.save.compound.building.response
 
-import core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.TimerData
 import socket.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
@@ -9213,9 +9212,9 @@ import core.items.model.Item
 import core.mission.LootService
 import core.mission.model.LootParameter
 import core.model.game.data.MissionStats
-import core.model.game.data.TimerData
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
+import dev.deadzone.core.model.game.data.TimerData
 import socket.core.Connection
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -9224,6 +9223,8 @@ import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
@@ -9326,8 +9327,15 @@ class MissionSaveHandler : SaveSubHandler {
                 val leader = svc.survivor.getSurvivorLeader()
 
                 val playerStats = missionStats[connection.playerId] ?: MissionStats()
-                val earnedXp = calculateXp(playerStats.killData)
+                val earnedXp = calculateMissionXp(playerStats.killData)
                 val (itemLooted, quantity) = summarizeLoots(data)
+
+                val newXp = leader.xp + earnedXp
+                val (newLevel, newLevelPts) = calculateNewLevelAndPoints(leader.level, leader.xp, newXp)
+
+                svc.survivor.updateSurvivor(leader.id) { currentLeader ->
+                    currentLeader.copy(xp = newXp, level = newLevel)
+                }
 
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionEndResponse(
@@ -9337,20 +9345,21 @@ class MissionSaveHandler : SaveSubHandler {
                         returnTimer = TimerData.runForDuration(
                             20.seconds,
                             data = mapOf("return" to 20)
-                        ), // TODO replace with realistic time
+                        ),
                         lockTimer = null,
                         loot = itemLooted,
                         itmCounters = quantity,
-                        injuries = null,          // TODO fill injured survivor
-                        survivors = emptyList(),  // TODO fill the survivors that goes into the mission, also increase their lvl or xp
+                        injuries = null,
+                        survivors = emptyList(),
                         player = PlayerSurvivor(
-                            xp = leader.xp + earnedXp,
-                            level = leader.level
-                        ), // TODO level up the leader if needed
-                        levelPts = 0,             // TODO increase when leader level up, I think this is skill points
+                            xp = newXp,
+                            level = newLevel
+                        ),
+                        levelPts = newLevelPts,
                         cooldown = null
                     )
                 )
+
 
                 val currentResource = svc.compound.getResources()
 
@@ -9546,14 +9555,6 @@ class MissionSaveHandler : SaveSubHandler {
         )
     }
 
-    private fun calculateXp(killData: Map<String, Int>): Int {
-        var totalXp = 0
-        for ((zombieId, killAmount) in killData) {
-            totalXp += Random.nextInt(1, 100) * killAmount
-        }
-        return totalXp
-    }
-
     @Suppress("UNCHECKED_CAST")
     private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
         val itemIdsOfLoots: List<String> =
@@ -9567,6 +9568,40 @@ class MissionSaveHandler : SaveSubHandler {
         }
 
         return items.toList() to itemCounts
+    }
+
+    private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
+        var level = currentLevel
+        var levelPts = 0
+        var xp = currentXp
+
+        while (xp < newXp) {
+            val xpForNextLevel = calculateXpForNextLevel(level)
+            if (newXp >= xp + xpForNextLevel) {
+                level++
+                levelPts++
+                xp += xpForNextLevel
+            } else {
+                break
+            }
+        }
+
+        return Pair(level, levelPts)
+    }
+
+    private fun calculateXpForNextLevel(currentLevel: Int): Int {
+        return (100 * (currentLevel.toDouble().pow(1.5))).toInt()
+    }
+
+    private fun calculateMissionXp(killData: Map<String, Int>): Int {
+        var totalXp = 50
+
+        totalXp += (killData["zombie"] ?: 0) * 5  // 5 XP per normal zombie
+        totalXp += (killData["runner"] ?: 0) * 10 // 10 XP per runner
+        totalXp += (killData["fatty"] ?: 0) * 15  // 15 XP per fatty
+        totalXp += (killData["boss"] ?: 0) * 100  // 100 XP per boss
+
+        return totalXp.coerceAtMost(1000)
     }
 }
 
@@ -9592,9 +9627,9 @@ package socket.handler.save.mission.response
 
 import core.items.model.Item
 import core.model.game.data.Morale
-import core.model.game.data.TimerData
 import core.model.game.data.assignment.AssignmentResult
 import core.survivor.model.injury.Injury
+import dev.deadzone.core.model.game.data.TimerData
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11940,6 +11975,52 @@ data class UserProfile(
     val friends: Set<UserProfile> = emptySet(),
     val enemies: Set<UserProfile> = emptySet(),
 )
+
+===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\utils\AnyMapSerializer.kt =====
+package dev.deadzone.utils
+
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
+
+object AnyMapSerializer : KSerializer<Map<String, Any>> {
+    override val descriptor: SerialDescriptor =
+        MapSerializer(String.serializer(), JsonElement.serializer()).descriptor
+
+    override fun serialize(encoder: Encoder, value: Map<String, Any>) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: error("This serializer only works with JSON")
+        val converted = value.mapValues { (_, v) ->
+            when (v) {
+                is JsonElement -> v
+                is String -> JsonPrimitive(v)
+                is Number -> JsonPrimitive(v)
+                is Boolean -> JsonPrimitive(v)
+                is Map<*, *> -> JsonObject((v as Map<String, Any>).mapValues { JsonPrimitive(it.value.toString()) })
+                is List<*> -> JsonArray(v.map { JsonPrimitive(it.toString()) })
+                else -> JsonPrimitive(v.toString())
+            }
+        }
+        jsonEncoder.encodeJsonElement(JsonObject(converted))
+    }
+
+    override fun deserialize(decoder: Decoder): Map<String, Any> {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: error("This serializer only works with JSON")
+        val obj = jsonDecoder.decodeJsonElement().jsonObject
+        return obj.mapValues { it.value }
+    }
+}
 
 ===== C:\Users\Sulivan\Desktop\Projects\DeadZone-Private-Server\src\main\kotlin\utils\JsonUtils.kt =====
 @file:Suppress("UNCHECKED_CAST")

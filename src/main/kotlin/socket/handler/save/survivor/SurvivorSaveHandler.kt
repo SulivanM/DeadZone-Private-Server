@@ -9,6 +9,7 @@ import socket.core.Connection
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.survivor.response.PlayerCustomResponse
+import socket.handler.save.survivor.response.SurvivorEditResponse
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
@@ -128,7 +129,40 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_EDIT -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_EDIT' message [not implemented]" }
+                val survivorId = data["id"] as? String ?: return
+                val ap = data["ap"] as? Map<*, *>
+                val gender = data["g"] as? String
+                val voice = data["v"] as? String
+
+                Logger.info(LogConfigSocketToClient) { "Editing survivor id=$survivorId, ap=$ap, gender=$gender, voice=$voice" }
+
+                val svc = serverContext.requirePlayerContext(playerId).services
+
+                svc.survivor.updateSurvivor(srvId = survivorId) { currentSurvivor ->
+                    var updatedSurvivor = currentSurvivor
+
+                    if (ap != null) {
+                        val appearance = HumanAppearance.parse(ap)
+                        if (appearance != null) {
+                            updatedSurvivor = updatedSurvivor.copy(appearance = appearance)
+                        } else {
+                            Logger.error(LogConfigSocketToClient) { "Failed to parse appearance=$ap" }
+                        }
+                    }
+
+                    if (gender != null) {
+                        updatedSurvivor = updatedSurvivor.copy(gender = gender)
+                    }
+
+                    if (voice != null) {
+                        updatedSurvivor = updatedSurvivor.copy(voice = voice)
+                    }
+
+                    updatedSurvivor
+                }
+
+                val responseJson = GlobalContext.json.encodeToString(SurvivorEditResponse(success = true))
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.NAMES -> {

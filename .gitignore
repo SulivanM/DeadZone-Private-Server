@@ -46,3 +46,4 @@ data/db/
 deploy/
 src/main/dump.py
 src/main/dump.txt
+src/main/server.txt
