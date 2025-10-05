@@ -4,46 +4,87 @@ TLS:DZ private server (revival).
 
 ## How to Play?
 
-1. Install [Java 24](https://www.oracle.com/java/technologies/downloads/). We recommend installing it in the default directory. (e.g., for Windows 64-bit users, download the x64 MSI installer).
-2. Install [MariaDB community edition](https://mariadb.com/kb/en/installing-mariadb-on-windows/). (Installing it as a service is optional)
-3. Download the server [latest release](https://github.com/glennhenry/Recapturing-The-DeadZone/releases) (download the `deploy.zip`).
-4. Extract the zip.
-5. Run the game server, this can be done by running the `autorun.bat/sh` script (behind the scene, this script locates your Java default installation to run the server).
-6. Open a flash-compatible browser (emulator like Ruffle is not supported), such as [Basilisk](https://www.mediafire.com/file/tmecqq7ke0uhqm7/Basilisk_with_Flash_%2528debug%2529.zip/file). Then, go to `127.0.0.1:8080`.
+1. Install [Java 25](https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.exe). We recommend installing it in the default directory.
 
-Join our [Discord](https://discord.gg/jFyAePxDBJ) for questions and more information.
+2. Install MariaDB using our companion repository:  
+   👉 https://github.com/SwitchCompagnie/Deadzone-Revive-Website-Game  
+   This repo provides a ready-to-use setup for MariaDB.
+
+3. Create a new database named `prod_deadzone_game` in MariaDB.  
+   ⚠️ Tables will be created automatically on first server run.
+
+4. Download the latest server :  
+   👉 [Latest Release](https://github.com/SulivanM/DeadZone-Private-Server/releases) (`deploy.zip`)
+
+5. Extract the zip archive.
+
+6. Run the game server using the provided script:  
+   - `autorun.bat` (Windows)  
+   - `autorun.sh` (Linux/macOS)  
+   This script will automatically detect your Java installation.
+
+7. Use a Flash-compatible browser (Ruffle is **not supported**).  
+   We recommend using [Basilisk with Flash (debug)](https://www.mediafire.com/file/tmecqq7ke0uhqm7/Basilisk_with_Flash_%2528debug%2529.zip/file)
+
+8. Go to the following URL in your browser:  
+   `http://127.0.0.1:8080`
+
+👉 Join our [Discord](https://discord.gg/jFyAePxDBJ) for questions, updates, or community support.
+
+---
 
 ## Development
 
-### Requirements:
+### Requirements
 
-- Java 24
-- MariaDB community edition
+- Java 25
+- MariaDB (installed via: [Deadzone-Revive-Website-Game](https://github.com/SwitchCompagnie/Deadzone-Revive-Website-Game))
+
+### Database Configuration
+
+The database config file is located at:  
+`DeadZone-Private-Server/src/main/resources/application.yaml`
+
+Example default configuration:
+
+```yaml
+maria:
+  url: jdbc:mariadb://localhost:3306/prod_deadzone_game
+  user: root
+  password: ""
+```
+
+✅ You can change these values to match your local setup.  
+⚠️ You must create the `prod_deadzone_game` database manually in MariaDB.  
+The required tables will be generated automatically when the server starts.
 
 ### Running the Server
 
-1. Ensure MariaDB server is running.
-2. Run game server:
-   - from scripts: `runserver.bat/sh`.
-   - via command line `.\gradlew run`.
-   - via Intellij IDE by clicking run on `Application.Kt`.
+1. Ensure your MariaDB service is running.
 
-## Docs
+2. Start the server using the provided script:  
+   - `runserver.bat` (Windows)  
+   - `runserver.sh` (Linux/macOS)
 
-Formerly in [this repo](https://github.com/glennhenry/DeadZone-Documentation), we also have documentation of TLSDZ. It's incomplete and isn't updated to the latest information, but still contains basic information about TLSDZ.
+---
 
-To run the docs website locally:
+## Documentation
 
-```
+Some partial and outdated documentation is available here:  
+👉 [DeadZone Documentation](https://github.com/glennhenry/DeadZone-Documentation)
+
+To run the documentation site locally:
+
+```bash
 npm install
 npm run dev
 ```
 
-### How to add new page:
+### How to Add a New Page
 
-1. A page must be `.md` file and is enforced to have this on top of them (frontmatter):
+1. Create a `.md` file with the following frontmatter at the top:
 
-```
+```markdown
 ---
 title: Subfolder Example
 slug: playerio/subfolder-example/subfolder
@@ -51,11 +92,16 @@ description: example
 ---
 ```
 
-2. Replace the title appropriately. The description is optional, so you can set it to be the same as the title. Any images or videos should be placed in `src/assets/`.
-3. The slug is produced from the directory structure based on the game packages. For example, `playerioconnector.md` exists within the `thelaststand.app.network` package, thus the final slug is `thelaststand/app/network/playerioconnector`.
-4. Next, add the page to the sidebar.
+2. Update the `title`. The `description` is optional.
 
-   1. Begin by editing the `astro.config.mjs`.
-   2. Follow the existing sidebar link format. You can create new groups or place it in existing ones based on the page topic.
+3. Place any images or videos in the `src/assets/` folder.
 
-   Sidebar lists are based on game packages. Long package names can be shortened (e.g., `thelaststand.app`). If a package has several child packages, we can make a group for them (e.g., `network
+4. The `slug` is based on the game's package structure.  
+   For example, for the file `playerioconnector.md` in package `thelaststand.app.network`,  
+   the slug would be: `thelaststand/app/network/playerioconnector`.
+
+5. Add the page to the sidebar:
+   - Edit `astro.config.mjs`
+   - Follow the format of the existing links
+
+---
