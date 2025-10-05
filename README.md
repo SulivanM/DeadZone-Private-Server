@@ -26,9 +26,6 @@ TLS:DZ private server (revival).
 7. Use a Flash-compatible browser (Ruffle is **not supported**).  
    We recommend using [Basilisk with Flash (debug)](https://www.mediafire.com/file/tmecqq7ke0uhqm7/Basilisk_with_Flash_%2528debug%2529.zip/file)
 
-8. Go to the following URL in your browser:  
-   `http://127.0.0.1:8080`
-
 👉 Join our [Discord](https://discord.gg/jFyAePxDBJ) for questions, updates, or community support.
 
 ---
