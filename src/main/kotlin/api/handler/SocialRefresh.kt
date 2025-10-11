@@ -20,12 +20,15 @@ import kotlinx.serialization.protobuf.ProtoBuf
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: String) {
     val socialRefreshArgs = call.receiveChannel().toByteArray() // Actually no input is given
-    logInput(socialRefreshArgs.decodeToString())
+
+    logInput(socialRefreshArgs.decodeToString(), disableLogging = true)
+
     val pid = serverContext.sessionManager.getPlayerId(token)!!
     val result = serverContext.playerAccountRepository.getProfileOfPlayerId(pid)
     result.onFailure {
         Logger.error(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$pid: ${it.message}" }
     }
+
     val userProfile = requireNotNull(result.getOrThrow()) {
         "getProfileOfPlayerId succeed but returned profile is null"
     }
@@ -45,7 +48,10 @@ suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: St
             blocked = ""
         )
     }
+
     val encodedOutput = ProtoBuf.encodeToByteArray(socialRefreshOutput)
-    logOutput(encodedOutput)
+
+    logOutput(encodedOutput, disableLogging = true)
+
     call.respondBytes(encodedOutput.pioFraming())
 }

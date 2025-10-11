@@ -8,6 +8,7 @@ import data.collection.NeighborHistory
 import data.collection.PlayerAccount
 import data.collection.PlayerObjects
 import data.collection.ServerMetadata
+import utils.Emoji
 import utils.Logger
 import utils.UUID
 import io.ktor.util.date.*
@@ -66,7 +67,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         }
     }
 
-    private suspend fun setupDatabase() {
+    private fun setupDatabase() {
         try {
             transaction(database) {
                 SchemaUtils.create(PlayerAccounts, PlayerObjectsTable, NeighborHistoryTable, InventoryTable)
@@ -74,7 +75,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
             val count = transaction(database) {
                 PlayerAccounts.selectAll().count()
             }
-            Logger.info { "🟢 MariaDB: User table ready, contains $count users." }
+            Logger.info { "${Emoji.Database} MariaDB: User table ready, contains $count users." }
             if (adminEnabled) {
                 val adminExists = transaction(database) {
                     PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq AdminData.PLAYER_ID }.count() > 0
@@ -114,13 +115,13 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                             it[dataJson] = json.encodeToString(adminInventory)
                         }
                     }
-                    Logger.info { "🟢 MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
+                    Logger.info { "${Emoji.Database} MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
                 } else {
-                    Logger.info { "🟢 MariaDB: Admin account already exists." }
+                    Logger.info { "${Emoji.Database} MariaDB: Admin account already exists." }
                 }
             }
         } catch (e: Exception) {
-            Logger.error { "🔴 MariaDB: Failed during setup: $e" }
+            Logger.error { "${Emoji.Database} MariaDB: Failed during setup: $e" }
             throw e
         }
     }
@@ -171,17 +172,10 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         }
     }
 
-    override suspend fun <T> updatePlayerObjectsField(playerId: String, path: String, value: T) {
+    override suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects) {
         transaction(database) {
-            val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
-                .singleOrNull()?.let { row ->
-                    json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
-                }
-            currentData?.let { playerObjects ->
-                val updatedJson = json.encodeToString(playerObjects)
-                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                    it[dataJson] = updatedJson
-                }
+            PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
+                it[dataJson] = json.encodeToString(updatedPlayerObjects)
             }
         }
     }
@@ -252,6 +246,5 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return Base64.encode(Bcrypt.hash(password, 10))
     }
 
-    override suspend fun shutdown() {
-    }
+    override suspend fun shutdown() {}
 }

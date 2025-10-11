@@ -1,4 +1,5 @@
 package api.handler
+
 import api.message.auth.AuthenticateArgs
 import api.message.auth.AuthenticateOutput
 import api.utils.pioFraming
@@ -23,17 +24,20 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
     val authenticateArgs = ProtoBuf.decodeFromByteArray<AuthenticateArgs>(
         call.receiveChannel().toByteArray()
     )
-    logInput(authenticateArgs)
+
+    logInput(authenticateArgs, disableLogging = true)
+
     val userToken = authenticateArgs
         .authenticationArguments
         .find { it.key == "userToken" }?.value
+
     if (userToken == null) {
-        Logger.error { "Missing userToken in API 13 request" }
+        Logger.error { "Client-error: missing userToken in API 13 request" }
         call.respond(HttpStatusCode.BadRequest, "userToken is missing")
         return
     }
+
     val authenticateOutput = if (userToken == AdminData.TOKEN) {
-        Logger.info { "auth by admin" }
         AuthenticateOutput.admin()
     } else {
         val isValidToken = serverContext.sessionManager.verify(userToken)
@@ -44,13 +48,16 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
                 apiServerHosts = listOf(SERVER_HOST)
             )
         } else {
-            call.respond(HttpStatusCode.Unauthorized, "token is invalid")
+            call.respond(HttpStatusCode.Unauthorized, "token is invalid, try re-login")
             null
         }
     } ?: return
+
     val encodedOutput = ProtoBuf.encodeToByteArray<AuthenticateOutput>(
         authenticateOutput
     )
-    logOutput(encodedOutput)
+
+    logOutput(encodedOutput, disableLogging = true)
+
     call.respondBytes(encodedOutput.pioFraming())
 }

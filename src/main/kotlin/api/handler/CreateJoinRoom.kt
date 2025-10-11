@@ -1,4 +1,5 @@
 package api.handler
+
 import api.message.server.CreateJoinRoomArgs
 import api.message.server.CreateJoinRoomOutput
 import api.utils.pioFraming
@@ -18,10 +19,14 @@ suspend fun RoutingContext.createJoinRoom() {
     val createJoinRoomArgs = ProtoBuf.decodeFromByteArray<CreateJoinRoomArgs>(
         call.receiveChannel().toByteArray()
     )
-    logInput(createJoinRoomArgs)
+
+    logInput(createJoinRoomArgs, disableLogging = true)
+
     val createJoinRoomOutput = ProtoBuf.encodeToByteArray<CreateJoinRoomOutput>(
         CreateJoinRoomOutput.defaultRoom()
     )
-    logOutput(createJoinRoomOutput)
+
+    logOutput(createJoinRoomOutput, disableLogging = true)
+
     call.respondBytes(createJoinRoomOutput.pioFraming())
 }

@@ -1,4 +1,5 @@
 package api.handler
+
 import api.message.utils.WriteErrorArgs
 import api.message.utils.WriteErrorError
 import api.utils.pioFraming
@@ -20,8 +21,11 @@ suspend fun RoutingContext.writeError() {
     val writeErrorArgs = ProtoBuf.decodeFromByteArray<WriteErrorArgs>(
         call.receiveChannel().toByteArray()
     )
-    logInput("\n" + writeErrorArgs)
+
+    logInput("\n" + writeErrorArgs, disableLogging = true)
+
     Logger.error(LogConfigWriteError) { writeErrorArgs.toString() }
+
     if (writeErrorArgs.details.contains("Load Never Completed", ignoreCase = true) ||
         writeErrorArgs.details.contains("Resource not found", ignoreCase = true) ||
         writeErrorArgs.details.contains("Resource load fail", ignoreCase = true) ||
@@ -30,6 +34,8 @@ suspend fun RoutingContext.writeError() {
     ) {
         Logger.error(LogConfigAssetsError) { writeErrorArgs.details }
     }
+
     val loadObjectsOutput = ProtoBuf.encodeToByteArray(WriteErrorError.dummy())
+
     call.respondBytes(loadObjectsOutput.pioFraming())
 }

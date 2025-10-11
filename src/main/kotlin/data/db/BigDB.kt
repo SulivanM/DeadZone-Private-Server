@@ -21,13 +21,11 @@ interface BigDB {
     suspend fun loadInventory(playerId: String): Inventory?
 
     /**
-     * A flexible method to update particular field of [PlayerObjects]
+     * A cheat solution to update [PlayerObjects] without relying on repository CRUD methods.
+     *
+     * This updates the entire JSON with the given [updatedPlayerObjects].
      */
-    suspend fun <T> updatePlayerObjectsField(
-        playerId: String,
-        path: String,
-        value: T
-    )
+    suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects)
 
     /**
      * Get a particular collection without type safety.

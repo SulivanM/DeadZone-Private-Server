@@ -1,4 +1,5 @@
 package dev.deadzone
+
 import api.routes.apiRoutes
 import api.routes.authRoutes
 import api.routes.caseInsensitiveStaticResources
@@ -12,6 +13,7 @@ import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
+import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.serialization.kotlinx.protobuf.*
@@ -51,7 +53,6 @@ import socket.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepositoryMaria
 import user.auth.SessionManager
 import user.auth.WebsiteAuthProvider
-import utils.LogLevel
 import utils.Logger
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
@@ -68,7 +69,13 @@ fun Application.module() {
         timeout = 15.seconds
         masking = true
     }
-    Logger.info("🚀 Starting DeadZone server")
+
+    Logger.setLevel(level = environment.config.propertyOrNull("logger.level")?.getString() ?: "0")
+    Logger.enableColorfulLog(
+        useColor = environment.config.propertyOrNull("logger.colorful")?.getString()?.toBooleanStrictOrNull() ?: true
+    )
+    Logger.info("${Emoji.Rocket} Starting DeadZone server")
+
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
@@ -91,18 +98,21 @@ fun Application.module() {
     GlobalContext.init(
         json = json,
         gameDefinitions = GameDefinitions(onResourceLoadComplete = {
-            Logger.info("🎮 Game resources loaded")
+            Logger.info("${Emoji.Gaming} Game resources loaded")
         })
     )
+
     val config = ServerConfig(
-        adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull() ?: false,
+        adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull()
+            ?: false,
         useMaria = true,
-        mariaUrl = environment.config.propertyOrNull("maria.url")?.getString() ?: "jdbc:mariadb://localhost:3306/deadzone",
+        mariaUrl = environment.config.propertyOrNull("maria.url")?.getString()
+            ?: "jdbc:mariadb://localhost:3306/deadzone",
         mariaUser = environment.config.propertyOrNull("maria.user")?.getString() ?: "root",
         mariaPassword = environment.config.propertyOrNull("maria.password")?.getString() ?: "",
         isProd = !developmentMode,
     )
-    Logger.info("🗃️ Connecting to MariaDB...")
+    Logger.info("${Emoji.Database} Connecting to MariaDB...")
     val database = try {
         val mariaDb = Database.connect(
             url = config.mariaUrl,
@@ -110,10 +120,10 @@ fun Application.module() {
             user = config.mariaUser,
             password = config.mariaPassword
         )
-        Logger.info("🟢 MariaDB connected")
+        Logger.info("${Emoji.Green} MariaDB connected")
         BigDBMariaImpl(mariaDb, config.adminEnabled)
     } catch (e: Exception) {
-        Logger.error("🔴 MariaDB connection failed: ${e.message}")
+        Logger.error("${Emoji.Red} MariaDB connection failed: ${e.message}")
         throw e
     }
     val sessionManager = SessionManager()
@@ -151,11 +161,10 @@ fun Application.module() {
     }
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            Logger.error("⚠️ Server error: ${cause.message}")
+            Logger.error("Server error: ${cause.message}")
             call.respondText(text = "500: ${cause.message}", status = HttpStatusCode.InternalServerError)
         }
     }
-    Logger.level = LogLevel.DEBUG
     install(CallLogging)
     routing {
         fileRoutes()
@@ -164,11 +173,11 @@ fun Application.module() {
         apiRoutes(serverContext)
     }
     val server = Server(context = serverContext).also { it.start() }
-    Logger.info("🎉 Server started successfully")
-    Logger.info("📡 Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
-    Logger.info("🌐 API server available at $SERVER_HOST:$API_SERVER_PORT")
+    Logger.info("${Emoji.Party} Server started successfully")
+    Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
+    Logger.info("${Emoji.Internet} API server available at $SERVER_HOST:$API_SERVER_PORT")
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
-        Logger.info("🛑 Server shutdown complete")
+        Logger.info("${Emoji.Red} Server shutdown complete")
     })
 }

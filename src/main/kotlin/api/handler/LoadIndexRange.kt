@@ -1,4 +1,5 @@
 package api.handler
+
 import api.message.db.LoadIndexRangeArgs
 import api.message.db.LoadObjectsOutput
 import api.utils.pioFraming
@@ -17,9 +18,12 @@ suspend fun RoutingContext.loadIndexRange() {
     val args = ProtoBuf.decodeFromByteArray<LoadIndexRangeArgs>(
         call.receiveChannel().toByteArray()
     )
-    logInput(args)
+
+    logInput(args, disableLogging = true)
+
     val outputBytes = ProtoBuf.encodeToByteArray(
         LoadObjectsOutput(objects = emptyList())
     )
+
     call.respondBytes(outputBytes.pioFraming())
 }
