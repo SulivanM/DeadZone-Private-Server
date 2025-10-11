@@ -35,3 +35,7 @@ data class Item(
     @EncodeDefault(EncodeDefault.Mode.NEVER) val specData: ItemBonusStats? = null,
     @EncodeDefault(EncodeDefault.Mode.NEVER) val duplicate: Boolean = false,  // added from deserialize of Inventory
 )
+
+fun Item.compactString(): String {
+    return "Item(id=${this.id}, type=${this.type})"
+}

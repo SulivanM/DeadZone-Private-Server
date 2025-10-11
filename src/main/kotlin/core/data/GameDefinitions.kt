@@ -78,9 +78,19 @@ class GameDefinitions(onResourceLoadComplete: () -> Unit) {
         onResourceLoadComplete()
     }
 
-    // in some cases, the game sends the server uppercased id
+    /**
+     * Find an item resource by ID, preferring exact match first.
+     *
+     * It is preferred to use this method to find an item resource.
+     * The game is known to be inconsistent for referencing item ID.
+     * Sometimes, it sends uppercased ID although items.xml definition is case-sensitive.
+     */
     fun findItem(id: String): ItemResource? {
-        // prefer exact match first
         return itemsById[id] ?: itemsByIdUppercased[id.uppercase()]
+    }
+
+    fun isResourceItem(idInXml: String): Boolean {
+        requireNotNull(findItem(idInXml)) { "Items with ID in XML $idInXml is missing from index" }
+        return itemsById[idInXml]?.type == "resource"
     }
 }
