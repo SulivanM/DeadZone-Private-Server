@@ -53,7 +53,6 @@ import socket.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepositoryMaria
 import user.auth.SessionManager
 import user.auth.WebsiteAuthProvider
-import utils.LogLevel
 import utils.Logger
 import java.io.File
 import kotlin.time.Duration.Companion.seconds

@@ -5,6 +5,9 @@ import io.ktor.server.routing.*
 import io.ktor.util.date.*
 import java.io.File
 import java.text.SimpleDateFormat
+import java.io.FileDescriptor
+import java.io.FileOutputStream
+import java.io.PrintStream
 
 fun RoutingContext.logInput(txt: Any?, logFull: Boolean = false, disableLogging: Boolean = false) {
     if (!disableLogging) {
@@ -105,19 +108,21 @@ object Logger {
         val timestamp = dateFormatter.format(getTimeMillis())
         val srcName = if (src != LogSource.ANY) src.name else ""
 
-        var logMessage = if (srcName.isEmpty()) {
+        val logMessage = if (srcName.isEmpty()) {
             "[$timestamp] [${level.name}] : $msgString"
         } else {
             "[$srcName | $timestamp] [${level.name}] : $msgString"
         }
 
-        if (this.colorfulLog) {
-            logMessage = colorizeLog(level, logMessage)
-        }
-
         targets.forEach { target ->
             when (target) {
-                LogTarget.PRINT -> println(logMessage)
+                LogTarget.PRINT -> {
+                    if (this.colorfulLog) {
+                        BypassJansi.println(colorizeLog(level, logMessage))
+                    } else {
+                        BypassJansi.println(logMessage)
+                    }
+                }
                 is LogTarget.FILE -> writeToFile(target.file, logMessage)
                 LogTarget.CLIENT -> {}
             }
@@ -171,6 +176,16 @@ object Logger {
     fun setLevel(logLevel: LogLevel) {
         level = logLevel
     }
+}
+
+/**
+ * Raw console access that bypass Jansi.
+ *
+ * This is only needed when you want to style the console (e.g., colored text, emoji display)
+ */
+object BypassJansi {
+    private val rawOut = PrintStream(FileOutputStream(FileDescriptor.out), true, Charsets.UTF_8)
+    fun println(msg: String) = rawOut.println(msg)
 }
 
 enum class LogLevel { SUCCESS, DEBUG, INFO, WARN, ERROR }
