@@ -5,6 +5,7 @@ import context.ServerContext
 import context.requirePlayerContext
 import core.items.ItemFactory
 import core.items.model.Item
+import core.items.model.compactString
 import core.mission.LootService
 import core.mission.model.LootParameter
 import core.model.game.data.MissionStats
@@ -19,7 +20,6 @@ import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
-import kotlin.math.floor
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -129,7 +129,10 @@ class MissionSaveHandler : SaveSubHandler {
 
                 val playerStats = missionStats[connection.playerId] ?: MissionStats()
                 val earnedXp = calculateMissionXp(playerStats.killData)
+
+                // to show loot results, the game expects a unique set of loot with its quantity
                 val (itemLooted, quantity) = summarizeLoots(data)
+                val addedInventoryItems = buildNewInventoryItems(itemLooted, quantity)
 
                 // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
@@ -138,6 +141,11 @@ class MissionSaveHandler : SaveSubHandler {
                 // Update the leader's XP and level
                 svc.survivor.updateSurvivor(leader.id) { currentLeader ->
                     currentLeader.copy(xp = newXp, level = newLevel)
+                }
+
+                // Update player's inventory
+                svc.inventory.updateInventory { items ->
+                    items + addedInventoryItems
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(
@@ -162,7 +170,6 @@ class MissionSaveHandler : SaveSubHandler {
                         cooldown = null
                     )
                 )
-
 
                 // TODO change resource with obtained loot...
                 val currentResource = svc.compound.getResources()
@@ -254,6 +261,7 @@ class MissionSaveHandler : SaveSubHandler {
             is String -> v.toIntOrNull() ?: 0
             else -> 0
         }
+
         fun asDouble(v: Any?): Double = when (v) {
             is Double -> v
             is Float -> v.toDouble()
@@ -370,7 +378,7 @@ class MissionSaveHandler : SaveSubHandler {
         val itemIdsOfLoots: List<String> =
             requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
         val items = mutableSetOf<Item>()
-        val itemCounts = mutableMapOf<String, Int>()
+        val itemCounts = mutableMapOf<String, Int>() // itemId (which is item.type) to count
 
         itemIdsOfLoots.forEach { itemId ->
             items.add(ItemFactory.createItemFromId(idInXML = itemId))
@@ -378,6 +386,26 @@ class MissionSaveHandler : SaveSubHandler {
         }
 
         return items.toList() to itemCounts
+    }
+
+    private fun buildNewInventoryItems(items: List<Item>, counter: Map<String, Int>): List<Item> {
+        val inventory = mutableListOf<Item>()
+
+        for (item in items) {
+            val count = counter[item.type.uppercase()]
+            // Resource type of item (e.g., water, food) does not need to be added to the inventory
+            if (!GlobalContext.gameDefinitions.isResourceItem(item.type)) {
+                if (count != null) {
+                    repeat(count) {
+                        inventory.add(item)
+                    }
+                } else {
+                    Logger.warn(logFull = true) { "buildNewInventoryItems: Item counter is null for itemId: ${item.id}, items: ${items.map { it.compactString() }}, counter: $counter" }
+                }
+            }
+        }
+
+        return inventory
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
