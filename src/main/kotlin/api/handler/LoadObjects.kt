@@ -9,7 +9,6 @@ import data.collection.NeighborHistory
 import dev.deadzone.core.LazyDataUpdater
 import utils.LogConfigAPIError
 import utils.LogConfigSocketToClient
-import utils.LogSource
 import utils.Logger
 import utils.logInput
 import io.ktor.server.request.*
@@ -20,6 +19,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
+import utils.logOutput
 import kotlin.math.max
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -27,19 +27,21 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
     val loadObjectsArgs = ProtoBuf.decodeFromByteArray<LoadObjectsArgs>(
         call.receiveChannel().toByteArray()
     )
-    logInput(loadObjectsArgs)
-    val objs = mutableListOf<BigDBObject>()
+
+    logInput(loadObjectsArgs, disableLogging = true)
+
+    val dbObjects = mutableListOf<BigDBObject>()
     for (objId in loadObjectsArgs.objectIds) {
         val playerId = objId.keys.firstOrNull() ?: continue
         val result = serverContext.playerAccountRepository.getProfileOfPlayerId(playerId)
         result.onFailure {
-            Logger.warn(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$playerId: ${it.message}" }
+            Logger.warn(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$playerId: ${it.message} [NOTE: if playerId has -<number> like -2, then this error is expected]" }
             continue
         }
+
         val profile = requireNotNull(result.getOrThrow()) {
             "getProfileOfPlayerId succeed but returned profile is null"
         }
-        Logger.debug(src = LogSource.API) { "Found object for playerId: $playerId" }
         val playerObjects = serverContext.db.loadPlayerObjects(playerId)!!
         val neighborHistory = serverContext.db.loadNeighborHistory(playerId)!!
         val inventory = serverContext.db.loadInventory(playerId)!!
@@ -53,36 +55,42 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
                         level = max(srv.level, 1)
                     )
                 }
+
+                val updatedPlayerObjects = playerObjects.copy(
+                    buildings = updatedBuildings,
+                    resources = depletedResources,
+                    survivors = updatedSurvivors
+                )
+
                 try {
-                    serverContext.db.updatePlayerObjectsField(playerId, "buildings", updatedBuildings)
-                    serverContext.db.updatePlayerObjectsField(playerId, "resources", depletedResources)
-                    serverContext.db.updatePlayerObjectsField(playerId, "survivors", updatedSurvivors)
+                    serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
                 } catch (e: Exception) {
                     Logger.error(LogConfigSocketToClient) { "Error while updating time-dynamic data: ${e.message}" }
                     return
                 }
-                LoadObjectsOutput.fromData(
-                    playerObjects.copy(
-                        buildings = updatedBuildings,
-                        resources = depletedResources,
-                        survivors = updatedSurvivors
-                    )
-                )
+
+                LoadObjectsOutput.fromData(updatedPlayerObjects)
             }
+
             "NeighborHistory" -> LoadObjectsOutput.fromData(
                 NeighborHistory(
                     playerId = playerId,
                     map = neighborHistory.map
                 )
             )
+
             "Inventory" -> LoadObjectsOutput.fromData(inventory)
             else -> {
                 Logger.error(LogConfigAPIError) { "UNIMPLEMENTED table for ${objId.table}" }
                 null
             }
         }
-        if (obj != null) objs.add(obj)
+        if (obj != null) dbObjects.add(obj)
     }
-    val loadObjectsOutput = ProtoBuf.encodeToByteArray(LoadObjectsOutput(objects = objs))
+
+    val loadObjectsOutput = ProtoBuf.encodeToByteArray(LoadObjectsOutput(objects = dbObjects))
+
+    logOutput(loadObjectsOutput, disableLogging = true)
+
     call.respondBytes(loadObjectsOutput.pioFraming())
 }
