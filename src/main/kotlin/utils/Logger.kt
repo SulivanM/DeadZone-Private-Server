@@ -1,17 +1,24 @@
 package utils
 
+import dev.deadzone.utils.AnsiColors
 import io.ktor.server.routing.*
 import io.ktor.util.date.*
-import kotlinx.serialization.Serializable
 import java.io.File
 import java.text.SimpleDateFormat
 
-fun RoutingContext.logInput(txt: Any?, logFull: Boolean = false) {
-    Logger.info(LogSource.API, logFull = logFull) { "Received [API ${call.parameters["path"]}]: $txt" }
+fun RoutingContext.logInput(txt: Any?, logFull: Boolean = false, disableLogging: Boolean = false) {
+    if (!disableLogging) {
+        Logger.info(LogSource.API, logFull = logFull) { "Received [API ${call.parameters["path"]}]: $txt" }
+    }
 }
 
-fun RoutingContext.logOutput(txt: ByteArray?, logFull: Boolean = false) {
-    Logger.info(LogSource.API, logFull = logFull) { "Sent [API ${call.parameters["path"]}]: ${txt?.decodeToString()}" }
+fun RoutingContext.logOutput(txt: ByteArray?, logFull: Boolean = false, disableLogging: Boolean = false) {
+    if (!disableLogging) {
+        Logger.info(
+            LogSource.API,
+            logFull = logFull
+        ) { "Sent [API ${call.parameters["path"]}]: ${txt?.decodeToString()}" }
+    }
 }
 
 object Logger {
@@ -22,13 +29,23 @@ object Logger {
         LogFile.SOCKET_SERVER_ERROR to File("logs/socket_server_error-1.log"),
     ).also { File("logs").mkdirs() }
 
-    var level: LogLevel = LogLevel.DEBUG
+    private var level: LogLevel = LogLevel.DEBUG
+    private var colorfulLog = true
     private const val MAX_LOG_LENGTH = 500
     private const val MAX_LOG_FILE_SIZE = 5 * 1024 * 1024
     private const val MAX_LOG_ROTATES = 5
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
-    fun init(function: () -> Unit) { }
+    fun success(msg: String) = success { msg }
+    fun success(config: LogConfig, forceLogFull: Boolean? = null, msg: () -> String) =
+        success(config.src, config.targets, forceLogFull ?: config.logFull, msg)
+
+    fun success(
+        src: LogSource = LogSource.SOCKET,
+        targets: Set<LogTarget> = setOf(LogTarget.PRINT),
+        logFull: Boolean = false,
+        msg: () -> String
+    ) = log(src, targets, LogLevel.SUCCESS, msg, logFull)
 
     fun debug(msg: String) = debug { msg }
     fun debug(config: LogConfig, forceLogFull: Boolean? = null, msg: () -> String) =
@@ -83,10 +100,20 @@ object Logger {
     ) {
         if (level < this.level) return
 
-        val msgString = msg().let { if (it.length > MAX_LOG_LENGTH && !logFull) "${it.take(MAX_LOG_LENGTH)}... [truncated]" else it }
+        val msgString =
+            msg().let { if (it.length > MAX_LOG_LENGTH && !logFull) "${it.take(MAX_LOG_LENGTH)}... [truncated]" else it }
         val timestamp = dateFormatter.format(getTimeMillis())
         val srcName = if (src != LogSource.ANY) src.name else ""
-        val logMessage = if (srcName.isEmpty()) "[$timestamp] [${level.name}]: $msgString" else "[$srcName | $timestamp] [${level.name}]: $msgString"
+
+        var logMessage = if (srcName.isEmpty()) {
+            "[$timestamp] [${level.name}] : $msgString"
+        } else {
+            "[$srcName | $timestamp] [${level.name}] : $msgString"
+        }
+
+        if (this.colorfulLog) {
+            logMessage = colorizeLog(level, logMessage)
+        }
 
         targets.forEach { target ->
             when (target) {
@@ -95,6 +122,17 @@ object Logger {
                 LogTarget.CLIENT -> {}
             }
         }
+    }
+
+    fun colorizeLog(level: LogLevel, text: String): String {
+        val (fg, bg) = when (level) {
+            LogLevel.SUCCESS -> AnsiColors.BlackText to AnsiColors.Success
+            LogLevel.DEBUG -> AnsiColors.BlackText to AnsiColors.Debug
+            LogLevel.INFO -> AnsiColors.BlackText to AnsiColors.Info
+            LogLevel.WARN -> AnsiColors.BlackText to AnsiColors.Warn
+            LogLevel.ERROR -> AnsiColors.WhiteText to AnsiColors.Error
+        }
+        return "$bg$fg$text${AnsiColors.Reset}"
     }
 
     private fun writeToFile(file: LogFile, message: String) {
@@ -114,9 +152,28 @@ object Logger {
         if (newFile.exists()) newFile.delete()
         return newFile
     }
+
+    fun enableColorfulLog(useColor: Boolean) {
+        this.colorfulLog = useColor
+    }
+
+    fun setLevel(level: String) {
+        when (level) {
+            "0" -> setLevel(LogLevel.SUCCESS)
+            "1" -> setLevel(LogLevel.DEBUG)
+            "2" -> setLevel(LogLevel.INFO)
+            "3" -> setLevel(LogLevel.WARN)
+            "4" -> setLevel(LogLevel.ERROR)
+            else -> setLevel(LogLevel.DEBUG)
+        }
+    }
+
+    fun setLevel(logLevel: LogLevel) {
+        level = logLevel
+    }
 }
 
-enum class LogLevel { DEBUG, INFO, WARN, ERROR }
+enum class LogLevel { SUCCESS, DEBUG, INFO, WARN, ERROR }
 
 sealed class LogTarget {
     object PRINT : LogTarget()
@@ -133,11 +190,11 @@ data class LogConfig(
     val logFull: Boolean = false
 )
 
-val LogConfigWriteError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.CLIENT_WRITE_ERROR)), true)
+val LogConfigWriteError =
+    LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.CLIENT_WRITE_ERROR)), true)
 val LogConfigAPIError = LogConfig(LogSource.API, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.API_SERVER_ERROR)), true)
-val LogConfigSocketToClient = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)))
-val LogConfigSocketError = LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)), true)
+val LogConfigSocketToClient =
+    LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)))
+val LogConfigSocketError =
+    LogConfig(LogSource.SOCKET, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.SOCKET_SERVER_ERROR)), true)
 val LogConfigAssetsError = LogConfig(LogSource.ANY, setOf(LogTarget.PRINT, LogTarget.FILE(LogFile.ASSETS_ERROR)), true)
-
-@Serializable
-data class LogMessage(val level: LogLevel, val msg: String)
