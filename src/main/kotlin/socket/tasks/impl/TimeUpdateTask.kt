@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Sends a time update ('tu') message to client.
  *
- * The game registers callback for such message, though not sure how frequent should we send the message.
+ * The game doesn't maintain its own time; instead, it relies on the server for timekeeping.
  */
 class TimeUpdateTask() : ServerTask {
     override val key: TaskTemplate
@@ -31,6 +31,6 @@ class TimeUpdateTask() : ServerTask {
         get() = null
 
     override suspend fun run(connection: Connection, finalConfig: TaskConfig) {
-        connection.sendMessage(finalConfig.targetTask, Time.now())
+        connection.sendMessage(finalConfig.targetTask, Time.now(), disableLogging = true)
     }
 }

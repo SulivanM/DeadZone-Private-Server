@@ -48,7 +48,7 @@ class Connection(
     /**
      * Send a serialized PIO message
      */
-    suspend fun sendMessage(type: String, vararg args: Any, logFull: Boolean = false) {
+    suspend fun sendMessage(type: String, vararg args: Any, logFull: Boolean = false, disableLogging: Boolean = false) {
         try {
             val msg = buildList {
                 add(type)
@@ -56,7 +56,10 @@ class Connection(
             }
             val bytes = PIOSerializer.serialize(msg)
 
-            Logger.debug(logFull = logFull) { "Sending message of type '$type' | raw message: ${bytes.decodeToString()}" }
+            if (!disableLogging) {
+                Logger.debug(logFull = logFull) { "Sending message of type '$type' | raw message: ${bytes.decodeToString()}" }
+            }
+
             output.writeFully(bytes)
             updateActivity()
         } catch (e: Exception) {
