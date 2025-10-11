@@ -54,7 +54,7 @@ class PlayerContextTracker {
             survivorRepository = SurvivorRepositoryMaria(database)
         )
         
-        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria())
+        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria(database))
         val compound = CompoundService(compoundRepository = CompoundRepositoryMaria(database, json))
         val playerObjectMetadata = PlayerObjectsMetadataService(
             playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database, json)
