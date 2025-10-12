@@ -16,7 +16,7 @@ import kotlinx.coroutines.cancel
  * @property playerId reference to which player does this socket belongs to. Only known after client send join message.
  */
 class Connection(
-    var playerId: String = "",
+    var playerId: String = "[Undetermined]",
     val connectionId: String = UUID.new(),
     val socket: Socket,
     val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
@@ -34,13 +34,15 @@ class Connection(
     /**
      * Send raw unserialized message (non-PIO) to client
      */
-    suspend fun sendRaw(b: ByteArray, logFull: Boolean = false) {
+    suspend fun sendRaw(b: ByteArray, enableLogging: Boolean = true, logFull: Boolean = true) {
         try {
-            Logger.debug(logFull = logFull) { "Sending raw: ${b.decodeToString()}" }
+            if (enableLogging) {
+                Logger.debug(logFull = logFull) { "Sending raw: ${b.decodeToString()}" }
+            }
             output.writeFully(b)
             updateActivity()
         } catch (e: Exception) {
-            Logger.warn { "Failed to send raw message to ${socket.remoteAddress}: ${e.message}" }
+            Logger.error { "Failed to send raw message to ${socket.remoteAddress}: ${e.message}" }
             throw e
         }
     }
@@ -48,7 +50,7 @@ class Connection(
     /**
      * Send a serialized PIO message
      */
-    suspend fun sendMessage(type: String, vararg args: Any, logFull: Boolean = false, disableLogging: Boolean = false) {
+    suspend fun sendMessage(type: String, vararg args: Any, enableLogging: Boolean = true, logFull: Boolean = true) {
         try {
             val msg = buildList {
                 add(type)
@@ -56,14 +58,14 @@ class Connection(
             }
             val bytes = PIOSerializer.serialize(msg)
 
-            if (!disableLogging) {
+            if (enableLogging) {
                 Logger.debug(logFull = logFull) { "Sending message of type '$type' | raw message: ${bytes.decodeToString()}" }
             }
 
             output.writeFully(bytes)
             updateActivity()
         } catch (e: Exception) {
-            Logger.warn { "Failed to send message of type '$type' to ${socket.remoteAddress}: ${e.message}" }
+            Logger.error { "Failed to send message of type '$type' to ${socket.remoteAddress}: ${e.message}" }
             throw e
         }
     }
@@ -73,7 +75,7 @@ class Connection(
             scope.cancel()
             socket.close()
         } catch (e: Exception) {
-            Logger.debug { "Exception during connection shutdown: ${e.message}" }
+            Logger.warn { "Exception during connection shutdown: ${e.message}" }
         }
     }
 

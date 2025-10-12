@@ -1,7 +1,8 @@
 package socket.handler
 
 import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
@@ -23,11 +24,7 @@ class SaveHandler(private val serverContext: ServerContext) : SocketMessageHandl
     }
 
     @Suppress("UNCHECKED_CAST")
-    override suspend fun handle(
-        connection: Connection,
-        message: SocketMessage,
-        send: suspend (ByteArray) -> Unit
-    ) {
+    override suspend fun handle(ctx: HandlerContext) = with(ctx) {
         val body = message.getMap(NetworkMessage.SAVE) ?: emptyMap()
         val data = body["data"] as? Map<String, Any?> ?: emptyMap()
         val type = data["_type"] as String? ?: return
@@ -44,7 +41,7 @@ class SaveHandler(private val serverContext: ServerContext) : SocketMessageHandl
             if (type in saveHandler.supportedTypes) {
                 match = true
                 // further string matching on the type on each handler
-                saveHandler.handle(connection, type, saveId, data, send, serverContext)
+                saveHandler.handle(SaveHandlerContext(connection, type, saveId, data, serverContext))
             }
         }
 

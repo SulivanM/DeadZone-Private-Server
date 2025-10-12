@@ -1,15 +1,14 @@
 package socket.handler.save.compound.task
 
+import context.GlobalContext
+import dev.deadzone.socket.handler.save.SaveHandlerContext
+import kotlinx.serialization.Serializable
+import socket.handler.buildMsg
+import socket.handler.save.SaveSubHandler
+import socket.messaging.SaveDataMethod
+import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
-import socket.core.Connection
-import context.ServerContext
-import socket.messaging.SaveDataMethod
-import socket.handler.buildMsg
-import socket.protocol.PIOSerializer
-import context.GlobalContext
-import socket.handler.save.SaveSubHandler
-import kotlinx.serialization.Serializable
 
 @Serializable
 data class TaskStartedResponse(
@@ -32,14 +31,7 @@ class TaskSaveHandler : SaveSubHandler {
         SaveDataMethod.TASK_SPEED_UP
     )
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.TASK_STARTED -> {
                 val taskType = data["type"] as? String

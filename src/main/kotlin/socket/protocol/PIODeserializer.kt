@@ -148,7 +148,6 @@ object PIODeserializer {
 
             return message
         } catch (_: Exception) {
-            Logger.info(LogSource.SOCKET) { "Deserializer receives JSON-like message" }
         }
 
         val offset = data.indexOfFirst { it == '{'.code.toByte() }

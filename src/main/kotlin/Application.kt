@@ -63,6 +63,7 @@ const val SERVER_HOST = "127.0.0.1"
 const val API_SERVER_PORT = 8080
 const val SOCKET_SERVER_PORT = 7777
 
+@Suppress("unused")
 fun Application.module() {
     install(WebSockets) {
         pingPeriod = 15.seconds

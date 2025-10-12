@@ -1,7 +1,7 @@
 package socket.handler
 
 import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
@@ -22,20 +22,18 @@ class InitCompleteHandler(private val serverContext: ServerContext) :
         return message.contains(NetworkMessage.INIT_COMPLETE)
     }
 
-    override suspend fun handle(
-        connection: Connection,
-        message: SocketMessage,
-        send: suspend (ByteArray) -> Unit
-    ) {
+    override suspend fun handle(ctx: HandlerContext) = with(ctx) {
         // When game init is completed, mark player as active
         serverContext.onlinePlayerRegistry.markOnline(connection.playerId)
 
-        // send serverTime to client (required)
+        // send serverTime to client
         serverContext.taskDispatcher.runTask(
             connection = connection,
             taskTemplateKey = TaskTemplate.TIME_UPDATE,
             cfgBuilder = { null },
             onComplete = {}
         )
+
+        Unit
     }
 }

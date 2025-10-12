@@ -1,6 +1,6 @@
 package socket.handler
 
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
 import utils.LogConfigSocketToClient
@@ -15,11 +15,7 @@ class AuthHandler() : SocketMessageHandler {
         return message.type == "auth" || message.contains("auth")
     }
 
-    override suspend fun handle(
-        connection: Connection,
-        message: SocketMessage,
-        send: suspend (ByteArray) -> Unit
-    ) {
+    override suspend fun handle(ctx: HandlerContext) {
         Logger.info(LogConfigSocketToClient) { "Received auth message, ignoring." }
     }
 }

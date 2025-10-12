@@ -4,7 +4,7 @@ import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
@@ -13,7 +13,7 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {
         return runCatching {
             transaction(database) {
-                PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                         playerObjects.survivors
@@ -24,7 +24,7 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
     override suspend fun updateSurvivor(playerId: String, srvId: String, updatedSurvivor: Survivor): Result<Unit> {
         return runCatching {
             transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                     } ?: throw NoSuchElementException("No player found with id=$playerId")
@@ -44,7 +44,7 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
     override suspend fun updateSurvivors(playerId: String, survivors: List<Survivor>): Result<Unit> {
         return runCatching {
             transaction(database) {
-                val currentData = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                     } ?: throw NoSuchElementException("No player found with id=$playerId")

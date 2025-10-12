@@ -31,6 +31,6 @@ class TimeUpdateTask() : ServerTask {
         get() = null
 
     override suspend fun run(connection: Connection, finalConfig: TaskConfig) {
-        connection.sendMessage(finalConfig.targetTask, Time.now(), disableLogging = true)
+        connection.sendMessage(finalConfig.targetTask, Time.now(), enableLogging = false)
     }
 }

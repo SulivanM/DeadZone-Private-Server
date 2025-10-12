@@ -29,6 +29,25 @@ class SocketMessage(private val raw: List<Any>) {
     }
 
     /**
+     * Type of socket message in String.
+     *
+     * This will check [type] (which is non-null string if length of message is odd).
+     * The fallback will be the first key of the message map.
+     * If message type is not able to be determined after these two, this will return `[Undetermined]`
+     */
+    fun msgTypeToString(): String {
+        if (map.keys.firstOrNull() == "s") {
+            return "save/${getSaveSubType()}"
+        }
+        return type ?: (map.keys.firstOrNull() ?: "[Undetermined]")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun getSaveSubType(): String {
+        return (this.getMap("s")?.get("data") as? Map<String, Any?>)?.get("_type") as String? ?: ""
+    }
+
+    /**
      * Get a value (`any` type) from particular key.
      * Use [getString], [getInt], etc for typed result
      *
@@ -43,6 +62,8 @@ class SocketMessage(private val raw: List<Any>) {
 
     fun getString(key: String): String? = map[key] as? String
     fun getInt(key: String): Int? = (map[key] as? Number)?.toInt()
+
+    @Suppress("UNCHECKED_CAST")
     fun getMap(key: String): Map<String, Any?>? {
         val rawValue = map[key] ?: return null
         return when (rawValue) {
@@ -54,6 +75,7 @@ class SocketMessage(private val raw: List<Any>) {
                     null
                 }
             }
+
             else -> null
         }
     }

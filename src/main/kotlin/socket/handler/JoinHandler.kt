@@ -2,7 +2,7 @@ package socket.handler
 
 import context.ServerContext
 import core.LoginStateBuilder
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
@@ -26,7 +26,7 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
         return message.getString(NetworkMessage.JOIN) != null
     }
 
-    override suspend fun handle(connection: Connection, message: SocketMessage, send: suspend (ByteArray) -> Unit) {
+    override suspend fun handle(ctx: HandlerContext) = with(ctx) {
         val joinKey = message.getString(NetworkMessage.JOIN)
         Logger.debug { "Handling join with key: $joinKey" }
 
@@ -35,8 +35,10 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
         connection.playerId = userId
 
         // First message: join result
-        val joinResultMsg = listOf(NetworkMessage.JOIN_RESULT, true)
-        send(PIOSerializer.serialize(joinResultMsg))
+        val success = true
+        val joinResultMsg = listOf(NetworkMessage.JOIN_RESULT, success)
+        send(PIOSerializer.serialize(joinResultMsg), enableLogging = false)
+        Logger.debug { "Sent playerio.joinresult:$success to playerId=$userId" }
 
         // Create PlayerContext which initializes per-player services
         serverContext.playerContextTracker.createContext(
@@ -54,7 +56,9 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
             loadRawFile("static/data/srv_table.json"),
             LoginStateBuilder.build(serverContext, connection.playerId)
         )
-        send(PIOSerializer.serialize(gameReadyMsg))
+
+        send(PIOSerializer.serialize(gameReadyMsg), enableLogging = false)
+        Logger.debug { "Sent game ready message to playerId=$userId" }
     }
 
     /**

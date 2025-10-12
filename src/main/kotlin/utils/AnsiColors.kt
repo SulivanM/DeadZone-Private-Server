@@ -11,7 +11,7 @@ object AnsiColors {
     const val WhiteText = "\u001B[38;5;255m"
 
     const val Success = "\u001B[48;5;120m"
-    const val Debug = "\u001B[48;5;141m"
+    const val Debug = "\u001B[48;5;223m"
     const val Info = "\u001B[48;5;153m"
     const val Warn = "\u001B[48;5;221m"
     const val Error = "\u001B[48;5;203m"

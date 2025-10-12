@@ -1,10 +1,10 @@
 package socket.handler
 
-import socket.protocol.PIOSerializer
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
+import socket.protocol.PIOSerializer
 
 /**
  * Handle `qp` message by:
@@ -17,7 +17,7 @@ class QuestProgressHandler() : SocketMessageHandler {
         return message.getString(NetworkMessage.QUEST_PROGRESS) != null
     }
 
-    override suspend fun handle(connection: Connection, message: SocketMessage, send: suspend (ByteArray) -> Unit) {
+    override suspend fun handle(ctx: HandlerContext) = with(ctx) {
         val message = listOf(NetworkMessage.QUEST_PROGRESS, questProgressJson.trimIndent())
         send(PIOSerializer.serialize(message))
     }

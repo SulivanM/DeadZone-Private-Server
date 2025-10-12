@@ -1,11 +1,10 @@
 package socket.handler.save.compound.building
 
 import context.GlobalContext
-import context.ServerContext
 import context.requirePlayerContext
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.compound.building.response.*
@@ -23,14 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 class BuildingSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.COMPOUND_BUILDING_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
         val svc = serverContext.requirePlayerContext(playerId).services.compound
 

@@ -33,9 +33,13 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
     val dbObjects = mutableListOf<BigDBObject>()
     for (objId in loadObjectsArgs.objectIds) {
         val playerId = objId.keys.firstOrNull() ?: continue
+
+        // The game stubbornly retries API 85 with suffixed -<numbers> e.g., -2, -3, -4 infinitely.
+        if (playerId.endsWith("-2")) continue
+
         val result = serverContext.playerAccountRepository.getProfileOfPlayerId(playerId)
         result.onFailure {
-            Logger.warn(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$playerId: ${it.message} [NOTE: if playerId has -<number> like -2, then this error is expected]" }
+            Logger.warn(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$playerId: ${it.message}" }
             continue
         }
 

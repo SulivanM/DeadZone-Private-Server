@@ -45,23 +45,23 @@ class ServerTaskDispatcher : TaskScheduler {
         cfgBuilder: (TaskConfig) -> TaskConfig?,
         onComplete: (() -> Unit)? = null
     ): UUID {
-        val task = requireNotNull(registeredTasks[taskTemplateKey]) { "Task not registered: $taskTemplateKey" }
-        val defaultCfg = requireNotNull(defaultConfigs[taskTemplateKey]) { "Missing default config for $taskTemplateKey" }
+        val task = requireNotNull(registeredTasks[taskTemplateKey]) { "Task not registered: $taskTemplateKey, playerId=${connection.playerId}" }
+        val defaultCfg = requireNotNull(defaultConfigs[taskTemplateKey]) { "Missing default config for $taskTemplateKey, playerId=${connection.playerId}" }
         val cfg = cfgBuilder(defaultCfg) ?: defaultCfg
 
         val taskId = UUID.randomUUID()
 
         val job = connection.scope.launch {
             try {
-                Logger.debug(LogSource.SOCKET) { "Push task ${task.key} is going to run." }
+                Logger.info(LogSource.SOCKET) { "Push task ${task.key} is going to run for playerId=${connection.playerId}" }
                 val scheduler = task.scheduler ?: this@ServerTaskDispatcher
                 scheduler.schedule(task, connection, cfg)
             } catch (_: CancellationException) {
-                Logger.debug(LogSource.SOCKET) { "Push task '${task.key}' was cancelled." }
+                Logger.info(LogSource.SOCKET) { "Push task '${task.key}' was cancelled for playerId=${connection.playerId}." }
             } catch (e: Exception) {
-                Logger.error(LogConfigSocketError) { "Error running push task '${task.key}': $e" }
+                Logger.error(LogConfigSocketError) { "Error running push task '${task.key}': $e for playerId=${connection.playerId}" }
             } finally {
-                Logger.debug(LogSource.SOCKET) { "Push task ${task.key} has finished running." }
+                Logger.info(LogSource.SOCKET) { "Push task ${task.key} has finished running for playerId=${connection.playerId}" }
                 runningInstances.remove(taskId)
                 onComplete?.invoke()
             }

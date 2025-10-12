@@ -1,7 +1,6 @@
 package socket.handler.save.compound.misc
 
-import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
@@ -10,14 +9,7 @@ import utils.Logger
 class CmpMiscSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.COMPOUND_MISC_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.CRAFT_ITEM -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'CRAFT_ITEM' message [not implemented]" }

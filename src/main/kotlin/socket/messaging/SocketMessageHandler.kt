@@ -1,6 +1,6 @@
 package socket.messaging
 
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 
 /**
  * A template for socket message handler
@@ -11,5 +11,5 @@ import socket.core.Connection
  */
 interface SocketMessageHandler {
     fun match(message: SocketMessage): Boolean
-    suspend fun handle(connection: Connection, message: SocketMessage, send: suspend (ByteArray) -> Unit)
+    suspend fun handle(ctx: HandlerContext)
 }
