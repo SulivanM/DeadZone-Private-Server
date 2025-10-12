@@ -35,7 +35,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val r = data["rotation"] as? Int ?: return
                 Logger.debug(LogConfigSocketToClient) { "'BUILDING_CREATE' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
 
-                val buildDuration = if (bldType.contains("storage")) 1.minutes else 4.seconds
+                val buildDuration = 15.seconds
                 val timer = TimerData.runForDuration(
                     duration = buildDuration,
                     data = mapOf("level" to 0, "type" to "upgrade", "xp" to 50)
