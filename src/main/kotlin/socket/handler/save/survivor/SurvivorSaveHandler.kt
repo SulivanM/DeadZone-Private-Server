@@ -79,6 +79,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val voice = data["v"] as? String ?: return
                 val gender = data["g"] as? String ?: return
                 val appearance = HumanAppearance.parse(ap)
+                @Suppress("SENSELESS_COMPARISON")
                 if (appearance == null) {
                     Logger.error(LogConfigSocketToClient) { "Failed to parse rawappearance=$ap" }
                     return
@@ -135,6 +136,7 @@ class SurvivorSaveHandler : SaveSubHandler {
 
                     if (ap != null) {
                         val appearance = HumanAppearance.parse(ap)
+                        @Suppress("SENSELESS_COMPARISON")
                         if (appearance != null) {
                             updatedSurvivor = updatedSurvivor.copy(appearance = appearance)
                         } else {
