@@ -17,18 +17,18 @@ data class Survivor(
     val gender: String,
     val portrait: String? = null,
     val classId: String,
-    val morale: Map<String, Double>,
-    val injuries: List<Injury>,
-    val level: Int,
-    val xp: Int,
-    val missionId: String?,
-    val assignmentId: String?,
+    val morale: Map<String, Double> = emptyMap(),
+    val injuries: List<Injury> = emptyList(),
+    val level: Int = 0,
+    val xp: Int = 0,
+    val missionId: String? = null,
+    val assignmentId: String? = null,
     val reassignTimer: TimerData? = null,
     val appearance: HumanAppearance? = null, // HumanAppearance > SurvivorAppearance
     val scale: Double = 1.22,
     val voice: String,
-    val accessories: Map<String, String>,  // key is parsed to int, string is accessory id
-    val maxClothingAccessories: Int
+    val accessories: Map<String, String> = emptyMap(),  // key is parsed to int, string is accessory id
+    val maxClothingAccessories: Int = 1
 ) {
     companion object {
         fun playerM(): Survivor {

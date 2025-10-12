@@ -46,7 +46,7 @@ class Server(
             socketDispatcher.register(InitCompleteHandler(this))
             socketDispatcher.register(SaveHandler(this))
             socketDispatcher.register(ZombieAttackHandler())
-            socketDispatcher.register(RequestSurvivorCheckHandler())
+            socketDispatcher.register(RequestSurvivorCheckHandler(this))
             context.taskDispatcher.register(TimeUpdateTask())
             context.taskDispatcher.register(BuildingTask())
         }
