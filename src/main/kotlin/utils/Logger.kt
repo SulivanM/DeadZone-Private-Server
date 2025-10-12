@@ -4,10 +4,10 @@ import dev.deadzone.utils.AnsiColors
 import io.ktor.server.routing.*
 import io.ktor.util.date.*
 import java.io.File
-import java.text.SimpleDateFormat
 import java.io.FileDescriptor
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.text.SimpleDateFormat
 
 fun RoutingContext.logInput(txt: Any?, logFull: Boolean = false, disableLogging: Boolean = false) {
     if (!disableLogging) {
@@ -57,7 +57,7 @@ object Logger {
     fun debug(
         src: LogSource = LogSource.SOCKET,
         targets: Set<LogTarget> = setOf(LogTarget.PRINT),
-        logFull: Boolean = false,
+        logFull: Boolean = true,
         msg: () -> String
     ) = log(src, targets, LogLevel.DEBUG, msg, logFull)
 
