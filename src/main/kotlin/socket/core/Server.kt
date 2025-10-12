@@ -24,6 +24,7 @@ import socket.handler.RequestSurvivorCheckHandler
 import socket.handler.SaveHandler
 import socket.handler.ZombieAttackHandler
 import java.net.SocketException
+import kotlin.system.measureTimeMillis
 
 const val POLICY_FILE_REQUEST = "<policy-file-request/>"
 const val POLICY_FILE_RESPONSE =
@@ -87,36 +88,48 @@ class Server(
                     val bytesRead = input.readAvailable(buffer, 0, buffer.size)
                     if (bytesRead <= 0) break
 
-                    val data = buffer.copyOfRange(0, bytesRead)
-                    Logger.debug { "Received raw: ${data.decodeToString()}" }
                     var msgType = "[Undetermined]"
+                    val elapsed = measureTimeMillis {
+                        val data = buffer.copyOfRange(0, bytesRead)
 
-                    if (data.startsWithBytes(POLICY_FILE_REQUEST.toByteArray())) {
-                        connection.sendRaw(POLICY_FILE_RESPONSE.toByteArray())
-                        Logger.info { "Policy file request received and sent" }
-                        break
-                    }
-
-                    val data2 = if (data.startsWithBytes(byteArrayOf(0x00))) {
-                        Logger.info { "Received 0x00 — ignoring" }
-                        data.drop(1).toByteArray()
-                    } else data
-
-                    val deserialized = PIODeserializer.deserialize(data2)
-                    val msg = SocketMessage.fromRaw(deserialized)
-                    if (msg.isEmpty()) continue
-
-                    socketDispatcher.findHandlerFor(msg).let { handler ->
-                        handler.handle(connection, msg) { response ->
-                            // Each handler serialize the message, so sendRaw directly
-                            connection.sendRaw(response)
+                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '�'): String {
+                            val decoded = String(this, Charsets.UTF_8)
+                            val sanitized = decoded.map { ch ->
+                                if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
+                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(' ', '.', ',', ':', ';', '-', '_', '{', '}', '[', ']', '(', ')', '"', '\'', '/', '\\', '?', '=', '+', '*', '%', '&', '|', '<', '>', '!', '@', '#', '$', '^', '~')) placeholder
+                                else ch
+                            }.joinToString("")
+                            return sanitized.take(max) + if (sanitized.length > max) "..." else ""
                         }
+
+                        Logger.debug {
+                            "=====> [SOCKET START]: ${data.decode()} for playerId=${connection.playerId}, bytes=$bytesRead"
+                        }
+
+                        if (data.startsWithBytes(POLICY_FILE_REQUEST.toByteArray())) {
+                            connection.sendRaw(POLICY_FILE_RESPONSE.toByteArray())
+                            break
+                        }
+
+                        val data2 = if (data.startsWithBytes(byteArrayOf(0x00))) {
+                            data.drop(1).toByteArray()
+                        } else data
+
+                        val deserialized = PIODeserializer.deserialize(data2)
+                        val msg = SocketMessage.fromRaw(deserialized)
+                        if (msg.isEmpty()) continue
+
                         msgType = msg.msgTypeToString()
 
                         socketDispatcher.findHandlerFor(msg).handle(HandlerContext(connection, msg))
                     }
 
-                    Logger.info("<------------ SOCKET MESSAGE END ------------>")
+                    Logger.debug {
+                        buildString {
+                            appendLine("<===== [SOCKET END] of type $msgType handled for playerId=${connection.playerId} in ${elapsed}ms")
+                            append("————————————————————————————————————————————————————————————————————————————————————————————————————————")
+                        }
+                    }
                 }
             } catch (_: ClosedByteChannelException) {
                 // Handle connection reset gracefully - this is expected when clients disconnect abruptly
@@ -127,9 +140,11 @@ class Server(
                     e.message?.contains("Connection reset") == true -> {
                         Logger.info { "Client ${connection.socket.remoteAddress} connection was reset by peer" }
                     }
+
                     e.message?.contains("Broken pipe") == true -> {
                         Logger.info { "Client ${connection.socket.remoteAddress} connection broken (broken pipe)" }
                     }
+
                     else -> {
                         Logger.warn { "Socket exception for ${connection.socket.remoteAddress}: ${e.message}" }
                     }
