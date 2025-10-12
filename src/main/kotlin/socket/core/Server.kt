@@ -3,6 +3,7 @@ package socket.core
 import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageDispatcher
 import socket.protocol.PIODeserializer
@@ -88,6 +89,7 @@ class Server(
 
                     val data = buffer.copyOfRange(0, bytesRead)
                     Logger.debug { "Received raw: ${data.decodeToString()}" }
+                    var msgType = "[Undetermined]"
 
                     if (data.startsWithBytes(POLICY_FILE_REQUEST.toByteArray())) {
                         connection.sendRaw(POLICY_FILE_RESPONSE.toByteArray())
@@ -109,6 +111,9 @@ class Server(
                             // Each handler serialize the message, so sendRaw directly
                             connection.sendRaw(response)
                         }
+                        msgType = msg.msgTypeToString()
+
+                        socketDispatcher.findHandlerFor(msg).handle(HandlerContext(connection, msg))
                     }
 
                     Logger.info("<------------ SOCKET MESSAGE END ------------>")

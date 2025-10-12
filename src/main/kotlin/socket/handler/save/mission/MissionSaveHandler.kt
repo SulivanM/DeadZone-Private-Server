@@ -1,7 +1,6 @@
 package socket.handler.save.mission
 
 import context.GlobalContext
-import context.ServerContext
 import context.requirePlayerContext
 import core.items.ItemFactory
 import core.items.model.Item
@@ -12,7 +11,7 @@ import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
 import dev.deadzone.core.model.game.data.TimerData
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.mission.response.*
@@ -31,14 +30,7 @@ class MissionSaveHandler : SaveSubHandler {
     // use this to know loots, EXP, kills, etc. after mission ended.
     private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
         when (type) {
             SaveDataMethod.MISSION_START -> {
@@ -112,7 +104,7 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 )
 
-                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)), logFull = false)
             }
 
             SaveDataMethod.MISSION_START_FLAG -> {

@@ -1,11 +1,10 @@
 package socket.handler.save.survivor
 
 import context.GlobalContext
-import context.ServerContext
 import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import core.model.game.data.HumanAppearance
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.survivor.response.PlayerCustomResponse
@@ -18,14 +17,7 @@ import utils.Logger
 class SurvivorSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.SURVIVOR_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
 
         when (type) {

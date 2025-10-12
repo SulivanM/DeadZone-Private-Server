@@ -1,7 +1,6 @@
 package socket.handler.save.arena
 
-import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
@@ -10,14 +9,7 @@ import utils.Logger
 class ArenaSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.ARENA_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.ARENA_START -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'ARENA_START' message [not implemented]" }

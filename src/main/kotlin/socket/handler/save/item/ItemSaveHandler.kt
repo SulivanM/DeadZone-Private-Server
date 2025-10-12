@@ -1,7 +1,6 @@
 package socket.handler.save.item
 
-import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
@@ -10,14 +9,7 @@ import utils.Logger
 class ItemSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.ITEM_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.ITEM -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'ITEM' message [not implemented]" }

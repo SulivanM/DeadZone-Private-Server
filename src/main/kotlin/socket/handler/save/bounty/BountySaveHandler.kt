@@ -1,7 +1,6 @@
 package socket.handler.save.bounty
 
-import context.ServerContext
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
@@ -10,14 +9,7 @@ import utils.Logger
 class BountySaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.BOUNTY_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.BOUNTY_VIEW -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'BOUNTY_VIEW' message [not implemented]" }

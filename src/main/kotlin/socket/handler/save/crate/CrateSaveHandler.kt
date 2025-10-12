@@ -1,9 +1,8 @@
 package socket.handler.save.crate
 
 import context.GlobalContext
-import context.ServerContext
 import core.items.ItemFactory
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.crate.response.CrateUnlockResponse
@@ -15,14 +14,7 @@ import utils.Logger
 class CrateSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.CRATE_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.CRATE_UNLOCK -> {
                 val keyId = data["keyId"] as String?

@@ -1,26 +1,18 @@
 package socket.handler.save.misc
 
-import context.ServerContext
-import socket.core.Connection
+import context.requirePlayerContext
+import core.metadata.model.PlayerFlags_Constants
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
-import context.requirePlayerContext
-import core.metadata.model.PlayerFlags_Constants
 import kotlin.experimental.inv
 
 class MiscSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISC_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             SaveDataMethod.TUTORIAL_PVP_PRACTICE -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'TUTORIAL_PVP_PRACTICE' message [not implemented]" }

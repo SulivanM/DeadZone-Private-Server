@@ -1,6 +1,6 @@
 package socket.handler
 
-import socket.core.Connection
+import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
@@ -19,15 +19,11 @@ class RequestSurvivorCheckHandler() : SocketMessageHandler {
         return message.type == NetworkMessage.REQUEST_SURVIVOR_CHECK || message.contains(NetworkMessage.REQUEST_SURVIVOR_CHECK)
     }
 
-    override suspend fun handle(
-        connection: Connection,
-        message: SocketMessage,
-        send: suspend (ByteArray) -> Unit
-    ) {
-        val id = message.getMap("rsc")?.get("id") as? String
-        Logger.debug { "Received RSC of saveId: $id" }
+    override suspend fun handle(ctx: HandlerContext) = with(ctx) {
+        val id = message.getMap(NetworkMessage.REQUEST_SURVIVOR_CHECK)?.get("id") as? String
+        Logger.debug { "Received RSC from playerId=${connection.playerId}" }
 
-        val reponseMsg =
+        val responseMsg =
             listOf(
                 NetworkMessage.SEND_RESPONSE,  // Message Type
                 id ?: "m",   // id
@@ -41,7 +37,7 @@ class RequestSurvivorCheckHandler() : SocketMessageHandler {
                 survivorNewJson.trimIndent()
             )
 
-        send(PIOSerializer.serialize(reponseMsg))
+        send(PIOSerializer.serialize(responseMsg))
         send(PIOSerializer.serialize(newSurvivorMsg))
     }
 }

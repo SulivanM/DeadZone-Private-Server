@@ -1,11 +1,10 @@
 package socket.handler.save.command
 
 import context.GlobalContext
-import context.ServerContext
 import core.items.model.CrateItem
 import core.items.model.Item
 import core.items.model.SchematicItem
-import socket.core.Connection
+import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.messaging.CommandMessage
@@ -17,14 +16,7 @@ import utils.UUID
 class CommandSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = CommandMessage.COMMAND_SAVES
 
-    override suspend fun handle(
-        connection: Connection,
-        type: String,
-        saveId: String,
-        data: Map<String, Any?>,
-        send: suspend (ByteArray) -> Unit,
-        serverContext: ServerContext
-    ) {
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         when (type) {
             CommandMessage.GIVE -> {
                 val type = data["type"] as? String ?: return
