@@ -75,7 +75,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAcco
                             enemies = emptySet()
                         )
                     } ?: run {
-                    Logger.info { "No profile found for playerId=$playerId" }
+                    Logger.warn { "No UserProfile found for playerId=$playerId" }
                     null
                 }
             }.let { profile ->
