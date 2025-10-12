@@ -33,9 +33,9 @@ class BuildingSaveHandler : SaveSubHandler {
                 val x = data["tx"] as? Int ?: return
                 val y = data["ty"] as? Int ?: return
                 val r = data["rotation"] as? Int ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_CREATE' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_CREATE' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
 
-                val buildDuration = 15.seconds
+                val buildDuration = 1445.seconds
                 val timer = TimerData.runForDuration(
                     duration = buildDuration,
                     data = mapOf("level" to 0, "type" to "upgrade", "xp" to 50)
@@ -98,7 +98,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val y = (data["ty"] as? Number)?.toInt() ?: return
                 val r = (data["rotation"] as? Number)?.toInt() ?: return
                 val buildingId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'bld_move' message for $saveId and $buildingId to tx=$x, ty=$y, rotation=$r" }
+                Logger.info(LogConfigSocketToClient) { "'bld_move' message for $saveId and $buildingId to tx=$x, ty=$y, rotation=$r" }
 
                 val result = svc.updateBuilding(buildingId) { it.copy(tx = x, ty = y, rotation = r) }
                 val response = if (result.isSuccess) {
@@ -114,7 +114,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_UPGRADE -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_UPGRADE' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_UPGRADE' message for $saveId and $bldId" }
 
                 val buildDuration = 10.seconds
                 lateinit var timer: TimerData
@@ -154,7 +154,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_RECYCLE -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_RECYCLE' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_RECYCLE' message for $saveId and $bldId" }
 
                 val result = svc.deleteBuilding(bldId)
                 val response = if (result.isSuccess) {
@@ -170,7 +170,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_COLLECT -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_COLLECT' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_COLLECT' message for $saveId and $bldId" }
 
                 val collectResult = svc.collectBuilding(bldId)
                 val response = if (collectResult.isSuccess) {
@@ -212,7 +212,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_CANCEL -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_CANCEL' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_CANCEL' message for $saveId and $bldId" }
 
                 val result = runCatching { svc.cancelBuilding(bldId) }
                 val response = if (result.isSuccess) {
@@ -227,12 +227,32 @@ class BuildingSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.BUILDING_SPEED_UP -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'BUILDING_SPEED_UP' message [not implemented]" }
+                val bldId = data["id"] as? String ?: return
+                val option = data["option"] as? String ?: return
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_SPEED_UP' message for bldId=$bldId with option.key=$option" }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val fuel = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
+
+                val response = if (fuel < 0) {
+                    BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
+                } else {
+                    // TO-DO: calculate the cost in cost table
+                    BuildingSpeedUpResponse(error = "", success = true, cost = 1)
+                }
+
+                val responseJson = GlobalContext.json.encodeToString(response)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+
+                // TO-DO ends the building create task
+                // need to implement a way to stop ongoing task with ServerTaskDispatcher
+                // we can associate playerId + bldId as the building task ID and reproduce the same id to cancel it
             }
 
             SaveDataMethod.BUILDING_REPAIR -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_REPAIR' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR' message for $saveId and $bldId" }
 
                 val buildDuration = 10.seconds
                 val timer = TimerData.runForDuration(
@@ -269,7 +289,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_REPAIR_SPEED_UP -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_REPAIR_SPEED_UP' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR_SPEED_UP' message for $saveId and $bldId" }
 
                 val result = svc.updateBuilding(bldId) { bld -> bld.copy(repair = null) }
                 val response = if (result.isSuccess) {
@@ -289,7 +309,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val x = data["tx"] as? Int ?: return
                 val y = data["ty"] as? Int ?: return
                 val r = data["rotation"] as? Int ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_CREATE_BUY' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_CREATE_BUY' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
 
                 val buildDuration = 0.seconds
                 val timer = TimerData.runForDuration(
@@ -351,7 +371,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_UPGRADE_BUY -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.debug(LogConfigSocketToClient) { "'BUILDING_UPGRADE_BUY' message for $saveId and $bldId" }
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_UPGRADE_BUY' message for $saveId and $bldId" }
 
                 val buildDuration = 0.seconds
                 lateinit var timer: TimerData
