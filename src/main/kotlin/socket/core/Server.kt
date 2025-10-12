@@ -157,7 +157,7 @@ class Server(
                 Logger.info { "Cleaning up connection for ${connection.socket.remoteAddress}" }
 
                 // Only perform cleanup if playerId is set (client was authenticated)
-                if (connection.playerId.isNotEmpty()) {
+                if (connection.playerId != "[Undetermined]") {
                     context.onlinePlayerRegistry.markOffline(connection.playerId)
                     context.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
                     context.playerContextTracker.removePlayer(connection.playerId)
