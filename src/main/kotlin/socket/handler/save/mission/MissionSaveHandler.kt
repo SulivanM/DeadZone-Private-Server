@@ -74,9 +74,6 @@ class MissionSaveHandler : SaveSubHandler {
                 val zombies = listOf(
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
-                    ZombieData.standardZombieWeakAttack(Random.nextInt()),
-                    ZombieData.standardZombieWeakAttack(Random.nextInt()),
-                    ZombieData.dogStandard(Random.nextInt()),
                     ZombieData.dogStandard(Random.nextInt()),
                     ZombieData.fatWalkerStrongAttack(Random.nextInt()),
                 ).flatMap { it.toFlatList() }
@@ -178,11 +175,7 @@ class MissionSaveHandler : SaveSubHandler {
 
                 val zombies = listOf(
                     ZombieData.strongRunner(Random.nextInt()),
-                    ZombieData.strongRunner(Random.nextInt()),
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
-                    ZombieData.standardZombieWeakAttack(Random.nextInt()),
-                    ZombieData.fatWalkerStrongAttack(104),
-                    ZombieData.fatWalkerStrongAttack(105),
                 ).flatMap { it.toFlatList() }
 
                 val responseJson = GlobalContext.json.encodeToString(
