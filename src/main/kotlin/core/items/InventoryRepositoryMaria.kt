@@ -5,7 +5,7 @@ import data.collection.Inventory
 import data.db.InventoryTable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
@@ -15,9 +15,7 @@ class InventoryRepositoryMaria(private val database: Database) : InventoryReposi
     override fun getInventory(playerId: String): Result<Inventory> {
         return runCatching {
             transaction(database) {
-                InventoryTable.select {
-                    InventoryTable.playerId eq playerId
-                }.singleOrNull()?.let { row ->
+                InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }.singleOrNull()?.let { row ->
                     val inventory = json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
                     inventory
                 } ?: throw NoSuchElementException("No inventory found with id=$playerId")
@@ -31,7 +29,7 @@ class InventoryRepositoryMaria(private val database: Database) : InventoryReposi
     ): Result<Unit> {
         return runCatching {
             transaction(database) {
-                val currentData = InventoryTable.select { InventoryTable.playerId eq playerId }
+                val currentData = InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
                     } ?: throw NoSuchElementException("No inventory found with id=$playerId")
@@ -49,7 +47,7 @@ class InventoryRepositoryMaria(private val database: Database) : InventoryReposi
     ): Result<Unit> {
         return runCatching {
             transaction(database) {
-                val currentData = InventoryTable.select { InventoryTable.playerId eq playerId }
+                val currentData = InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
                     } ?: throw NoSuchElementException("No player found with id=$playerId")

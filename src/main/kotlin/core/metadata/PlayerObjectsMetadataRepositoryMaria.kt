@@ -1,6 +1,5 @@
 package core.metadata
 
-import core.metadata.PlayerObjectsMetadataRepository
 import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
 import kotlinx.serialization.json.Json

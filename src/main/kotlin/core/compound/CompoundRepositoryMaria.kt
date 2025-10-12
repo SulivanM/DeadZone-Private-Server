@@ -5,13 +5,11 @@ import core.model.game.data.GameResources
 import core.model.game.data.id
 import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class CompoundRepositoryMaria(
     private val database: Database,
@@ -21,7 +19,7 @@ class CompoundRepositoryMaria(
     private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return runCatching {
             transaction(database) {
-                PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                         transform(playerObjects)
@@ -33,7 +31,7 @@ class CompoundRepositoryMaria(
     private suspend fun updatePlayerObjectsData(playerId: String, updateAction: (PlayerObjects) -> PlayerObjects): Result<Unit> {
         return runCatching {
             transaction(database) {
-                val currentRow = PlayerObjectsTable.select { PlayerObjectsTable.playerId eq playerId }
+                val currentRow = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull() ?: throw NoSuchElementException("No player found with id=$playerId")
 
                 val currentData = json.decodeFromString(PlayerObjects.serializer(), currentRow[PlayerObjectsTable.dataJson])
