@@ -22,6 +22,16 @@ class SurvivorService(
         return survivors
     }
 
+    suspend fun addNewSurvivor(survivor: Survivor) {
+        val result = survivorRepository.addSurvivor(playerId, survivor)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on addNewSurvivor: ${it.message}" }
+        }
+        result.onSuccess {
+            survivors.add(survivor)
+        }
+    }
+
     suspend fun updateSurvivor(
         srvId: String,
         updateAction: suspend (Survivor) -> Survivor
