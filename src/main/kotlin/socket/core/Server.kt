@@ -55,6 +55,14 @@ class Server(
                     "${category.code}-$playerId"
                 }
             )
+            context.taskDispatcher.registerStopId<BuildingCreateStopParameter>(
+                category = TaskCategory.TimeUpdate,
+                stopInputFactory = { BuildingCreateStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "BLD-CREATE-bldId123-playerId123"
+                    "${category.code}-${stopInput.buildingId}-$playerId"
+                }
+            )
         }
     }
 

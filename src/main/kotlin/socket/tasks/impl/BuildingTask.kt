@@ -2,30 +2,37 @@ package socket.tasks.impl
 
 import socket.core.Connection
 import socket.messaging.NetworkMessage
-import socket.tasks.ServerTask
-import socket.tasks.TaskConfig
-import socket.tasks.TaskTemplate
-import socket.tasks.TaskScheduler
-import kotlin.time.Duration.Companion.seconds
+import socket.tasks.*
+import kotlin.time.Duration
 
-class BuildingTask() : ServerTask {
-    override val key: TaskTemplate
-        get() = TaskTemplate.BUILDING
+class BuildingCreateTask(
+    override val taskInputBlock: BuildingCreateParameter.() -> Unit,
+    override val stopInputBlock: BuildingCreateStopParameter.() -> Unit
+) : ServerTask<BuildingCreateParameter, BuildingCreateStopParameter>() {
+    private val taskInput: BuildingCreateParameter by lazy {
+        createTaskInput().apply(taskInputBlock)
+    }
 
-    override val config: TaskConfig
-        get() = TaskConfig(
-            targetTask = NetworkMessage.BUILDING_COMPLETE,
-            initialRunDelay = 0.seconds,
-            repeatDelay = null,
-            extra = emptyMap(),
-        )
+    override val category = TaskCategory.Building.Create
+    override val config = TaskConfig(
+        startDelay = taskInput.buildDuration
+    )
+    override val scheduler: TaskScheduler? = null
 
-    override val scheduler: TaskScheduler?
-        get() = null
+    override fun createTaskInput(): BuildingCreateParameter = BuildingCreateParameter()
+    override fun createStopInput(): BuildingCreateStopParameter = BuildingCreateStopParameter()
 
-    override suspend fun run(connection: Connection, finalConfig: TaskConfig) {
-        val customMessage = finalConfig.extra["msg"] as? List<*> ?: emptyList<Any?>()
-        val nonnull = customMessage.filterNotNull().toTypedArray()
-        connection.sendMessage(finalConfig.targetTask, *nonnull)
+    @InternalTaskAPI
+    override suspend fun execute(connection: Connection) {
+        connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, taskInput.buildingId)
     }
 }
+
+data class BuildingCreateParameter(
+    var buildingId: String = "",
+    var buildDuration: Duration = Duration.ZERO
+)
+
+data class BuildingCreateStopParameter(
+    var buildingId: String = "",
+)
