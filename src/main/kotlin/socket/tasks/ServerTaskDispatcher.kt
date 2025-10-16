@@ -1,128 +1,177 @@
 package socket.tasks
 
+import io.ktor.util.date.getTimeMillis
 import socket.core.Connection
 import utils.LogConfigSocketError
 import utils.LogSource
 import utils.Logger
 import kotlinx.coroutines.*
-import java.util.UUID
 import kotlin.collections.component1
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
- * Manages and dispatches registered [ServerTask]s for each playerId or connection
+ * Manages and dispatches task instances.
  *
- * This is used to register tasks that the server runs independently, usually
- * to push messages to the connected clients (e.g., time update, real-time events).
+ * This dispatcher is also a task scheduler (i.e., the default implementation of [TaskScheduler]).
  *
- * @property registeredTasks keep tracks registered tasks
- * @property defaultConfigs config for each task. The default config can be overridden from [runTask].
- * @property runningInstances list of globally unique running tasks
+ * @property runningInstances Map of task IDs to currently running [TaskInstance]s.
+ * @property stopIdRegistry Map of each [TaskCategory] to a function capable of deriving a task ID
+ * from a `playerId`, [TaskCategory], and a generic [StopParam] type.
+ * Every [ServerTask] implementation **must** call [registerStopId], typically using its own [ServerTask.deriveId],
+ * to register how the dispatcher should compute a task ID for that category when stopping tasks.
  */
 class ServerTaskDispatcher : TaskScheduler {
-    // taskKey -> template
-    private val registeredTasks = mutableMapOf<TaskTemplate, ServerTask>()
+    private val runningInstances = mutableMapOf<String, TaskInstance>()
+    private val stopIdRegistry = mutableMapOf<TaskCategory, (String, TaskCategory, Any) -> String>()
 
-    // taskKey -> default config
-    private val defaultConfigs = mutableMapOf<TaskTemplate, TaskConfig>()
-
-    // unique task id -> task instance
-    private val runningInstances = mutableMapOf<UUID, TaskInstance>()
-
-    // completion listener
-
-    fun register(task: ServerTask) {
-        registeredTasks[task.key] = task
-        defaultConfigs[task.key] = task.config
+    /**
+     * Registers a function that derives a task ID for a given task category.
+     *
+     * It always takes a `String` of [Connection.playerId] and a generic [StopParam] type.
+     */
+    fun <StopParam : Any> registerStopId(category: TaskCategory, deriveId: (String, TaskCategory, StopParam) -> String) {
+        @Suppress("UNCHECKED_CAST")
+        stopIdRegistry[category] = { playerId, category, stopParam -> deriveId(playerId, category, stopParam as StopParam) }
     }
 
     /**
-     * Run a task for the socket connection, returning the task ID (UUID).
+     * Computes task ID for a given player and task category with the generic [StopParam] type.
+     *
+     * @throws IllegalStateException if no ID derivation function has been registered for the category.
      */
-    fun runTask(
-        connection: Connection,
-        taskTemplateKey: TaskTemplate,
-        cfgBuilder: (TaskConfig) -> TaskConfig?,
-        onComplete: (() -> Unit)? = null
-    ): UUID {
-        val task = requireNotNull(registeredTasks[taskTemplateKey]) { "Task not registered: $taskTemplateKey, playerId=${connection.playerId}" }
-        val defaultCfg = requireNotNull(defaultConfigs[taskTemplateKey]) { "Missing default config for $taskTemplateKey, playerId=${connection.playerId}" }
-        val cfg = cfgBuilder(defaultCfg) ?: defaultCfg
+    fun <StopParam : Any> deriveTaskId(playerId: String, category: TaskCategory, stopParam: StopParam): String {
+        val f = requireNotNull(stopIdRegistry[category]) { "No deriveId function registered for $category" }
+        return f(playerId, category, stopParam)
+    }
 
-        val taskId = UUID.randomUUID()
+    /**
+     * Run the selected [task] for the player's [Connection].
+     */
+    fun <ExecParam : Any, StopParam : Any> runTask(
+        connection: Connection,
+        task: ServerTask<ExecParam, StopParam>,
+    ) {
+        val taskId = task.deriveId()
 
         val job = connection.scope.launch {
             try {
-                Logger.info(LogSource.SOCKET) { "Push task ${task.key} is going to run for playerId=${connection.playerId}" }
+                Logger.info(LogSource.SOCKET) { "Task ${task.category} is going to run for playerId=${connection.playerId}" }
                 val scheduler = task.scheduler ?: this@ServerTaskDispatcher
-                scheduler.schedule(task, connection, cfg)
+                scheduler.schedule(connection, task)
             } catch (_: CancellationException) {
-                Logger.info(LogSource.SOCKET) { "Push task '${task.key}' was cancelled for playerId=${connection.playerId}." }
+                Logger.info(LogSource.SOCKET) { "Task '${task.category}' was cancelled (via CancellationException) for playerId=${connection.playerId}." }
             } catch (e: Exception) {
-                Logger.error(LogConfigSocketError) { "Error running push task '${task.key}': $e for playerId=${connection.playerId}" }
+                Logger.error(LogConfigSocketError) { "Error on task '${task.category}': $e for playerId=${connection.playerId}" }
             } finally {
-                Logger.info(LogSource.SOCKET) { "Push task ${task.key} has finished running for playerId=${connection.playerId}" }
+                Logger.info(LogSource.SOCKET) { "Task ${task.category} has finished running for playerId=${connection.playerId}" }
                 runningInstances.remove(taskId)
-                onComplete?.invoke()
             }
         }
 
-        runningInstances[taskId] = TaskInstance(connection.playerId, taskTemplateKey, cfg, job, onComplete)
-        return taskId
+        runningInstances[taskId] = TaskInstance(
+            taskId = taskId,
+            category = task.category,
+            playerId = connection.playerId,
+            config = task.config,
+            job = job
+        )
     }
 
-    fun stopTask(taskId: UUID) {
+    /**
+     * Stop the task of [taskId] by cancelling the associated coroutine job.
+     */
+    fun stopTask(taskId: String) {
         runningInstances.remove(taskId)?.job?.cancel()
     }
 
+    /**
+     * Stop all tasks for the [playerId]
+     */
     fun stopAllTasksForPlayer(playerId: String) {
         runningInstances
             .filterValues { it.playerId == playerId }
             .forEach { (taskId, _) -> stopTask(taskId) }
     }
 
-    override suspend fun schedule(
-        task: ServerTask,
+    /**
+     * Default implementation of [TaskScheduler].
+     *
+     * The process at how specifically task lifecycle is handled is documented in [ServerTask].
+     */
+    @OptIn(SchedulerOnly::class)
+    override suspend fun <ExecParam : Any, StopParam : Any> schedule(
         connection: Connection,
-        cfg: TaskConfig
+        task: ServerTask<ExecParam, StopParam>,
     ) {
-        delay(cfg.initialRunDelay)
+        val config = task.config
+        val shouldRepeat = config.repeatInterval != null
+        var iterationDone = 0
+        val startTime = getTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
-        val shouldRunInfinitely = cfg.repeatDelay != null
-        if (shouldRunInfinitely) {
-            while (currentCoroutineContext().isActive) {
-                delay(cfg.repeatDelay)
-                task.run(connection, cfg)
+        try {
+            task.onStart(connection)
+            delay(config.startDelay)
+
+            if (shouldRepeat) {
+                while (currentCoroutineContext().isActive) {
+
+                    // Check timeout
+                    config.timeout?.let { timeout ->
+                        val now = getTimeMillis().toDuration(DurationUnit.MILLISECONDS)
+                        if (now - startTime >= timeout) {
+                            task.onCancelled(connection, CancellationReason.TIMEOUT)
+                            break
+                        }
+                    }
+
+                    task.onIterationStart(connection)
+                    task.execute(connection)
+                    task.onIterationComplete(connection)
+
+                    iterationDone++
+                    // Check max repeat
+                    config.maxRepeats?.let { max ->
+                        if (iterationDone >= max) {
+                            task.onTaskComplete(connection)
+                            break
+                        }
+                    }
+
+                    delay(config.repeatInterval)
+                }
+            } else {
+                task.execute(connection)
+                task.onTaskComplete(connection)
             }
-        } else {
-            task.run(connection, cfg)
+        } catch (e: CancellationException) {
+            task.onCancelled(connection, CancellationReason.MANUAL)
+            throw e
+        } catch (e: Exception) {
+            task.onCancelled(connection, CancellationReason.ERROR)
+            throw e
         }
     }
 
+    /**
+     * Stop every running tasks instances in the server.
+     */
     fun stopAllPushTasks() {
         runningInstances.forEach { (taskId, _) -> stopTask(taskId) }
     }
 
     fun shutdown() {
-        registeredTasks.clear()
-        defaultConfigs.clear()
         stopAllPushTasks()
+        runningInstances.clear()
+        stopIdRegistry.clear()
     }
 }
 
-/**
- * An instance of task.
- *
- * @property playerId the player the task belongs to.
- * @property taskKey the [ServerTask] identifier.
- * @property config the configuration of the task.
- * @property job coroutine reference for the task.
- * @property onComplete callback after task has finished running.
- */
 data class TaskInstance(
+    val taskId: String,
+    val category: TaskCategory,
     val playerId: String,
-    val taskKey: TaskTemplate,
     val config: TaskConfig,
     val job: Job,
-    val onComplete: (() -> Unit)?
 )

@@ -3,11 +3,27 @@ package socket.tasks
 import socket.core.Connection
 
 /**
- * Entity that can schedule task.
+ * Represents a component that handles timing, repetition, and lifecycle of a task as defined by [TaskConfig].
  *
- * By default, the scheduling of task is done by scheduler default implementation of [ServerTaskDispatcher].
- * However, if task scheduling is complex, the particular [ServerTask] can override the implementation.
+ * By default, scheduling is handled by [ServerTaskDispatcher].
+ * However, individual [ServerTask] implementations may override this behavior
+ * if they require custom scheduling logic or more complex timing control.
  */
 interface TaskScheduler {
-    suspend fun schedule(task: ServerTask, connection: Connection, cfg: TaskConfig)
+    suspend fun <ExecParam : Any, StopParam : Any> schedule(
+        connection: Connection,
+        task: ServerTask<ExecParam, StopParam>,
+    )
 }
+
+/**
+ * [ServerTask] has lifecycle hooks (e.g., `onStart`, `onComplete`) which are intended to be used
+ * by a [TaskScheduler]. This annotation gives a warning for caller that tries to call lifecycle hooks
+ * directly on [ServerTask] implementation.
+ */
+@RequiresOptIn(
+    level = RequiresOptIn.Level.ERROR,
+    message = "This API is only intended to be called by task scheduler."
+)
+@Retention(AnnotationRetention.BINARY)
+annotation class SchedulerOnly
