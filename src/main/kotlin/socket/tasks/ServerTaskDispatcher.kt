@@ -87,6 +87,13 @@ class ServerTaskDispatcher : TaskScheduler {
                 runningInstances.remove(taskId)
             }
         }
+
+        runningInstances[taskId] = TaskInstance(
+            category = taskToRun.category,
+            playerId = connection.playerId,
+            config = taskToRun.config,
+            job = job
+        )
     }
 
     /**
@@ -140,16 +147,69 @@ class ServerTaskDispatcher : TaskScheduler {
                 task.onTaskComplete(connection)
             }
         } catch (e: CancellationException) {
-            when (e.message) {
-                "FORCE_COMPLETE" -> task.onForceComplete(connection)
-                "MANUAL_CANCEL" -> task.onCancelled(connection, CancellationReason.MANUAL)
-                else -> task.onCancelled(connection, CancellationReason.ERROR)
-            }
+            when (e) {
+                is ChangeConfigException -> {
+                    val updated = e.newConfig
+                    Logger.info { "[Scheduler] Config changed for ${task.category}: $updated" }
+                    schedule(connection, task.apply { this.config = updated })
+                }
 
+                is ForceCompleteException -> task.onForceComplete(connection)
+
+                is ManualCancellationException -> task.onCancelled(connection, CancellationReason.MANUAL)
+
+                else -> {
+                    task.onCancelled(connection, CancellationReason.ERROR)
+                }
+            }
             throw e
         } catch (e: Exception) {
             task.onCancelled(connection, CancellationReason.ERROR)
             throw e
+        }
+    }
+
+    /**
+     * Change a particular task config, typically used to alter task execution timing.
+     *
+     * For example, it can be used to speed up building construction task.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <StopInput : Any> changeTaskConfig(
+        connection: Connection,
+        category: TaskCategory,
+        stopInputBlock: StopInput.() -> Unit = {},
+        transform: TaskConfig.() -> TaskConfig
+    ) {
+        val factory = stopInputFactories[category]
+            ?: error("No stopInputFactory registered for $category (register in Server.kt)")
+
+        try {
+            val stopInput = (factory() as StopInput).apply(stopInputBlock)
+            val deriveId = stopIdProviders[category]
+                ?: error("No stopIdProvider registered for $category (register in Server.kt)")
+
+            val taskId = deriveId(connection.playerId, category, stopInput)
+            val instance = runningInstances[taskId]
+
+            if (instance == null) {
+                Logger.warn(LogConfigSocketError) {
+                    "[changeTaskConfig]: instance for taskId=$taskId is null."
+                }
+                return
+            }
+
+            val newConfig = instance.config.transform()
+            runningInstances[taskId] = instance.copy(config = newConfig)
+            instance.job.cancel(ChangeConfigException(newConfig))
+        } catch (e: ClassCastException) {
+            val msg = buildString {
+                appendLine("[changeTaskConfig] Type mismatch when casting factory stop ID:")
+                appendLine("• Category: $category")
+                appendLine("• Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in changeTaskConfig()")
+            }
+
+            throw IllegalStateException(msg, e)
         }
     }
 
@@ -183,17 +243,17 @@ class ServerTaskDispatcher : TaskScheduler {
             val instance = runningInstances.remove(taskId)
 
             if (instance == null) {
-                Logger.warn(LogConfigSocketError) { "[stopTaskFor]: instance for taskId=$taskId was null." }
+                Logger.warn(LogConfigSocketError) { "[stopTaskFor]: instance for taskId=$taskId is null." }
                 return
             }
 
-            val reason = if (forceComplete) {
-                "FORCE_COMPLETE"
+            val exception = if (forceComplete) {
+                ForceCompleteException()
             } else {
-                "MANUAL_CANCEL"
+                ManualCancellationException()
             }
 
-            instance.job.cancel(CancellationException(reason))
+            instance.job.cancel(exception)
         } catch (e: ClassCastException) {
             val msg = buildString {
                 appendLine("[stopTaskFor] Type mismatch when casting factory stop ID:")
@@ -235,3 +295,7 @@ data class TaskInstance(
     val config: TaskConfig,
     val job: Job,
 )
+
+class ChangeConfigException(val newConfig: TaskConfig) : CancellationException("CHANGE_CONFIG:${newConfig.hashCode()}")
+class ForceCompleteException : CancellationException("Force completion was requested")
+class ManualCancellationException : CancellationException()

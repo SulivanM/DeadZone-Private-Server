@@ -70,7 +70,7 @@ import socket.core.Connection
  */
 abstract class ServerTask<TaskInput : Any, StopInput : Any> {
     abstract val category: TaskCategory
-    abstract val config: TaskConfig
+    abstract var config: TaskConfig
     abstract val scheduler: TaskScheduler?
 
     abstract val taskInputBlock: TaskInput.() -> Unit
