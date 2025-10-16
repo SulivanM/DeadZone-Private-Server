@@ -2,12 +2,8 @@ package socket.tasks.impl
 
 import socket.core.Connection
 import socket.messaging.NetworkMessage
-import socket.tasks.ServerTask
-import socket.tasks.TaskConfig
-import socket.tasks.TaskTemplate
-import socket.tasks.TaskScheduler
+import socket.tasks.*
 import utils.Time
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -15,22 +11,18 @@ import kotlin.time.Duration.Companion.seconds
  *
  * The game doesn't maintain its own time; instead, it relies on the server for timekeeping.
  */
-class TimeUpdateTask() : ServerTask {
-    override val key: TaskTemplate
-        get() = TaskTemplate.TIME_UPDATE
+class TimeUpdateTask(private val connection: Connection) : ServerTask<Unit, Unit>() {
+    override val category: TaskCategory = TaskCategory.TimeUpdate
+    override val config: TaskConfig = TaskConfig(repeatInterval = 1.seconds)
+    override val scheduler: TaskScheduler? = null
 
-    override val config: TaskConfig
-        get() = TaskConfig(
-            targetTask = NetworkMessage.TIME_UPDATE,
-            initialRunDelay = 1.seconds,
-            repeatDelay = 1000.milliseconds,
-            extra = emptyMap(),
-        )
+    // playerId123-TU
+    override fun deriveId(): String {
+        return "${connection.playerId}-${category.code}"
+    }
 
-    override val scheduler: TaskScheduler?
-        get() = null
-
-    override suspend fun run(connection: Connection, finalConfig: TaskConfig) {
-        connection.sendMessage(finalConfig.targetTask, Time.now(), enableLogging = false)
+    @InternalTaskAPI
+    override suspend fun execute(connection: Connection) {
+        connection.sendMessage(NetworkMessage.TIME_UPDATE, Time.now(), enableLogging = false)
     }
 }
