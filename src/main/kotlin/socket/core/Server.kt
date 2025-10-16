@@ -7,8 +7,6 @@ import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageDispatcher
 import socket.protocol.PIODeserializer
-import socket.tasks.impl.BuildingTask
-import socket.tasks.impl.TimeUpdateTask
 import utils.Logger
 import utils.UUID
 import io.ktor.network.selector.*
@@ -23,6 +21,7 @@ import socket.handler.QuestProgressHandler
 import socket.handler.RequestSurvivorCheckHandler
 import socket.handler.SaveHandler
 import socket.handler.ZombieAttackHandler
+import socket.tasks.TaskCategory
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -47,8 +46,13 @@ class Server(
             socketDispatcher.register(SaveHandler(this))
             socketDispatcher.register(ZombieAttackHandler())
             socketDispatcher.register(RequestSurvivorCheckHandler(this))
-            context.taskDispatcher.register(TimeUpdateTask())
-            context.taskDispatcher.register(BuildingTask())
+            context.taskDispatcher.registerStopId<Unit>(
+                category = TaskCategory.TimeUpdate,
+                deriveId = { playerId, category, _ ->
+                    // "TU-playerId123"
+                    "${category.code}-$playerId"
+                }
+            )
         }
     }
 
@@ -96,7 +100,41 @@ class Server(
                             val decoded = String(this, Charsets.UTF_8)
                             val sanitized = decoded.map { ch ->
                                 if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
-                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(' ', '.', ',', ':', ';', '-', '_', '{', '}', '[', ']', '(', ')', '"', '\'', '/', '\\', '?', '=', '+', '*', '%', '&', '|', '<', '>', '!', '@', '#', '$', '^', '~')) placeholder
+                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(
+                                        ' ',
+                                        '.',
+                                        ',',
+                                        ':',
+                                        ';',
+                                        '-',
+                                        '_',
+                                        '{',
+                                        '}',
+                                        '[',
+                                        ']',
+                                        '(',
+                                        ')',
+                                        '"',
+                                        '\'',
+                                        '/',
+                                        '\\',
+                                        '?',
+                                        '=',
+                                        '+',
+                                        '*',
+                                        '%',
+                                        '&',
+                                        '|',
+                                        '<',
+                                        '>',
+                                        '!',
+                                        '@',
+                                        '#',
+                                        '$',
+                                        '^',
+                                        '~'
+                                    )
+                                ) placeholder
                                 else ch
                             }.joinToString("")
                             return sanitized.take(max) + if (sanitized.length > max) "..." else ""

@@ -5,7 +5,12 @@ import dev.deadzone.socket.messaging.HandlerContext
 import socket.messaging.NetworkMessage
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageHandler
-import socket.tasks.TaskTemplate
+import socket.tasks.TaskCategory
+import socket.tasks.impl.BuildingCreateParameter
+import socket.tasks.impl.BuildingCreateStopParameter
+import socket.tasks.impl.BuildingCreateTask
+import socket.tasks.impl.TimeUpdateTask
+import kotlin.time.Duration
 
 /**
  * Handle `ic` message by:
@@ -27,11 +32,9 @@ class InitCompleteHandler(private val serverContext: ServerContext) :
         serverContext.onlinePlayerRegistry.markOnline(connection.playerId)
 
         // send serverTime to client
-        serverContext.taskDispatcher.runTask(
+        serverContext.taskDispatcher.runTaskFor(
             connection = connection,
-            taskTemplateKey = TaskTemplate.TIME_UPDATE,
-            cfgBuilder = { null },
-            onComplete = {}
+            taskToRun = TimeUpdateTask()
         )
 
         Unit

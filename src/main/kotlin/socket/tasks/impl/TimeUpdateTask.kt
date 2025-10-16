@@ -11,15 +11,15 @@ import kotlin.time.Duration.Companion.seconds
  *
  * The game doesn't maintain its own time; instead, it relies on the server for timekeeping.
  */
-class TimeUpdateTask(private val connection: Connection) : ServerTask<Unit, Unit>() {
+class TimeUpdateTask() : ServerTask<Unit, Unit>() {
     override val category: TaskCategory = TaskCategory.TimeUpdate
     override val config: TaskConfig = TaskConfig(repeatInterval = 1.seconds)
     override val scheduler: TaskScheduler? = null
 
-    // playerId123-TU
-    override fun deriveId(): String {
-        return "${connection.playerId}-${category.code}"
-    }
+    override val taskInputBlock: (Unit) -> Unit = { }
+    override val stopInputBlock: (Unit) -> Unit = { }
+    override fun createTaskInput() = Unit
+    override fun createStopInput() = Unit
 
     @InternalTaskAPI
     override suspend fun execute(connection: Connection) {
