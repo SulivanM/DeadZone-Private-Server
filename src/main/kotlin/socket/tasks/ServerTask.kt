@@ -11,8 +11,21 @@ import socket.core.Connection
  * Typically, tasks implement this interface as a reusable template,
  * allowing callers to run them easily without dealing with lower-level scheduling logic.
  *
- * Internally, implementations rely on the low-level `runTask` API
- * provided by [ServerTaskDispatcher] to handle timing and lifecycle control.
+ * [ServerTask] implementation should be able to provide `stopId`, a reproducible, deterministic identifier for the task.
+ * The derived ID is used for referencing and cancelling tasks consistently across server components.
+ * Typically it is derived from a combination of the player ID, [category], and [StopParam] instance (e.g., a `buildingId`).
+ *
+ * Example (register in Server.kt)
+ * ```
+ * context.taskDispatcher.registerStopId(
+ *     category = TaskCategory.TimeUpdate,
+ *     stopParamFactory = { BuildingStopParameter() },
+ *     deriveId = { playerId, category, _ ->
+ *         // "TU-playerId123"
+ *         "${category.code}-$playerId"
+ *     }
+ * )
+ * ```
  *
  * ### Lifecycle Overview
  * A task may run once or repeatedly, depending on its configuration.
@@ -42,37 +55,31 @@ import socket.core.Connection
  * Only [execute] must be implemented; all other lifecycle hooks are optional.
  * Each lifecycle callback receives a [Connection] instance, representing the player's connection this task belongs to.
  *
- * @property category Logical grouping of this task or namespace for this task.
- * @property config Defines timing, delay, and repetition rules for task execution.
+ * @property category  Logical grouping of this task or namespace for this task.
+ * @property config    Defines timing, delay, and repetition rules for task execution.
  * @property scheduler Optional scheduler for this task.
  *                     Typically, when scheduling is complex, the [ServerTask] itself implements it.
  *
  * @param ExecParam The type of the execution parameter required by this task.
  *                  This is the input used when the task is started.
  *
- * @param StopParam The type of the cancellation parameter for this task.
- *                  Used to deterministically identify or stop a running task
- *                  (for example, a building ID for a construction task).
+ * @param StopParam The type of the cancellation parameter required by this task.
+ *                  This is the input used when the task wants to be stopped.
+ *
+ * @property execParamBlock DSL block to produce [ExecParam] instance.
+ * @property stopParamBlock DSL block to produce [StopParam] instance.
+ * @property createExecParam Applies the [execParamBlock] block to an empty [ExecParam].
+ * @property createStopParam Applies the [stopParamBlock] block to an empty [StopParam].
  */
 abstract class ServerTask<ExecParam : Any, StopParam : Any> {
     abstract val category: TaskCategory
     abstract val config: TaskConfig
     abstract val scheduler: TaskScheduler?
 
-    /**
-     * Returns a reproducible, deterministic identifier for this task.
-     *
-     * The derived ID is used for referencing and cancelling tasks consistently
-     * across server components. Typically it is derived from a combination of
-     * the player ID, [category], and [StopParam] instance (e.g., a `buildingId`).
-     *
-     * Example:
-     * ```
-     * override fun deriveId(): String = "${playerId}_${category}_${stopParam.buildingId}"
-     * ```
-     * for building create task.
-     */
-    abstract fun deriveId(): String
+    abstract val execParamBlock: (ExecParam) -> Unit
+    abstract val stopParamBlock: (StopParam) -> Unit
+    abstract fun createExecParam(): ExecParam
+    abstract fun createStopParam(): StopParam
 
     /**
      * Called once when the task is first scheduled.

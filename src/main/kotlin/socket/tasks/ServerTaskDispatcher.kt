@@ -17,33 +17,30 @@ import kotlin.time.toDuration
  * This dispatcher is also a task scheduler (i.e., the default implementation of [TaskScheduler]).
  *
  * @property runningInstances Map of task IDs to currently running [TaskInstance]s.
- * @property stopIdRegistry Map of each [TaskCategory] to a function capable of deriving a task ID
+ * @property stopIdProviders Map of each [TaskCategory] to a function capable of deriving a task ID
  * from a `playerId`, [TaskCategory], and a generic [StopParam] type.
- * Every [ServerTask] implementation **must** call [registerStopId], typically using its own [ServerTask.deriveId],
+ * Every [ServerTask] implementation **must** call [registerStopId] (in Server.kt)
  * to register how the dispatcher should compute a task ID for that category when stopping tasks.
  */
 class ServerTaskDispatcher : TaskScheduler {
     private val runningInstances = mutableMapOf<String, TaskInstance>()
-    private val stopIdRegistry = mutableMapOf<TaskCategory, (String, TaskCategory, Any) -> String>()
+
+    private val stopIdProviders =
+        mutableMapOf<TaskCategory, (playerId: String, category: TaskCategory, stopParam: Any) -> String>()
 
     /**
      * Registers a function that derives a task ID for a given task category.
      *
      * It always takes a `String` of [Connection.playerId] and a generic [StopParam] type.
      */
-    fun <StopParam : Any> registerStopId(category: TaskCategory, deriveId: (String, TaskCategory, StopParam) -> String) {
+    fun <StopParam : Any> registerStopId(
+        category: TaskCategory,
+        deriveId: (playerId: String, category: TaskCategory, stopParam: StopParam) -> String
+    ) {
         @Suppress("UNCHECKED_CAST")
-        stopIdRegistry[category] = { playerId, category, stopParam -> deriveId(playerId, category, stopParam as StopParam) }
-    }
-
-    /**
-     * Computes task ID for a given player and task category with the generic [StopParam] type.
-     *
-     * @throws IllegalStateException if no ID derivation function has been registered for the category.
-     */
-    fun <StopParam : Any> deriveTaskId(playerId: String, category: TaskCategory, stopParam: StopParam): String {
-        val f = requireNotNull(stopIdRegistry[category]) { "No deriveId function registered for $category" }
-        return f(playerId, category, stopParam)
+        stopIdProviders[category] = { playerId, category, stopParam ->
+            deriveId(playerId, category, stopParam as StopParam)
+        }
     }
 
     /**
@@ -53,7 +50,11 @@ class ServerTaskDispatcher : TaskScheduler {
         connection: Connection,
         task: ServerTask<ExecParam, StopParam>,
     ) {
-        val taskId = task.deriveId()
+        val stopParam = task.createStopParam().apply(task.stopParamBlock)
+
+        val deriveStopId = stopIdProviders[task.category]
+            ?: error("StopIdProvider not registered for ${task.category} (register in Server.kt)")
+        val taskId = deriveStopId(connection.playerId, task.category, stopParam)
 
         val job = connection.scope.launch {
             try {
@@ -71,7 +72,6 @@ class ServerTaskDispatcher : TaskScheduler {
         }
 
         runningInstances[taskId] = TaskInstance(
-            taskId = taskId,
             category = task.category,
             playerId = connection.playerId,
             config = task.config,
@@ -83,6 +83,21 @@ class ServerTaskDispatcher : TaskScheduler {
      * Stop the task of [taskId] by cancelling the associated coroutine job.
      */
     fun stopTask(taskId: String) {
+        runningInstances.remove(taskId)?.job?.cancel()
+    }
+
+    /**
+     * Stop the task with the given [playerId], [category], and [stopParam].
+     */
+    fun <StopParam : Any> stopTask(
+        playerId: String,
+        category: TaskCategory,
+        stopParamFactory: () -> StopParam
+    ) {
+        val stopParam = stopParamFactory()
+        val deriveStopId = stopIdProviders[category]
+            ?: error("No stopIdProvider registered for $category (register in Server.kt)")
+        val taskId = deriveStopId(playerId, category, stopParam)
         runningInstances.remove(taskId)?.job?.cancel()
     }
 
@@ -164,12 +179,11 @@ class ServerTaskDispatcher : TaskScheduler {
     fun shutdown() {
         stopAllPushTasks()
         runningInstances.clear()
-        stopIdRegistry.clear()
+        stopIdProviders.clear()
     }
 }
 
 data class TaskInstance(
-    val taskId: String,
     val category: TaskCategory,
     val playerId: String,
     val config: TaskConfig,

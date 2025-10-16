@@ -12,7 +12,7 @@ import socket.core.Connection
 interface TaskScheduler {
     suspend fun <ExecParam : Any, StopParam : Any> schedule(
         connection: Connection,
-        task: ServerTask<ExecParam, StopParam>,
+        task: ServerTask<ExecParam, StopParam>
     )
 }
 
@@ -21,6 +21,13 @@ interface TaskScheduler {
  * by a [TaskScheduler] and the subclass itself implementing the methods.
  *
  * This annotation gives a warning for caller that tries to call lifecycle hooks directly from a [ServerTask] implementation.
+ *
+ * Don't do something like:
+ * ```
+ * BuildingTask.BuildingCreate {
+ *     buildingId = "bld123"
+ * }.execute()
+ * ```
  */
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR,

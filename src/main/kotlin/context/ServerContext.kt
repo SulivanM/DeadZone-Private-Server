@@ -1,7 +1,6 @@
 package context
 
 import data.db.BigDB
-import dev.deadzone.socket.tasks.ServerTaskRunner
 import socket.core.OnlinePlayerRegistry
 import socket.handler.save.SaveSubHandler
 import socket.tasks.ServerTaskDispatcher
@@ -16,7 +15,6 @@ data class ServerContext(
     val onlinePlayerRegistry: OnlinePlayerRegistry,
     val authProvider: AuthProvider,
     val taskDispatcher: ServerTaskDispatcher,
-    val taskRunner: ServerTaskRunner,
     val playerContextTracker: PlayerContextTracker,
     val saveHandlers: List<SaveSubHandler>,
     val config: ServerConfig,
