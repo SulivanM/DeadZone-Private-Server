@@ -39,6 +39,15 @@ class BuildingCreateTask(
     override suspend fun execute(connection: Connection) {
         connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, taskInput.buildingId)
     }
+
+    /**
+     * Force complete: typically used when player's speed up the construction.
+     * Similarly, send BUILDING_COMPLETE message to client.
+     */
+    @InternalTaskAPI
+    override suspend fun onForceComplete(connection: Connection) {
+        connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, taskInput.buildingId)
+    }
 }
 
 data class BuildingCreateParameter(
