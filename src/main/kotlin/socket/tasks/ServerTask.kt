@@ -115,8 +115,28 @@ abstract class ServerTask<TaskInput : Any, StopInput : Any> {
     open suspend fun onTaskComplete(connection: Connection) = Unit
 
     /**
+     * Called when a completion is forced.
+     *
+     * This happens when the task is not yet finished (e.g., still repeating or its start delay has not yet elapsed),
+     * but an external source forces the task to complete immediately.
+     *
+     * By default, it will just call [onTaskComplete] directly.
+     * This makes it differ than cancelling the task, as it is not treated as an error or interruption,
+     * and it skips to [onTaskComplete] rather than call the [onCancelled].
+     *
+     * [ServerTask] implementation can replace or add behaviors as needed.
+     */
+    @InternalTaskAPI
+    open suspend fun onForceComplete(connection: Connection) {
+        onTaskComplete(connection)
+    }
+
+    /**
      * Called if the task is stopped or cancelled before completing normally.
      * Use this to revert partial state or perform cleanup.
+     *
+     * @param reason The reason why the task was cancelled.
+     *               `ServerTask` implementation may handle different cases as needed.
      */
     @InternalTaskAPI
     open suspend fun onCancelled(connection: Connection, reason: CancellationReason) = Unit

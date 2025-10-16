@@ -8,6 +8,7 @@ import utils.Logger
 import kotlinx.coroutines.*
 import kotlin.collections.component1
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -45,7 +46,17 @@ class ServerTaskDispatcher : TaskScheduler {
     ) {
         stopInputFactories[category] = stopInputFactory
         stopIdProviders[category] = { playerId, category, stopInput ->
-            deriveId(playerId, category, stopInput as StopInput)
+            try {
+                deriveId(playerId, category, stopInput as StopInput)
+            } catch (e: ClassCastException) {
+                val msg = buildString {
+                    appendLine("[registerStopId] Type mismatch when deriving stop ID:")
+                    appendLine("• Category: $category")
+                    appendLine("• Most likely cause: duplicate registration in Server.kt for same category or wrong factory return type.")
+                }
+
+                throw IllegalStateException(msg, e)
+            }
         }
     }
 
@@ -76,49 +87,6 @@ class ServerTaskDispatcher : TaskScheduler {
                 runningInstances.remove(taskId)
             }
         }
-
-        runningInstances[taskId] = TaskInstance(
-            category = taskToRun.category,
-            playerId = connection.playerId,
-            config = taskToRun.config,
-            job = job
-        )
-    }
-
-    /**
-     * Stop the task of [taskId] by cancelling the associated coroutine job.
-     */
-    private fun stopTask(taskId: String) {
-        runningInstances.remove(taskId)?.job?.cancel()
-    }
-
-    /**
-     * Stop the task with the given [Connection.playerId], [category], and [StopInput].
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <StopInput : Any> stopTaskFor(
-        connection: Connection,
-        category: TaskCategory,
-        stopInputBlock: StopInput.() -> Unit = {}
-    ) {
-        val factory = stopInputFactories[category]
-            ?: error("No stopInputFactory registered for $category (register in Server.kt)")
-        val stopInput = (factory() as StopInput).apply(stopInputBlock)
-
-        val deriveId = stopIdProviders[category]
-            ?: error("No stopIdProvider registered for $category (register in Server.kt)")
-
-        val taskId = deriveId(connection.playerId, category, stopInput)
-        runningInstances.remove(taskId)?.job?.cancel()
-    }
-
-    /**
-     * Stop all tasks for the [playerId]
-     */
-    fun stopAllTasksForPlayer(playerId: String) {
-        runningInstances
-            .filterValues { it.playerId == playerId }
-            .forEach { (taskId, _) -> stopTask(taskId) }
     }
 
     /**
@@ -172,12 +140,78 @@ class ServerTaskDispatcher : TaskScheduler {
                 task.onTaskComplete(connection)
             }
         } catch (e: CancellationException) {
-            task.onCancelled(connection, CancellationReason.MANUAL)
+            when (e.message) {
+                "FORCE_COMPLETE" -> task.onForceComplete(connection)
+                "MANUAL_CANCEL" -> task.onCancelled(connection, CancellationReason.MANUAL)
+                else -> task.onCancelled(connection, CancellationReason.ERROR)
+            }
+
             throw e
         } catch (e: Exception) {
             task.onCancelled(connection, CancellationReason.ERROR)
             throw e
         }
+    }
+
+    /**
+     * Stop the task of [taskId] by cancelling the associated coroutine job.
+     */
+    private fun stopTask(taskId: String) {
+        runningInstances.remove(taskId)?.job?.cancel()
+    }
+
+    /**
+     * Stop the task with the given [Connection.playerId], [category], and [StopInput].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <StopInput : Any> stopTaskFor(
+        connection: Connection,
+        category: TaskCategory,
+        forceComplete: Boolean = false,
+        stopInputBlock: StopInput.() -> Unit = {}
+    ) {
+        val factory = stopInputFactories[category]
+            ?: error("No stopInputFactory registered for $category (register in Server.kt)")
+
+        try {
+            val stopInput = (factory() as StopInput).apply(stopInputBlock)
+
+            val deriveId = stopIdProviders[category]
+                ?: error("No stopIdProvider registered for $category (register in Server.kt)")
+
+            val taskId = deriveId(connection.playerId, category, stopInput)
+            val instance = runningInstances.remove(taskId)
+
+            if (instance == null) {
+                Logger.warn(LogConfigSocketError) { "[stopTaskFor]: instance for taskId=$taskId was null." }
+                return
+            }
+
+            val reason = if (forceComplete) {
+                "FORCE_COMPLETE"
+            } else {
+                "MANUAL_CANCEL"
+            }
+
+            instance.job.cancel(CancellationException(reason))
+        } catch (e: ClassCastException) {
+            val msg = buildString {
+                appendLine("[stopTaskFor] Type mismatch when casting factory stop ID:")
+                appendLine("• Category: $category")
+                appendLine("• Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in stopTaskFor()")
+            }
+
+            throw IllegalStateException(msg, e)
+        }
+    }
+
+    /**
+     * Stop all tasks for the [playerId]
+     */
+    fun stopAllTasksForPlayer(playerId: String) {
+        runningInstances
+            .filterValues { it.playerId == playerId }
+            .forEach { (taskId, _) -> stopTask(taskId) }
     }
 
     /**
@@ -192,6 +226,7 @@ class ServerTaskDispatcher : TaskScheduler {
         runningInstances.clear()
         stopIdProviders.clear()
     }
+
 }
 
 data class TaskInstance(
