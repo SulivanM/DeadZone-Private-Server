@@ -10,6 +10,7 @@ import socket.messaging.SocketMessageHandler
 import socket.protocol.PIOSerializer
 import utils.Logger
 import utils.Time
+import kotlin.collections.random
 import kotlin.random.Random
 
 /**
@@ -49,10 +50,11 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
         val gender = if (Random.nextBoolean()) "male" else "female"
         val maleVoices = setOf("white-m", "black-m", "latino-m", "asian-m")
         val femaleVoices = setOf("white-f", "black-f", "latino-f")
+        val name = (if (gender == "male") maleNames.random() else femaleNames.random()).split(" ")
 
         return Survivor(
-            firstName = if (gender == "male") maleFirstNames.random() else femaleFirstNames.random(),
-            lastName = if (gender == "male") maleLastNames.random() else femaleLastNames.random(),
+            firstName = name[0],
+            lastName = name[1],
             gender = gender,
             classId = "unassigned",
             voice = if (gender == "male") maleVoices.random() else femaleVoices.random(),
@@ -82,32 +84,18 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
         """.trimIndent()
     }
 
-    // popular culture names
-    val maleFirstNames = setOf(
-        "Mario", "Cloud", "Link", "Arthur", "Luffy",
-        "Goku", "Tony", "Peter", "Jesse", "Neo",
-        "Ash", "Sonic", "Leon", "Ezio", "Shinji",
-        "Alucard", "Kratos", "Steve", "Jin", "Nathan"
+    // popular culture some troll names
+    val maleNames = setOf(
+        "Tony Stark", "Peter Parker", "Bruce Wayne", "Clark Kent", "Steve Rogers",
+        "Luke Skywalker", "Genshin Impact", "Rick Roll", "Joel Miller", "Arthur Morgan",
+        "John Wick", "Ethan Winters", "Leon Kennedy", "Gordon Freeman", "Nathan Drake",
+        "Cloud Strife", "Uzumaki Naruto", "Zombie Dinner", "Jesse Pinkman", "Trevor Philips"
     )
 
-    val maleLastNames = setOf(
-        "Skywalker", "Kenobi", "Potter", "Wayne", "Kent",
-        "Stark", "Ryu", "Pinkman", "Strife", "Redfield",
-        "Drake", "Sakai", "Morgan", "Elric", "Hiraga",
-        "Tsukino", "Uzumaki", "Kurosaki", "Joestar", "Belcher"
-    )
-
-    val femaleFirstNames = setOf(
-        "Zelda", "Lara", "Tifa", "Aerith", "Sakura",
-        "Jill", "Ciri", "Hermione", "Leia", "Yuna",
-        "Samus", "Ada", "Mikasa", "Hinata", "Cortana",
-        "Ellie", "Rinoa", "Bulma", "Korra", "Judy"
-    )
-
-    val femaleLastNames = setOf(
-        "Croft", "Lockhart", "Valentine", "Tsukino", "Hikari",
-        "Organa", "Potter", "Forrester", "Kasugano", "Amane",
-        "Gainsborough", "Shepard", "Takanashi", "Fairchild", "Alcott",
-        "Valkyrie", "Nishimiya", "Sato", "Ravenwood", "Kusanagi"
+    val femaleNames = setOf(
+        "Lara Croft", "Jill Valentine", "Claire Redfield", "Ada Wong", "Ellie Williams",
+        "Tifa Lockhart", "Aerith Gainsborough", "Hermione Granger", "Hinata Hyuga", "Sarah Connor",
+        "Genshin Impact", "Carol Danvers", "Tasty Brain", "Natasha Romanoff", "Selina Kyle",
+        "Sakura Haruno", "Asuka Langley", "Yuna Braska", "Jang Wonyoung", "Harley Quinn"
     )
 }

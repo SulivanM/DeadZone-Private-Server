@@ -8,15 +8,16 @@ import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.compound.building.response.*
-import socket.messaging.NetworkMessage
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
-import socket.tasks.TaskTemplate
+import socket.tasks.TaskCategory
+import socket.tasks.impl.BuildingCreateStopParameter
+import socket.tasks.impl.BuildingCreateTask
+import socket.tasks.impl.BuildingRepairTask
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
 import kotlin.math.max
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class BuildingSaveHandler : SaveSubHandler {
@@ -78,17 +79,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTask(
+                    serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
-                        taskTemplateKey = TaskTemplate.BUILDING,
-                        cfgBuilder = {
-                            it.copy(
-                                targetTask = NetworkMessage.BUILDING_COMPLETE,
-                                initialRunDelay = buildDuration,
-                                extra = mapOf("msg" to listOf(bldId))
-                            )
-                        },
-                        onComplete = {}
+                        taskToRun = BuildingCreateTask(
+                            taskInputBlock = {
+                                this.buildingId = bldId
+                                this.buildDuration = buildDuration
+                            },
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
                     )
                 }
             }
@@ -137,17 +138,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTask(
+                    serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
-                        taskTemplateKey = TaskTemplate.BUILDING,
-                        cfgBuilder = {
-                            it.copy(
-                                targetTask = NetworkMessage.BUILDING_COMPLETE,
-                                initialRunDelay = buildDuration,
-                                extra = mapOf("msg" to listOf(bldId))
-                            )
-                        },
-                        onComplete = {}
+                        taskToRun = BuildingCreateTask(
+                            taskInputBlock = {
+                                this.buildingId = bldId
+                                this.buildDuration = buildDuration
+                            },
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
                     )
                 }
             }
@@ -175,8 +176,11 @@ class BuildingSaveHandler : SaveSubHandler {
                 val collectResult = svc.collectBuilding(bldId)
                 val response = if (collectResult.isSuccess) {
                     val res = collectResult.getOrThrow()
-                    val resType = requireNotNull(res.getNonEmptyResTypeOrNull()) { "Unexpected null on getNonEmptyResTypeOrNull during collect resource" }
-                    val resAmount = requireNotNull(res.getNonEmptyResAmountOrNull()?.toDouble()) { "Unexpected null on getNonEmptyResAmountOrNull during collect resource" }
+                    val resType =
+                        requireNotNull(res.getNonEmptyResTypeOrNull()) { "Unexpected null on getNonEmptyResTypeOrNull during collect resource" }
+                    val resAmount = requireNotNull(
+                        res.getNonEmptyResAmountOrNull()?.toDouble()
+                    ) { "Unexpected null on getNonEmptyResAmountOrNull during collect resource" }
                     val currentResource = svc.getResources()
                     val limit = 100.0 // TODO: Base this on storage capacity from GameDefinitions
                     val expectedResource = currentResource.wood + resAmount
@@ -234,20 +238,37 @@ class BuildingSaveHandler : SaveSubHandler {
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
                 val fuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
+                var success = false
 
                 val response = if (fuel < 0) {
+                    // not enough coins response
                     BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
-                    // TO-DO: calculate the cost in cost table
-                    BuildingSpeedUpResponse(error = "", success = true, cost = 1)
+                    val result = svc.compound.updateBuilding(bldId) { bld -> bld.copy(upgrade = null) }
+                    if (result.isSuccess) {
+                        // successful response
+                        // TO-DO: calculate the cost in cost table
+                        success = true
+                        BuildingSpeedUpResponse(error = "", success = true, cost = 1)
+                    } else {
+                        // unexpected DB error response
+                        Logger.error(LogConfigSocketError) { "Failed to speed up building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
+                        BuildingSpeedUpResponse(error = "", success = false, cost = 1)
+                    }
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
-                // TO-DO ends the building create task
-                // need to implement a way to stop ongoing task with ServerTaskDispatcher
-                // we can associate playerId + bldId as the building task ID and reproduce the same id to cancel it
+                if (success) {
+                    serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
+                        connection = connection,
+                        category = TaskCategory.Building.Create,
+                        stopInputBlock = {
+                            this.buildingId = bldId
+                        }
+                    )
+                }
             }
 
             SaveDataMethod.BUILDING_REPAIR -> {
@@ -272,17 +293,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTask(
+                    serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
-                        taskTemplateKey = TaskTemplate.BUILDING,
-                        cfgBuilder = {
-                            it.copy(
-                                targetTask = NetworkMessage.BUILDING_REPAIR_COMPLETE,
-                                initialRunDelay = buildDuration,
-                                extra = mapOf("msg" to listOf(bldId))
-                            )
-                        },
-                        onComplete = {}
+                        taskToRun = BuildingRepairTask(
+                            taskInputBlock = {
+                                this.buildingId = bldId
+                                this.repairDuration = buildDuration
+                            },
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
                     )
                 }
             }
@@ -296,7 +317,11 @@ class BuildingSaveHandler : SaveSubHandler {
                     BuildingSpeedUpResponse(success = true, error = "", cost = 0)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to speed up repair for building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingSpeedUpResponse(success = false, error = result.exceptionOrNull()?.message ?: "Unknown error", cost = 0)
+                    BuildingSpeedUpResponse(
+                        success = false,
+                        error = result.exceptionOrNull()?.message ?: "Unknown error",
+                        cost = 0
+                    )
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -354,17 +379,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTask(
+                    serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
-                        taskTemplateKey = TaskTemplate.BUILDING,
-                        cfgBuilder = {
-                            it.copy(
-                                targetTask = NetworkMessage.BUILDING_COMPLETE,
-                                initialRunDelay = buildDuration,
-                                extra = mapOf("msg" to listOf(bldId))
-                            )
-                        },
-                        onComplete = {}
+                        taskToRun = BuildingCreateTask(
+                            taskInputBlock = {
+                                this.buildingId = bldId
+                                this.buildDuration = buildDuration
+                            },
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
                     )
                 }
             }
@@ -394,17 +419,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTask(
+                    serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
-                        taskTemplateKey = TaskTemplate.BUILDING,
-                        cfgBuilder = {
-                            it.copy(
-                                targetTask = NetworkMessage.BUILDING_COMPLETE,
-                                initialRunDelay = buildDuration,
-                                extra = mapOf("msg" to listOf(bldId))
-                            )
-                        },
-                        onComplete = {}
+                        taskToRun = BuildingCreateTask(
+                            taskInputBlock = {
+                                this.buildingId = bldId
+                                this.buildDuration = buildDuration
+                            },
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
                     )
                 }
             }

@@ -23,6 +23,7 @@ import socket.handler.SaveHandler
 import socket.handler.ZombieAttackHandler
 import socket.tasks.TaskCategory
 import socket.tasks.impl.BuildingCreateStopParameter
+import socket.tasks.impl.BuildingRepairStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -56,10 +57,18 @@ class Server(
                 }
             )
             context.taskDispatcher.registerStopId<BuildingCreateStopParameter>(
-                category = TaskCategory.TimeUpdate,
+                category = TaskCategory.Building.Create,
                 stopInputFactory = { BuildingCreateStopParameter() },
                 deriveId = { playerId, category, stopInput ->
                     // "BLD-CREATE-bldId123-playerId123"
+                    "${category.code}-${stopInput.buildingId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId<BuildingRepairStopParameter>(
+                category = TaskCategory.Building.Repair,
+                stopInputFactory = { BuildingRepairStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "BLD-REPAIR-bldId123-playerId123"
                     "${category.code}-${stopInput.buildingId}-$playerId"
                 }
             )
