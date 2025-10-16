@@ -18,12 +18,13 @@ interface TaskScheduler {
 
 /**
  * [ServerTask] has lifecycle hooks (e.g., `onStart`, `onComplete`) which are intended to be used
- * by a [TaskScheduler]. This annotation gives a warning for caller that tries to call lifecycle hooks
- * directly on [ServerTask] implementation.
+ * by a [TaskScheduler] and the subclass itself implementing the methods.
+ *
+ * This annotation gives a warning for caller that tries to call lifecycle hooks directly from a [ServerTask] implementation.
  */
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR,
     message = "This API is only intended to be called by task scheduler."
 )
 @Retention(AnnotationRetention.BINARY)
-annotation class SchedulerOnly
+annotation class InternalTaskAPI

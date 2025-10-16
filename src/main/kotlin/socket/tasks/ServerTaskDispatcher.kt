@@ -100,7 +100,7 @@ class ServerTaskDispatcher : TaskScheduler {
      *
      * The process at how specifically task lifecycle is handled is documented in [ServerTask].
      */
-    @OptIn(SchedulerOnly::class)
+    @OptIn(InternalTaskAPI::class)
     override suspend fun <ExecParam : Any, StopParam : Any> schedule(
         connection: Connection,
         task: ServerTask<ExecParam, StopParam>,

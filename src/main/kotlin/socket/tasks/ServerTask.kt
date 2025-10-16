@@ -78,14 +78,14 @@ abstract class ServerTask<ExecParam : Any, StopParam : Any> {
      * Called once when the task is first scheduled.
      * Used for setup, initialization, or sending a "start" message to the client.
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun onStart(connection: Connection) = Unit
 
     /**
      * Main execution body of the task.
      * Called once or repeatedly depending on [config].
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun execute(connection: Connection) {
     }
 
@@ -93,28 +93,28 @@ abstract class ServerTask<ExecParam : Any, StopParam : Any> {
      * Called before each execution cycle begins (only for repeatable tasks).
      * Useful for preparing per-iteration state or logging progress.
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun onIterationStart(connection: Connection) = Unit
 
     /**
      * Called after each execution cycle completes (only for repeatable tasks).
      * Useful for cleanup, progress tracking, or scheduling side effects.
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun onIterationComplete(connection: Connection) = Unit
 
     /**
      * Called once when the task finishes all scheduled iterations successfully.
      * For non-repeating tasks, this is invoked immediately after [execute].
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun onTaskComplete(connection: Connection) = Unit
 
     /**
      * Called if the task is stopped or cancelled before completing normally.
      * Use this to revert partial state or perform cleanup.
      */
-    @SchedulerOnly
+    @InternalTaskAPI
     open suspend fun onCancelled(connection: Connection, reason: CancellationReason) = Unit
 }
 
