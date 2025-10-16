@@ -22,6 +22,7 @@ import socket.handler.RequestSurvivorCheckHandler
 import socket.handler.SaveHandler
 import socket.handler.ZombieAttackHandler
 import socket.tasks.TaskCategory
+import socket.tasks.impl.BuildingCreateStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -48,6 +49,7 @@ class Server(
             socketDispatcher.register(RequestSurvivorCheckHandler(this))
             context.taskDispatcher.registerStopId<Unit>(
                 category = TaskCategory.TimeUpdate,
+                stopInputFactory = {},
                 deriveId = { playerId, category, _ ->
                     // "TU-playerId123"
                     "${category.code}-$playerId"

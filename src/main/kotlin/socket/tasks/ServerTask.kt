@@ -73,8 +73,8 @@ abstract class ServerTask<TaskInput : Any, StopInput : Any> {
     abstract val config: TaskConfig
     abstract val scheduler: TaskScheduler?
 
-    abstract val taskInputBlock: (TaskInput) -> Unit
-    abstract val stopInputBlock: (StopInput) -> Unit
+    abstract val taskInputBlock: TaskInput.() -> Unit
+    abstract val stopInputBlock: StopInput.() -> Unit
     abstract fun createTaskInput(): TaskInput
     abstract fun createStopInput(): StopInput
 
