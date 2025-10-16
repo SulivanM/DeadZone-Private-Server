@@ -115,43 +115,16 @@ class Server(
                     val elapsed = measureTimeMillis {
                         val data = buffer.copyOfRange(0, bytesRead)
 
-                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '�'): String {
+                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '.'): String {
                             val decoded = String(this, Charsets.UTF_8)
                             val sanitized = decoded.map { ch ->
                                 if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
                                 else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(
-                                        ' ',
-                                        '.',
-                                        ',',
-                                        ':',
-                                        ';',
-                                        '-',
-                                        '_',
-                                        '{',
-                                        '}',
-                                        '[',
-                                        ']',
-                                        '(',
-                                        ')',
-                                        '"',
-                                        '\'',
-                                        '/',
-                                        '\\',
-                                        '?',
-                                        '=',
-                                        '+',
-                                        '*',
-                                        '%',
-                                        '&',
-                                        '|',
-                                        '<',
-                                        '>',
-                                        '!',
-                                        '@',
-                                        '#',
-                                        '$',
-                                        '^',
-                                        '~'
+                                        ' ', '.', ',', ':', ';', '-', '_',
+                                        '{', '}', '[', ']', '(', ')', '"',
+                                        '\'', '/', '\\', '?', '=', '+', '*',
+                                        '%', '&', '|', '<', '>', '!', '@',
+                                        '#', '$', '^', '~'
                                     )
                                 ) placeholder
                                 else ch
@@ -184,7 +157,7 @@ class Server(
                     Logger.debug {
                         buildString {
                             appendLine("<===== [SOCKET END] of type $msgType handled for playerId=${connection.playerId} in ${elapsed}ms")
-                            append("————————————————————————————————————————————————————————————————————————————————————————————————————————")
+                            append("====================================================================================================")
                         }
                     }
                 }
