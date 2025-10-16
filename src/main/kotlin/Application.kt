@@ -13,7 +13,6 @@ import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
-import dev.deadzone.socket.tasks.ServerTaskRunner
 import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -133,7 +132,6 @@ fun Application.module() {
     val onlinePlayerRegistry = OnlinePlayerRegistry()
     val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
     val taskDispatcher = ServerTaskDispatcher()
-    val taskRunner = ServerTaskRunner(taskDispatcher)
     val playerContextTracker = PlayerContextTracker()
     val saveHandlers = listOf(
         ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(), CommandSaveHandler(),
@@ -148,7 +146,6 @@ fun Application.module() {
         onlinePlayerRegistry = onlinePlayerRegistry,
         authProvider = authProvider,
         taskDispatcher = taskDispatcher,
-        taskRunner = taskRunner,
         playerContextTracker = playerContextTracker,
         saveHandlers = saveHandlers,
         config = config,

@@ -13,13 +13,13 @@ import socket.core.Connection
  *
  * [ServerTask] implementation should be able to provide `stopId`, a reproducible, deterministic identifier for the task.
  * The derived ID is used for referencing and cancelling tasks consistently across server components.
- * Typically it is derived from a combination of the player ID, [category], and [StopParam] instance (e.g., a `buildingId`).
+ * Typically it is derived from a combination of the player ID, [category], and [StopInput] instance (e.g., a `buildingId`).
  *
  * Example (register in Server.kt)
  * ```
  * context.taskDispatcher.registerStopId(
  *     category = TaskCategory.TimeUpdate,
- *     stopParamFactory = { BuildingStopParameter() },
+ *     StopInputFactory = { BuildingStopInputeter() },
  *     deriveId = { playerId, category, _ ->
  *         // "TU-playerId123"
  *         "${category.code}-$playerId"
@@ -60,26 +60,23 @@ import socket.core.Connection
  * @property scheduler Optional scheduler for this task.
  *                     Typically, when scheduling is complex, the [ServerTask] itself implements it.
  *
- * @param ExecParam The type of the execution parameter required by this task.
- *                  This is the input used when the task is started.
+ * @param TaskInput The type of data required to execute this task.
+ * @param StopInput The type of data used to identify and stop this task.
  *
- * @param StopParam The type of the cancellation parameter required by this task.
- *                  This is the input used when the task wants to be stopped.
- *
- * @property execParamBlock DSL block to produce [ExecParam] instance.
- * @property stopParamBlock DSL block to produce [StopParam] instance.
- * @property createExecParam Applies the [execParamBlock] block to an empty [ExecParam].
- * @property createStopParam Applies the [stopParamBlock] block to an empty [StopParam].
+ * @property taskInputBlock DSL block to produce [TaskInput] instance.
+ * @property stopInputBlock DSL block to produce [StopInput] instance.
+ * @property createTaskInput Applies the [taskInputBlock] block to an empty [TaskInput].
+ * @property stopInputBlock Applies the [stopInputBlock] block to an empty [StopInput].
  */
-abstract class ServerTask<ExecParam : Any, StopParam : Any> {
+abstract class ServerTask<TaskInput : Any, StopInput : Any> {
     abstract val category: TaskCategory
     abstract val config: TaskConfig
     abstract val scheduler: TaskScheduler?
 
-    abstract val execParamBlock: (ExecParam) -> Unit
-    abstract val stopParamBlock: (StopParam) -> Unit
-    abstract fun createExecParam(): ExecParam
-    abstract fun createStopParam(): StopParam
+    abstract val taskInputBlock: (TaskInput) -> Unit
+    abstract val stopInputBlock: (StopInput) -> Unit
+    abstract fun createTaskInput(): TaskInput
+    abstract fun createStopInput(): StopInput
 
     /**
      * Called once when the task is first scheduled.

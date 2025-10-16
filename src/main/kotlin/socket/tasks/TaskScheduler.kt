@@ -10,9 +10,9 @@ import socket.core.Connection
  * if they require custom scheduling logic or more complex timing control.
  */
 interface TaskScheduler {
-    suspend fun <ExecParam : Any, StopParam : Any> schedule(
+    suspend fun <TaskInput : Any, StopInput : Any> schedule(
         connection: Connection,
-        task: ServerTask<ExecParam, StopParam>
+        task: ServerTask<TaskInput, StopInput>
     )
 }
 
