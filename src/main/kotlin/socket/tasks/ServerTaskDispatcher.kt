@@ -49,8 +49,8 @@ class ServerTaskDispatcher : TaskScheduler {
             } catch (e: ClassCastException) {
                 val msg = buildString {
                     appendLine("[registerStopId] Type mismatch when deriving stop ID:")
-                    appendLine("• Category: $category")
-                    appendLine("• Most likely cause: duplicate registration in Server.kt for same category or wrong factory return type.")
+                    appendLine("- Category: $category")
+                    appendLine("- Most likely cause: duplicate registration in Server.kt for same category or wrong factory return type.")
                 }
 
                 throw IllegalStateException(msg, e)
@@ -73,15 +73,27 @@ class ServerTaskDispatcher : TaskScheduler {
 
         val job = connection.scope.launch {
             try {
-                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category.code} is going to run for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.info(LogSource.SOCKET) { "[runTaskFor Hello] Task ${taskToRun.category.code} has been scheduled to run (waiting for startDelay) for playerId=${connection.playerId}, taskId=$taskId" }
                 val scheduler = taskToRun.scheduler ?: this@ServerTaskDispatcher
                 scheduler.schedule(connection, taskToRun)
-            } catch (_: CancellationException) {
-                Logger.info(LogSource.SOCKET) { "Task '${taskToRun.category.code}' was cancelled (via CancellationException) for playerId=${connection.playerId}, taskId=$taskId" }
+            } catch (e: CancellationException) {
+                when (e) {
+                    is ForceCompleteException -> {
+                        Logger.info(LogSource.SOCKET) { "[ForceCompleteException] Task '${taskToRun.category.code}' was forced to complete for playerId=${connection.playerId}, taskId=$taskId" }
+                    }
+
+                    is ManualCancellationException -> {
+                        Logger.info(LogSource.SOCKET) { "[ManualCancellationException] Task '${taskToRun.category.code}' was manually cancelled for playerId=${connection.playerId}, taskId=$taskId" }
+                    }
+
+                    else -> {
+                        Logger.warn(LogSource.SOCKET) { "[CancellationException] Task '${taskToRun.category.code}' was cancelled for playerId=${connection.playerId}, taskId=$taskId" }
+                    }
+                }
             } catch (e: Exception) {
-                Logger.error(LogConfigSocketError) { "Error on task '${taskToRun.category.code}': $e for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.error(LogConfigSocketError) { "[runTaskFor Exception] Error on task '${taskToRun.category.code}': $e for playerId=${connection.playerId}, taskId=$taskId" }
             } finally {
-                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category.code} has completed running for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.info(LogSource.SOCKET) { "[runTaskFor Goodbye] Task '${taskToRun.category.code}' no longer run for playerId=${connection.playerId}, taskId=$taskId" }
                 runningInstances.remove(taskId)
             }
         }
@@ -146,12 +158,6 @@ class ServerTaskDispatcher : TaskScheduler {
             }
         } catch (e: CancellationException) {
             when (e) {
-                is ChangeConfigException -> {
-                    val updated = e.newConfig
-                    Logger.info { "[Scheduler] Config changed for ${task.category}: $updated" }
-                    schedule(connection, task)
-                }
-
                 is ForceCompleteException -> task.onForceComplete(connection)
 
                 is ManualCancellationException -> task.onCancelled(connection, CancellationReason.MANUAL)
@@ -211,8 +217,8 @@ class ServerTaskDispatcher : TaskScheduler {
         } catch (e: ClassCastException) {
             val msg = buildString {
                 appendLine("[stopTaskFor] Type mismatch when casting factory stop ID:")
-                appendLine("• Category: $category")
-                appendLine("• Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in stopTaskFor()")
+                appendLine("- Category: $category")
+                appendLine("- Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in stopTaskFor()")
             }
 
             throw IllegalStateException(msg, e)
@@ -250,6 +256,5 @@ data class TaskInstance(
     val job: Job,
 )
 
-class ChangeConfigException(val newConfig: TaskConfig) : CancellationException("CHANGE_CONFIG:${newConfig.hashCode()}")
 class ForceCompleteException : CancellationException("Force completion was requested")
-class ManualCancellationException : CancellationException()
+class ManualCancellationException : CancellationException("Manual cancellation was done")
