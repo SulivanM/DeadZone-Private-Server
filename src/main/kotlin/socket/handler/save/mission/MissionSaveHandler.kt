@@ -17,11 +17,11 @@ import dev.deadzone.socket.tasks.impl.MissionReturnTask
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.mission.response.*
+import socket.messaging.NetworkMessage
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
-import utils.UUID
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -88,7 +88,10 @@ class MissionSaveHandler : SaveSubHandler {
 
                 val timeSeconds = if (isCompoundZombieAttack == true) 30 else 240
 
-                val missionId = UUID.new()
+                // temporarily use player's ID as missionId itself
+                // this enables deterministic ID therefore can avoid memory leak
+                // later, should save the missionId as task to DB in MISSION_END
+                val missionId = connection.playerId
                 activeMissionIds[connection.playerId] = missionId
 
                 val responseJson = GlobalContext.json.encodeToString(
@@ -240,6 +243,8 @@ class MissionSaveHandler : SaveSubHandler {
                 val response: MissionSpeedUpResponse = MissionSpeedUpResponse("", true, 0)
                 val responseJson = GlobalContext.json.encodeToString(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+
+                connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, connection.playerId)
             }
 
             SaveDataMethod.MISSION_SCOUTED -> {
