@@ -68,15 +68,16 @@ class BuildingSaveHandler : SaveSubHandler {
                     }
                 }
 
-                val response = if (result.isSuccess) {
-                    BuildingCreateResponse(
+                val response: BuildingCreateResponse
+                if (result.isSuccess) {
+                    response = BuildingCreateResponse(
                         success = true,
                         items = emptyMap(),
                         timer = timer
                     )
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to create building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingCreateResponse(
+                    response = BuildingCreateResponse(
                         success = false,
                         items = emptyMap(),
                         timer = null
@@ -110,11 +111,13 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'bld_move' message for $saveId and $buildingId to tx=$x, ty=$y, rotation=$r" }
 
                 val result = svc.updateBuilding(buildingId) { it.copy(tx = x, ty = y, rotation = r) }
-                val response = if (result.isSuccess) {
-                    BuildingMoveResponse(success = true, x = x, y = y, r = r)
+
+                val response: BuildingMoveResponse
+                if (result.isSuccess) {
+                    response = BuildingMoveResponse(success = true, x = x, y = y, r = r)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to move building bldId=$buildingId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingMoveResponse(success = false, x = x, y = y, r = r)
+                    response = BuildingMoveResponse(success = false, x = x, y = y, r = r)
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -135,11 +138,12 @@ class BuildingSaveHandler : SaveSubHandler {
                     bld.copy(upgrade = timer)
                 }
 
-                val response = if (result.isSuccess) {
-                    BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
+                val response: BuildingUpgradeResponse
+                if (result.isSuccess) {
+                    response = BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to upgrade building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
+                    response = BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -166,11 +170,13 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_RECYCLE' message for $saveId and $bldId" }
 
                 val result = svc.deleteBuilding(bldId)
-                val response = if (result.isSuccess) {
-                    BuildingRecycleResponse(success = true, items = emptyMap())
+
+                val response: BuildingRecycleResponse
+                if (result.isSuccess) {
+                    response = BuildingRecycleResponse(success = true, items = emptyMap())
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to recycle building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingRecycleResponse(success = false, items = emptyMap())
+                    response = BuildingRecycleResponse(success = false, items = emptyMap())
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -182,7 +188,9 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_COLLECT' message for $saveId and $bldId" }
 
                 val collectResult = svc.collectBuilding(bldId)
-                val response = if (collectResult.isSuccess) {
+
+                val response: BuildingCollectResponse
+                if (collectResult.isSuccess) {
                     val res = collectResult.getOrThrow()
                     val resType =
                         requireNotNull(res.getNonEmptyResTypeOrNull()) { "Unexpected null on getNonEmptyResTypeOrNull during collect resource" }
@@ -194,7 +202,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     val expectedResource = currentResource.wood + resAmount
                     val remainder = expectedResource - limit
                     val total = max(limit, expectedResource)
-                    BuildingCollectResponse(
+                    response = BuildingCollectResponse(
                         success = true,
                         locked = false,
                         resource = resType,
@@ -206,7 +214,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     )
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to collect building bldId=$bldId for playerId=$playerId: ${collectResult.exceptionOrNull()?.message}" }
-                    BuildingCollectResponse(
+                    response = BuildingCollectResponse(
                         success = false,
                         locked = false,
                         resource = "",
@@ -227,11 +235,13 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_CANCEL' message for $saveId and $bldId" }
 
                 val result = runCatching { svc.cancelBuilding(bldId) }
-                val response = if (result.isSuccess) {
-                    BuildingCancelResponse(success = true, items = emptyMap())
+
+                val response: BuildingCancelResponse
+                if (result.isSuccess) {
+                    response = BuildingCancelResponse(success = true, items = emptyMap())
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to cancel building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingCancelResponse(success = false, items = emptyMap())
+                    response = BuildingCancelResponse(success = false, items = emptyMap())
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -247,8 +257,9 @@ class BuildingSaveHandler : SaveSubHandler {
                 val fuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
-                val response = if (fuel < 0) {
-                    BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
+                val response: BuildingSpeedUpResponse
+                if (fuel < 0) {
+                    response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
 
                     val building =
@@ -294,7 +305,6 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (newBuilding != null && cost != null) {
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
-                        BuildingSpeedUpResponse(error = "", success = true, cost = cost)
 
                         // end the currently active building task
                         serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
@@ -323,10 +333,12 @@ class BuildingSaveHandler : SaveSubHandler {
                                 }
                             )
                         )
+
+                        response = BuildingSpeedUpResponse(error = "", success = true, cost = cost)
                     } else {
                         // unexpected DB error response
                         Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        BuildingSpeedUpResponse(error = "", success = false, cost = 1)
+                        response = BuildingSpeedUpResponse(error = "", success = false, cost = 1)
                     }
                 }
 
@@ -345,11 +357,13 @@ class BuildingSaveHandler : SaveSubHandler {
                 )
 
                 val result = svc.updateBuilding(bldId) { bld -> bld.copy(repair = timer) }
-                val response = if (result.isSuccess) {
-                    BuildingRepairResponse(success = true, items = emptyMap(), timer = timer)
+
+                val response: BuildingRepairResponse
+                if (result.isSuccess) {
+                    response = BuildingRepairResponse(success = true, items = emptyMap(), timer = timer)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to repair building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingRepairResponse(success = false, items = emptyMap(), timer = null)
+                    response = BuildingRepairResponse(success = false, items = emptyMap(), timer = null)
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
@@ -380,10 +394,10 @@ class BuildingSaveHandler : SaveSubHandler {
                 val fuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
-                val response = if (fuel < 0) {
-                    BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
+                val response: BuildingRepairSpeedUpResponse
+                if (fuel < 0) {
+                    response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
-
                     val building =
                         requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }.toBuilding()
 
@@ -427,7 +441,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (newBuilding != null && cost != null) {
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
-                        BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
+                        response = BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
 
                         // end the currently active building repair task
                         serverContext.taskDispatcher.stopTaskFor<BuildingRepairStopParameter>(
@@ -459,7 +473,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     } else {
                         // unexpected DB error response
                         Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        BuildingRepairSpeedUpResponse(error = "", success = false, cost = 1)
+                        response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 1)
                     }
                 }
 
@@ -499,15 +513,16 @@ class BuildingSaveHandler : SaveSubHandler {
                     }
                 }
 
-                val response = if (result.isSuccess) {
-                    BuildingCreateResponse(
+                val response: BuildingCreateResponse
+                if (result.isSuccess) {
+                    response = BuildingCreateResponse(
                         success = true,
                         items = emptyMap(),
                         timer = timer
                     )
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to create (buy) building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingCreateResponse(
+                    response = BuildingCreateResponse(
                         success = false,
                         items = emptyMap(),
                         timer = null
@@ -547,11 +562,12 @@ class BuildingSaveHandler : SaveSubHandler {
                     bld.copy(upgrade = timer)
                 }
 
-                val response = if (result.isSuccess) {
-                    BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
+                val response: BuildingUpgradeResponse
+                if (result.isSuccess) {
+                    response = BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to upgrade (buy) building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
+                    response = BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)

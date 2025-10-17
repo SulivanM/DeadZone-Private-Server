@@ -68,20 +68,20 @@ class ServerTaskDispatcher : TaskScheduler {
         val stopInput = taskToRun.createStopInput().apply(taskToRun.stopInputBlock)
 
         val deriveStopId = stopIdProviders[taskToRun.category]
-            ?: error("stopIdProvider not registered for ${taskToRun.category} (register in Server.kt)")
+            ?: error("stopIdProvider not registered for ${taskToRun.category.code} (register in Server.kt)")
         val taskId = deriveStopId(connection.playerId, taskToRun.category, stopInput)
 
         val job = connection.scope.launch {
             try {
-                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category} is going to run for playerId=${connection.playerId}" }
+                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category.code} is going to run for playerId=${connection.playerId}, taskId=$taskId" }
                 val scheduler = taskToRun.scheduler ?: this@ServerTaskDispatcher
                 scheduler.schedule(connection, taskToRun)
             } catch (_: CancellationException) {
-                Logger.info(LogSource.SOCKET) { "Task '${taskToRun.category}' was cancelled (via CancellationException) for playerId=${connection.playerId}." }
+                Logger.info(LogSource.SOCKET) { "Task '${taskToRun.category.code}' was cancelled (via CancellationException) for playerId=${connection.playerId}, taskId=$taskId" }
             } catch (e: Exception) {
-                Logger.error(LogConfigSocketError) { "Error on task '${taskToRun.category}': $e for playerId=${connection.playerId}" }
+                Logger.error(LogConfigSocketError) { "Error on task '${taskToRun.category.code}': $e for playerId=${connection.playerId}, taskId=$taskId" }
             } finally {
-                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category} has finished running for playerId=${connection.playerId}" }
+                Logger.info(LogSource.SOCKET) { "Task ${taskToRun.category.code} has completed running for playerId=${connection.playerId}, taskId=$taskId" }
                 runningInstances.remove(taskId)
             }
         }
