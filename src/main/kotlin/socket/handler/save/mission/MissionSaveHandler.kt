@@ -11,17 +11,24 @@ import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
 import dev.deadzone.core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
+import dev.deadzone.socket.tasks.impl.MissionReturnTask
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
 import socket.handler.save.mission.response.*
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
+import socket.tasks.impl.BuildingCreateTask
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.UUID
 import kotlin.math.pow
 import kotlin.random.Random
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class MissionSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISSION_SAVES
@@ -29,6 +36,10 @@ class MissionSaveHandler : SaveSubHandler {
     // save stats of playerId: MissionStats
     // use this to know loots, EXP, kills, etc. after mission ended.
     private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
+
+    // when player start a mission, generate missionId
+    // this map from playerId to missionId
+    private val activeMissionIds = mutableMapOf<String, String>()
 
     override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
@@ -80,9 +91,12 @@ class MissionSaveHandler : SaveSubHandler {
 
                 val timeSeconds = if (isCompoundZombieAttack == true) 30 else 240
 
+                val missionId = UUID.new()
+                activeMissionIds[connection.playerId] = missionId
+
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionStartResponse(
-                        id = saveId,
+                        id = missionId,
                         time = timeSeconds,
                         assignmentType = "None", // 'None' because not a raid or arena. see AssignmentType
                         areaClass = (data["areaClass"] as String?) ?: "", // supposedly depend on the area
@@ -137,14 +151,16 @@ class MissionSaveHandler : SaveSubHandler {
                     items + addedInventoryItems
                 }
 
+                val returnTime = 20.seconds
+
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionEndResponse(
                         automated = false,
                         xpEarned = earnedXp,
                         xp = XpBreakdown(total = earnedXp),
                         returnTimer = TimerData.runForDuration(
-                            20.seconds,
-                            data = mapOf("return" to 20)
+                            duration = returnTime,
+                            data = mapOf("return" to returnTime.toInt(DurationUnit.SECONDS))
                         ),
                         lockTimer = null,
                         loot = itemLooted,
@@ -160,13 +176,31 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 )
 
-                // TODO change resource with obtained loot...
+                // TO-DO change resource with obtained loot...
+                // need to lookup on how much resources does each resource item grant
+                // e.g., wood scrap gives 10 wood
                 val currentResource = svc.compound.getResources()
 
                 val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
-
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
+
+                val missionId = requireNotNull(activeMissionIds[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
+
+                serverContext.taskDispatcher.runTaskFor(
+                    connection = connection,
+                    taskToRun = MissionReturnTask(
+                        taskInputBlock = {
+                            this.missionId = missionId
+                            this.returnTime = returnTime
+                        },
+                        stopInputBlock = {
+                            this.missionId = missionId
+                        }
+                    )
+                )
+
                 missionStats.remove(connection.playerId)
+                activeMissionIds.remove(connection.playerId)
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
