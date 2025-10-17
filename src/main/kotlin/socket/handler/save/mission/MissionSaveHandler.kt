@@ -12,6 +12,7 @@ import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
 import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.socket.handler.save.SaveHandlerContext
+import dev.deadzone.socket.handler.save.mission.response.MissionSpeedUpResponse
 import dev.deadzone.socket.tasks.impl.MissionReturnTask
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -230,6 +231,15 @@ class MissionSaveHandler : SaveSubHandler {
 
             SaveDataMethod.MISSION_SPEED_UP -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'MISSION_SPEED_UP' message [not implemented]" }
+
+                // TO-DO implement mission speed up similar to building speed up
+                // TO-DO don't forget to save mission as a task to DB (TaskCollection),
+                // just like how building construction modify upgrade/repair timer in DB
+
+                // temporarily always make speed up always success so player don't stuck
+                val response: MissionSpeedUpResponse = MissionSpeedUpResponse("", true, 0)
+                val responseJson = GlobalContext.json.encodeToString(response)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.MISSION_SCOUTED -> {

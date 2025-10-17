@@ -23,7 +23,7 @@ class MissionReturnTask(
         createTaskInput().apply(taskInputBlock)
     }
 
-    override val category = TaskCategory.Building.Create
+    override val category = TaskCategory.Mission.Return
     override val config = TaskConfig(
         startDelay = taskInput.returnTime
     )
