@@ -171,7 +171,7 @@ data class PlayerObjects(
                 research = ResearchState(active = emptyList(), levels = emptyMap()),
                 skills = null,
                 resources = GameResources(
-                    cash = 100, wood = 300, metal = 300,
+                    cash = 1000, wood = 300, metal = 300,
                     cloth = 300, food = 25, water = 25, ammunition = 150
                 ),
                 survivors = listOf(playerSrv),

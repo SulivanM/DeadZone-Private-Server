@@ -4,7 +4,6 @@ import context.GlobalContext
 import context.requirePlayerContext
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
-import dev.deadzone.core.model.game.data.hasEnded
 import dev.deadzone.core.model.game.data.removeIfFinished
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
@@ -254,11 +253,11 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_SPEED_UP' message for bldId=$bldId with option.key=$option" }
 
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
-                val fuel = svc.compound.getResources().cash
+                val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
                 val response: BuildingSpeedUpResponse
-                if (fuel < 0) {
+                if (playerFuel < 0) {
                     response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
 
@@ -305,6 +304,9 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (newBuilding != null && cost != null) {
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        svc.compound.updateResource { resource ->
+                            resource.copy(cash = playerFuel - cost)
+                        }
 
                         // end the currently active building task
                         serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
@@ -391,11 +393,11 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR_SPEED_UP' message for bldId=$bldId with option.key=$option" }
 
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
-                val fuel = svc.compound.getResources().cash
+                val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
                 val response: BuildingRepairSpeedUpResponse
-                if (fuel < 0) {
+                if (playerFuel < 0) {
                     response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
                     val building =
@@ -441,6 +443,10 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (newBuilding != null && cost != null) {
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        svc.compound.updateResource { resource ->
+                            resource.copy(cash = playerFuel - cost)
+                        }
+
                         response = BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
 
                         // end the currently active building repair task

@@ -127,6 +127,17 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         }
     }
 
+    suspend fun updateResource(updateAction: suspend (GameResources) -> (GameResources)) {
+        val update = updateAction(this.resources)
+        val result = compoundRepository.updateGameResources(playerId, update)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on updateResource: ${it.message}" }
+        }
+        result.onSuccess {
+            this.resources = update
+        }
+    }
+
     fun calculateResource(durationSec: Duration): Double {
         val productionRate = 4
         // Parameter: building level, effects
