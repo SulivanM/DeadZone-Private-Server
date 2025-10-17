@@ -4,6 +4,7 @@ import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
 import dev.deadzone.socket.messaging.HandlerContext
+import dev.deadzone.socket.tasks.impl.MissionReturnStopParameter
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageDispatcher
 import socket.protocol.PIODeserializer
@@ -70,6 +71,14 @@ class Server(
                 deriveId = { playerId, category, stopInput ->
                     // "BLD-REPAIR-bldId123-playerId123"
                     "${category.code}-${stopInput.buildingId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId<MissionReturnStopParameter>(
+                category = TaskCategory.Mission.Return,
+                stopInputFactory = { MissionReturnStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "MIS-RETURN-missionId123-playerId123"
+                    "${category.code}-${stopInput.missionId}-$playerId"
                 }
             )
         }

@@ -29,4 +29,10 @@ sealed interface TaskCategory {
             override val code: String = "BLD-UPGRADE"
         }
     }
+
+    sealed interface Mission : TaskCategory {
+        object Return : Mission {
+            override val code: String = "MIS-RETURN"
+        }
+    }
 }
