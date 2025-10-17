@@ -12,6 +12,7 @@ import socket.core.Connection
 interface TaskScheduler {
     suspend fun <TaskInput : Any, StopInput : Any> schedule(
         connection: Connection,
+        taskId: String,
         task: ServerTask<TaskInput, StopInput>
     )
 }

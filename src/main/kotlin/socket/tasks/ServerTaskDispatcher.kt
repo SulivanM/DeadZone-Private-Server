@@ -73,9 +73,9 @@ class ServerTaskDispatcher : TaskScheduler {
 
         val job = connection.scope.launch {
             try {
-                Logger.info(LogSource.SOCKET) { "[runTaskFor Hello] Task ${taskToRun.category.code} has been scheduled to run (waiting for startDelay) for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.info(LogSource.SOCKET) { "[runTask Hello] Task ${taskToRun.category.code} has been scheduled to run (waiting for startDelay) for playerId=${connection.playerId}, taskId=$taskId" }
                 val scheduler = taskToRun.scheduler ?: this@ServerTaskDispatcher
-                scheduler.schedule(connection, taskToRun)
+                scheduler.schedule(connection, taskId, taskToRun)
             } catch (e: CancellationException) {
                 when (e) {
                     is ForceCompleteException -> {
@@ -91,9 +91,9 @@ class ServerTaskDispatcher : TaskScheduler {
                     }
                 }
             } catch (e: Exception) {
-                Logger.error(LogConfigSocketError) { "[runTaskFor Exception] Error on task '${taskToRun.category.code}': $e for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.error(LogConfigSocketError) { "[runTask Exception] Error on task '${taskToRun.category.code}': $e for playerId=${connection.playerId}, taskId=$taskId" }
             } finally {
-                Logger.info(LogSource.SOCKET) { "[runTaskFor Goodbye] Task '${taskToRun.category.code}' no longer run for playerId=${connection.playerId}, taskId=$taskId" }
+                Logger.info(LogSource.SOCKET) { "[runTask Goodbye] Task '${taskToRun.category.code}' no longer run for playerId=${connection.playerId}, taskId=$taskId" }
                 runningInstances.remove(taskId)
             }
         }
@@ -114,7 +114,8 @@ class ServerTaskDispatcher : TaskScheduler {
     @OptIn(InternalTaskAPI::class)
     override suspend fun <TaskInput : Any, StopInput : Any> schedule(
         connection: Connection,
-        task: ServerTask<TaskInput, StopInput>,
+        taskId: String,
+        task: ServerTask<TaskInput, StopInput>
     ) {
         val config = task.config
         val shouldRepeat = config.repeatInterval != null
@@ -125,9 +126,10 @@ class ServerTaskDispatcher : TaskScheduler {
             task.onStart(connection)
             delay(config.startDelay)
 
+            Logger.info("[runTask Working] Task '${task.category.code}' currently running for playerId=${connection.playerId}, taskId=$taskId")
+
             if (shouldRepeat) {
                 while (currentCoroutineContext().isActive) {
-
                     // Check timeout
                     config.timeout?.let { timeout ->
                         val now = getTimeMillis().toDuration(DurationUnit.MILLISECONDS)
