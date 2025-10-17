@@ -11,7 +11,6 @@ import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
 import dev.deadzone.core.model.game.data.TimerData
-import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import dev.deadzone.socket.tasks.impl.MissionReturnTask
 import socket.handler.buildMsg
@@ -19,16 +18,13 @@ import socket.handler.save.SaveSubHandler
 import socket.handler.save.mission.response.*
 import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
-import socket.tasks.impl.BuildingCreateTask
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
 import kotlin.math.pow
 import kotlin.random.Random
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class MissionSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISSION_SAVES
@@ -147,6 +143,8 @@ class MissionSaveHandler : SaveSubHandler {
                 }
 
                 // Update player's inventory
+                // TO-DO move inventory update to MissionReturnTask execute()
+                // items and injuries are sent to player after mission return complete
                 svc.inventory.updateInventory { items ->
                     items + addedInventoryItems
                 }
@@ -184,8 +182,10 @@ class MissionSaveHandler : SaveSubHandler {
                 val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
-                val missionId = requireNotNull(activeMissionIds[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
+                val missionId =
+                    requireNotNull(activeMissionIds[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
 
+                // TO-DO update player's task collection to include the mission return task
                 serverContext.taskDispatcher.runTaskFor(
                     connection = connection,
                     taskToRun = MissionReturnTask(
