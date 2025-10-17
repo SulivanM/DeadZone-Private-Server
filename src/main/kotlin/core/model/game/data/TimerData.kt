@@ -53,8 +53,12 @@ data class TimerData(
     /**
      * Divide [length] by [divisor].
      */
-    operator fun div(divisor: Int): TimerData {
-        return this.copy(length = (length.seconds / divisor).toLong(DurationUnit.SECONDS))
+    operator fun div(divisor: Number): TimerData {
+        return when (divisor) {
+            is Int -> this.copy(length = length / divisor)
+            is Double -> this.copy(length = (length / divisor).toLong())
+            else -> throw IllegalArgumentException("Unsupported divisor type")
+        }
     }
 }
 
