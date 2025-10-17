@@ -62,6 +62,7 @@ fun TimerData.reduceByHalf(): TimerData? {
     val reducedLength = remainingSeconds / 2
     if (reducedLength <= 1.seconds) return null
 
+    val x = this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
     return this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
 }
 
@@ -71,7 +72,7 @@ fun TimerData.hasEnded(): Boolean {
 
 fun TimerData.secondsLeftToEnd(): Int {
     if (this.hasEnded()) return 0
-    return (this.length.seconds - getTimeMillis().milliseconds).toInt(DurationUnit.SECONDS)
+    return ((start.milliseconds + this.length.seconds) - getTimeMillis().milliseconds).toInt(DurationUnit.SECONDS)
 }
 
 /**
