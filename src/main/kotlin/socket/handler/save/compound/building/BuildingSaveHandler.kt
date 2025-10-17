@@ -4,6 +4,8 @@ import context.GlobalContext
 import context.requirePlayerContext
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.reduceBy
+import dev.deadzone.core.model.game.data.reduceByHalf
 import dev.deadzone.core.model.game.data.removeIfFinished
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
@@ -265,22 +267,20 @@ class BuildingSaveHandler : SaveSubHandler {
                     val upgradeTimer =
                         requireNotNull(building.upgrade) { "Building upgrade timer for bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }
 
-                    val remainingSeconds = upgradeTimer.secondsLeftToEnd().toDuration(DurationUnit.SECONDS)
-
                     // TO-DO ensure that the selected option is enabled in the cost table.
                     // this prevent player from manipulating packet to unknown speed up option
                     // TO-DO: calculate the cost in cost table
                     val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
-                            building.copy(upgrade = upgradeTimer.copy(length = remainingSeconds.minus(1.hours).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(upgrade = upgradeTimer.reduceBy(1.hours)) to 1
                         }
 
                         "SpeedUpTwoHour" -> {
-                            building.copy(upgrade = upgradeTimer.copy(length = remainingSeconds.minus(2.hours).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(upgrade = upgradeTimer.reduceBy(2.hours)) to 1
                         }
 
                         "SpeedUpHalf" -> {
-                            building.copy(upgrade = upgradeTimer.copy(length = remainingSeconds.div(2).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(upgrade = upgradeTimer.reduceByHalf()) to 1
                         }
 
                         "SpeedUpComplete" -> {
@@ -409,22 +409,20 @@ class BuildingSaveHandler : SaveSubHandler {
                     val repairTimer =
                         requireNotNull(building.repair) { "Building repair timer for bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }
 
-                    val remainingSeconds = repairTimer.secondsLeftToEnd().toDuration(DurationUnit.SECONDS)
-
                     // TO-DO ensure that the selected option is enabled in the cost table.
                     // this prevent player from manipulating packet to unknown speed up option
                     // TO-DO: calculate the cost in cost table
                     val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
-                            building.copy(repair = repairTimer.copy(length = remainingSeconds.minus(1.hours).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(repair = repairTimer.reduceBy(1.hours)) to 1
                         }
 
                         "SpeedUpTwoHour" -> {
-                            building.copy(repair = repairTimer.copy(length = remainingSeconds.minus(2.hours).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(repair = repairTimer.reduceBy(2.hours)) to 1
                         }
 
                         "SpeedUpHalf" -> {
-                            building.copy(repair = repairTimer.copy(length = remainingSeconds.div(2).toLong(DurationUnit.SECONDS))) to 1
+                            building.copy(repair = repairTimer.reduceByHalf()) to 1
                         }
 
                         "SpeedUpComplete" -> {

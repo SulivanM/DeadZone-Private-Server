@@ -7,6 +7,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Serializable
 data class TimerData(
@@ -28,58 +29,40 @@ data class TimerData(
             )
         }
     }
-
-    /**
-     * Add [length] by [time].
-     */
-    operator fun plus(time: Duration): TimerData {
-        return this.copy(length = (length.seconds + time).toLong(DurationUnit.SECONDS))
-    }
-
-    /**
-     * Subtract [length] by [time].
-     */
-    operator fun minus(time: Duration): TimerData {
-        return this.copy(length = (length.seconds - time).toLong(DurationUnit.SECONDS))
-    }
-
-    /**
-     * Multiply [length] by [multiplier].
-     */
-    operator fun times(multiplier: Int): TimerData {
-        return this.copy(length = (length.seconds * multiplier).toLong(DurationUnit.SECONDS))
-    }
-
-    /**
-     * Divide [length] by [divisor].
-     */
-    operator fun div(divisor: Number): TimerData {
-        return when (divisor) {
-            is Int -> this.copy(length = length / divisor)
-            is Double -> this.copy(length = (length / divisor).toLong())
-            else -> throw IllegalArgumentException("Unsupported divisor type")
-        }
-    }
 }
 
-operator fun TimerData?.plus(other: TimerData?): TimerData? {
-    if (this == null && other == null) return null
-    return this + other
+/**
+ * Reduce the timer data length by [hours].
+ *
+ * **This will first calculate the remaining time before subtracting**
+ *
+ * @return `null` if the timer has finished after the reduction.
+ */
+fun TimerData.reduceBy(hours: Duration): TimerData? {
+    if (this.hasEnded()) return null
+
+    val remainingSeconds = this.secondsLeftToEnd().toDuration(DurationUnit.SECONDS)
+    val reducedLength = remainingSeconds - hours
+    if (reducedLength <= Duration.ZERO) return null
+
+    return this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
 }
 
-operator fun TimerData?.minus(other: TimerData?): TimerData? {
-    if (this == null && other == null) return null
-    return this - other
-}
+/**
+ * Reduce the timer data length by half.
+ *
+ * **This will first calculate the remaining time before subtracting**
+ *
+ * @return `null` if the timer has finished after the reduction.
+ */
+fun TimerData.reduceByHalf(): TimerData? {
+    if (this.hasEnded()) return null
 
-operator fun TimerData?.times(other: TimerData?): TimerData? {
-    if (this == null && other == null) return null
-    return this * other
-}
+    val remainingSeconds = this.secondsLeftToEnd().toDuration(DurationUnit.SECONDS)
+    val reducedLength = remainingSeconds / 2
+    if (reducedLength <= 1.seconds) return null
 
-operator fun TimerData?.div(other: TimerData?): TimerData? {
-    if (this == null && other == null) return null
-    return this / other
+    return this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
 }
 
 fun TimerData.hasEnded(): Boolean {
