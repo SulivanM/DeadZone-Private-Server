@@ -63,8 +63,8 @@ import socket.core.Connection
  * @param TaskInput The type of data required to execute this task.
  * @param StopInput The type of data used to identify and stop this task.
  *
- * @property taskInputBlock DSL block to produce [TaskInput] instance.
- * @property stopInputBlock DSL block to produce [StopInput] instance.
+ * @property taskInputBlock DSL block to produce [TaskInput] instance, to produce data needed to execute the task. **Make sure to set every variables here.**
+ * @property stopInputBlock DSL block to produce [StopInput] instance, to produce data needed to cancel the task. **Make sure to set every variables here.**
  * @property createTaskInput Applies the [taskInputBlock] block to an empty [TaskInput].
  * @property stopInputBlock Applies the [stopInputBlock] block to an empty [StopInput].
  */

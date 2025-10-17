@@ -4,6 +4,9 @@ import context.GlobalContext
 import context.requirePlayerContext
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.hasEnded
+import dev.deadzone.core.model.game.data.removeIfFinished
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.buildMsg
 import socket.handler.save.SaveSubHandler
@@ -13,12 +16,17 @@ import socket.protocol.PIOSerializer
 import socket.tasks.TaskCategory
 import socket.tasks.impl.BuildingCreateStopParameter
 import socket.tasks.impl.BuildingCreateTask
+import socket.tasks.impl.BuildingRepairStopParameter
 import socket.tasks.impl.BuildingRepairTask
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
 import kotlin.math.max
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class BuildingSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.COMPOUND_BUILDING_SAVES
@@ -238,37 +246,92 @@ class BuildingSaveHandler : SaveSubHandler {
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
                 val fuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
-                var success = false
 
                 val response = if (fuel < 0) {
-                    // not enough coins response
                     BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
-                    val result = svc.compound.updateBuilding(bldId) { bld -> bld.copy(upgrade = null) }
-                    if (result.isSuccess) {
+
+                    val building =
+                        requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }.toBuilding()
+
+                    // TO-DO ensure that the selected option is enabled in the cost table.
+                    // this prevent player from manipulating packet to unknown speed up option
+                    // TO-DO: calculate the cost in cost table
+                    val (newBuilding, cost) = when (option) {
+                        "SpeedUpOneHour" -> {
+                            building.copy(upgrade = building.upgrade?.minus(1.hours).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpTwoHour" -> {
+                            building.copy(upgrade = building.upgrade?.minus(2.hours).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpHalf" -> {
+                            building.copy(upgrade = building.upgrade?.div(2).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpComplete" -> {
+                            building.copy(upgrade = null) to 1
+                        }
+
+                        "SpeedUpFree" -> {
+                            // TO-DO lookup cost table and see the minimum time to speed up for free
+                            // in this case, only if building duration is less than 5 minutes it will be allowed
+                            if (building.upgrade != null && building.upgrade.secondsLeftToEnd() <= 300) {
+                                building.copy(upgrade = null) to 1
+                            } else {
+                                Logger.warn { "Received unexpected BuildingSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
+                                null to null
+                            }
+                        }
+
+                        else -> {
+                            Logger.warn { "Received unknown BuildingSpeedUp option: $option from playerId=${connection.playerId}" }
+                            null to null
+                        }
+                    }
+
+                    if (newBuilding != null && cost != null) {
                         // successful response
-                        // TO-DO: calculate the cost in cost table
-                        success = true
-                        BuildingSpeedUpResponse(error = "", success = true, cost = 1)
+                        svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        BuildingSpeedUpResponse(error = "", success = true, cost = cost)
+
+                        // end the currently active building task
+                        serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
+                            connection = connection,
+                            category = TaskCategory.Building.Create,
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
+
+                        // then restart it to change the timer
+                        // if construction ended after the speed up, automatically start with zero second delay
+                        serverContext.taskDispatcher.runTaskFor(
+                            connection = connection,
+                            taskToRun = BuildingCreateTask(
+                                taskInputBlock = {
+                                    this.buildingId = bldId
+                                    this.buildDuration =
+                                        newBuilding.upgrade
+                                            ?.secondsLeftToEnd()
+                                            ?.toDuration(DurationUnit.SECONDS)
+                                            ?: Duration.ZERO
+                                },
+                                stopInputBlock = {
+                                    this.buildingId = bldId
+                                }
+                            )
+                        )
                     } else {
                         // unexpected DB error response
-                        Logger.error(LogConfigSocketError) { "Failed to speed up building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
+                        Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
                         BuildingSpeedUpResponse(error = "", success = false, cost = 1)
                     }
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
-
-                if (success) {
-                    serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
-                        connection = connection,
-                        category = TaskCategory.Building.Create,
-                        stopInputBlock = {
-                            this.buildingId = bldId
-                        }
-                    )
-                }
             }
 
             SaveDataMethod.BUILDING_REPAIR -> {
@@ -310,18 +373,94 @@ class BuildingSaveHandler : SaveSubHandler {
 
             SaveDataMethod.BUILDING_REPAIR_SPEED_UP -> {
                 val bldId = data["id"] as? String ?: return
-                Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR_SPEED_UP' message for $saveId and $bldId" }
+                val option = data["option"] as? String ?: return
+                Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR_SPEED_UP' message for bldId=$bldId with option.key=$option" }
 
-                val result = svc.updateBuilding(bldId) { bld -> bld.copy(repair = null) }
-                val response = if (result.isSuccess) {
-                    BuildingSpeedUpResponse(success = true, error = "", cost = 0)
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val fuel = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
+
+                val response = if (fuel < 0) {
+                    BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
-                    Logger.error(LogConfigSocketError) { "Failed to speed up repair for building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
-                    BuildingSpeedUpResponse(
-                        success = false,
-                        error = result.exceptionOrNull()?.message ?: "Unknown error",
-                        cost = 0
-                    )
+
+                    val building =
+                        requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }.toBuilding()
+
+                    // TO-DO ensure that the selected option is enabled in the cost table.
+                    // this prevent player from manipulating packet to unknown speed up option
+                    // TO-DO: calculate the cost in cost table
+                    val (newBuilding, cost) = when (option) {
+                        "SpeedUpOneHour" -> {
+                            building.copy(repair = building.repair?.minus(1.hours).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpTwoHour" -> {
+                            building.copy(repair = building.repair?.minus(2.hours).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpHalf" -> {
+                            building.copy(repair = building.repair?.div(2).removeIfFinished()) to 1
+                        }
+
+                        "SpeedUpComplete" -> {
+                            building.copy(repair = null) to 1
+                        }
+
+                        "SpeedUpFree" -> {
+                            // TO-DO lookup cost table and see the minimum time to speed up for free
+                            // in this case, only if building duration is less than 5 minutes it will be allowed
+                            if (building.repair != null && building.repair.secondsLeftToEnd() <= 300) {
+                                building.copy(repair = null) to 1
+                            } else {
+                                Logger.warn { "Received unexpected BuildingRepairSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
+                                null to null
+                            }
+                        }
+
+                        else -> {
+                            Logger.warn { "Received unknown BuildingRepairSpeedUp option: $option from playerId=${connection.playerId}" }
+                            null to null
+                        }
+                    }
+
+                    if (newBuilding != null && cost != null) {
+                        // successful response
+                        svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
+
+                        // end the currently active building repair task
+                        serverContext.taskDispatcher.stopTaskFor<BuildingRepairStopParameter>(
+                            connection = connection,
+                            category = TaskCategory.Building.Repair,
+                            stopInputBlock = {
+                                this.buildingId = bldId
+                            }
+                        )
+
+                        // then restart it to change the timer
+                        // if construction ended after the speed up, automatically start with zero second delay
+                        serverContext.taskDispatcher.runTaskFor(
+                            connection = connection,
+                            taskToRun = BuildingRepairTask(
+                                taskInputBlock = {
+                                    this.buildingId = bldId
+                                    this.repairDuration =
+                                        newBuilding.repair
+                                            ?.secondsLeftToEnd()
+                                            ?.toDuration(DurationUnit.SECONDS)
+                                            ?: Duration.ZERO
+                                },
+                                stopInputBlock = {
+                                    this.buildingId = bldId
+                                }
+                            )
+                        )
+                    } else {
+                        // unexpected DB error response
+                        Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
+                        BuildingRepairSpeedUpResponse(error = "", success = false, cost = 1)
+                    }
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)

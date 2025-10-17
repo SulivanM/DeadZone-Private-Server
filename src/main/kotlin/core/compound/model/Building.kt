@@ -114,6 +114,10 @@ data class Building(
     val repair: TimerData? = null
 ) : BuildingLike()
 
+fun Building.toCompactString(): String {
+    return "Building(id=$id, type=$type, level=$level, upgrade=$upgrade, repair=$repair, resourceValue=$resourceValue)"
+}
+
 object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(BuildingLike::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BuildingLike> {
         return when (val discriminator = element.jsonObject["_t"]?.jsonPrimitive?.contentOrNull) {
