@@ -26,6 +26,10 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         }
     }
 
+    fun getBuilding(bldId: String): BuildingLike? {
+        return buildings.find { it.id == bldId }
+    }
+
     suspend fun updateBuilding(
         bldId: String,
         updateAction: suspend (BuildingLike) -> BuildingLike

@@ -16,6 +16,10 @@ import kotlinx.serialization.json.*
 @JsonClassDiscriminator("_t")
 sealed class BuildingLike
 
+fun BuildingLike.toBuilding(): Building {
+    return this as Building
+}
+
 val BuildingLike.id: String
     get() = when (this) {
         is Building -> this.id
