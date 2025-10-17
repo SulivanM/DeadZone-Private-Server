@@ -1,14 +1,12 @@
 package socket.tasks
 
-import io.ktor.util.date.getTimeMillis
+import io.ktor.util.date.*
+import kotlinx.coroutines.*
 import socket.core.Connection
 import utils.LogConfigSocketError
 import utils.LogSource
 import utils.Logger
-import kotlinx.coroutines.*
-import kotlin.collections.component1
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -151,7 +149,7 @@ class ServerTaskDispatcher : TaskScheduler {
                 is ChangeConfigException -> {
                     val updated = e.newConfig
                     Logger.info { "[Scheduler] Config changed for ${task.category}: $updated" }
-                    schedule(connection, task.apply { this.config = updated })
+                    schedule(connection, task)
                 }
 
                 is ForceCompleteException -> task.onForceComplete(connection)
@@ -166,50 +164,6 @@ class ServerTaskDispatcher : TaskScheduler {
         } catch (e: Exception) {
             task.onCancelled(connection, CancellationReason.ERROR)
             throw e
-        }
-    }
-
-    /**
-     * Change a particular task config, typically used to alter task execution timing.
-     *
-     * For example, it can be used to speed up building construction task.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <StopInput : Any> changeTaskConfig(
-        connection: Connection,
-        category: TaskCategory,
-        stopInputBlock: StopInput.() -> Unit = {},
-        transform: TaskConfig.() -> TaskConfig
-    ) {
-        val factory = stopInputFactories[category]
-            ?: error("No stopInputFactory registered for $category (register in Server.kt)")
-
-        try {
-            val stopInput = (factory() as StopInput).apply(stopInputBlock)
-            val deriveId = stopIdProviders[category]
-                ?: error("No stopIdProvider registered for $category (register in Server.kt)")
-
-            val taskId = deriveId(connection.playerId, category, stopInput)
-            val instance = runningInstances[taskId]
-
-            if (instance == null) {
-                Logger.warn(LogConfigSocketError) {
-                    "[changeTaskConfig]: instance for taskId=$taskId is null."
-                }
-                return
-            }
-
-            val newConfig = instance.config.transform()
-            runningInstances[taskId] = instance.copy(config = newConfig)
-            instance.job.cancel(ChangeConfigException(newConfig))
-        } catch (e: ClassCastException) {
-            val msg = buildString {
-                appendLine("[changeTaskConfig] Type mismatch when casting factory stop ID:")
-                appendLine("• Category: $category")
-                appendLine("• Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in changeTaskConfig()")
-            }
-
-            throw IllegalStateException(msg, e)
         }
     }
 
