@@ -22,6 +22,16 @@ class SurvivorService(
         return survivors
     }
 
+    suspend fun addNewSurvivor(survivor: Survivor) {
+        val result = survivorRepository.addSurvivor(playerId, survivor)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on addNewSurvivor: ${it.message}" }
+        }
+        result.onSuccess {
+            survivors.add(survivor)
+        }
+    }
+
     suspend fun updateSurvivor(
         srvId: String,
         updateAction: suspend (Survivor) -> Survivor
@@ -47,24 +57,17 @@ class SurvivorService(
             this.playerId = playerId
             val loadedSurvivors = survivorRepository.getSurvivors(playerId).getOrThrow()
             if (loadedSurvivors.isEmpty()) {
-                Logger.warn(LogConfigSocketError) { "Survivor for playerId=$playerId is empty" }
+                Logger.warn(LogConfigSocketError) { "Survivors for playerId=$playerId is empty" }
             }
-            survivors.clear()
             survivors.addAll(loadedSurvivors.map { srv ->
                 srv.copy(
                     lastName = srv.lastName.takeIf { it.isNotEmpty() } ?: "DZ",
-                    level = max(srv.level, 1)
                 )
             })
         }
     }
 
     override suspend fun close(playerId: String): Result<Unit> {
-        return runCatching {
-            survivorRepository.updateSurvivors(playerId, survivors).getOrThrow()
-        }.onFailure {
-            Logger.error(LogConfigSocketError) { "Failed to save survivors on close for playerId=$playerId: ${it.message}" }
-            failure<Unit>(it) // Spécification explicite du type Unit
-        }
+        return Result.success(Unit)
     }
 }

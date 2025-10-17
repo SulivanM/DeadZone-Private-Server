@@ -50,9 +50,15 @@ data class Inventory(
         }
 
         fun newgame(pid: String): Inventory {
+            // give good weapon to do tutorial easier
+            val free = setOf(
+                "morningStar-2", "PKP", "an94", "goldAK47-special", "fal-winter-2017-3",
+                "M249", "m107cq-arctic", "shotgun", "axe-halloween-2015-birthday-2017", "polehammer-halloween-2015-birthday-2017",
+            )
             val items = listOf(
                 Item(type = "pocketKnife"),
-                Item(type = "lawson22")
+                Item(type = "lawson22"),
+                Item(type = free.random())
             )
             return Inventory(
                 playerId = pid,

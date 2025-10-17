@@ -16,6 +16,10 @@ import kotlinx.serialization.json.*
 @JsonClassDiscriminator("_t")
 sealed class BuildingLike
 
+fun BuildingLike.toBuilding(): Building {
+    return this as Building
+}
+
 val BuildingLike.id: String
     get() = when (this) {
         is Building -> this.id
@@ -109,6 +113,10 @@ data class Building(
     val upgrade: TimerData? = null,
     val repair: TimerData? = null
 ) : BuildingLike()
+
+fun Building.toCompactString(): String {
+    return "Building(id=$id, type=$type, level=$level, upgrade=$upgrade, repair=$repair, resourceValue=$resourceValue)"
+}
 
 object BuildingLikeSerializer : JsonContentPolymorphicSerializer<BuildingLike>(BuildingLike::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<BuildingLike> {

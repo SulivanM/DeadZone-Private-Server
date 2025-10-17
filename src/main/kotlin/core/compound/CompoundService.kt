@@ -26,6 +26,10 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         }
     }
 
+    fun getBuilding(bldId: String): BuildingLike? {
+        return buildings.find { it.id == bldId }
+    }
+
     suspend fun updateBuilding(
         bldId: String,
         updateAction: suspend (BuildingLike) -> BuildingLike
@@ -120,6 +124,17 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         } catch (e: Exception) {
             Logger.error(LogConfigSocketError) { "Failed to collect building bldId=$bldId for playerId=$playerId: ${e.message}" }
             Result.failure(e)
+        }
+    }
+
+    suspend fun updateResource(updateAction: suspend (GameResources) -> (GameResources)) {
+        val update = updateAction(this.resources)
+        val result = compoundRepository.updateGameResources(playerId, update)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on updateResource: ${it.message}" }
+        }
+        result.onSuccess {
+            this.resources = update
         }
     }
 

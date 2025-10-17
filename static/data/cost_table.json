@@ -24,5 +24,58 @@
   "AttributeReset": {},
   "TradeSlotUpgrade": {},
   "DeathMobileUpgrade": {},
-  "InventoryUpgrade1_UNUSED": {}
+  "InventoryUpgrade1_UNUSED": {},
+  "SpeedUpOneHour": {
+    "type": "speed_up",
+    "order": 2,
+    "enabled": true,
+    "FreelyGivable": false,
+    "key": "SpeedUpOneHour",
+    "time": 3600,
+    "maxTime": 14400,
+    "costPerMin": 0.35,
+    "minCost": 25,
+    "PriceCoins": 20
+  },
+  "SpeedUpTwoHour": {
+    "type": "speed_up",
+    "order": 3,
+    "enabled": true,
+    "FreelyGivable": false,
+    "key": "SpeedUpTwoHour",
+    "time": 7200,
+    "maxTime": 28800,
+    "costPerMin": 0.3,
+    "minCost": 40,
+    "PriceCoins": 40
+  },
+  "SpeedUpHalf": {
+    "type": "speed_up",
+    "order": 1,
+    "enabled": true,
+    "FreelyGivable": false,
+    "key": "SpeedUpHalf",
+    "percent": 0.5,
+    "costPerMin": 0.4,
+    "minCost": 60,
+    "PriceCoins": 70
+  },
+  "SpeedUpComplete": {
+    "type": "speed_up",
+    "order": 4,
+    "enabled": true,
+    "FreelyGivable": false,
+    "key": "SpeedUpComplete",
+    "PriceCoins": 80,
+    "minCost": 80
+  },
+  "SpeedUpFree": {
+    "type": "speed_up",
+    "order": 5,
+    "enabled": true,
+    "FreelyGivable": true,
+    "key": "SpeedUpFree",
+    "maxTime": 300,
+    "PriceCoins": 0
+  }
 }

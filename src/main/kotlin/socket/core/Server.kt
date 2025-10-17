@@ -4,11 +4,10 @@ import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
 import dev.deadzone.socket.messaging.HandlerContext
+import dev.deadzone.socket.tasks.impl.MissionReturnStopParameter
 import socket.messaging.SocketMessage
 import socket.messaging.SocketMessageDispatcher
 import socket.protocol.PIODeserializer
-import socket.tasks.impl.BuildingTask
-import socket.tasks.impl.TimeUpdateTask
 import utils.Logger
 import utils.UUID
 import io.ktor.network.selector.*
@@ -23,6 +22,9 @@ import socket.handler.QuestProgressHandler
 import socket.handler.RequestSurvivorCheckHandler
 import socket.handler.SaveHandler
 import socket.handler.ZombieAttackHandler
+import socket.tasks.TaskCategory
+import socket.tasks.impl.BuildingCreateStopParameter
+import socket.tasks.impl.BuildingRepairStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -46,9 +48,39 @@ class Server(
             socketDispatcher.register(InitCompleteHandler(this))
             socketDispatcher.register(SaveHandler(this))
             socketDispatcher.register(ZombieAttackHandler())
-            socketDispatcher.register(RequestSurvivorCheckHandler())
-            context.taskDispatcher.register(TimeUpdateTask())
-            context.taskDispatcher.register(BuildingTask())
+            socketDispatcher.register(RequestSurvivorCheckHandler(this))
+            context.taskDispatcher.registerStopId<Unit>(
+                category = TaskCategory.TimeUpdate,
+                stopInputFactory = {},
+                deriveId = { playerId, category, _ ->
+                    // "TU-playerId123"
+                    "${category.code}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId<BuildingCreateStopParameter>(
+                category = TaskCategory.Building.Create,
+                stopInputFactory = { BuildingCreateStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "BLD-CREATE-bldId123-playerId123"
+                    "${category.code}-${stopInput.buildingId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId<BuildingRepairStopParameter>(
+                category = TaskCategory.Building.Repair,
+                stopInputFactory = { BuildingRepairStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "BLD-REPAIR-bldId123-playerId123"
+                    "${category.code}-${stopInput.buildingId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId<MissionReturnStopParameter>(
+                category = TaskCategory.Mission.Return,
+                stopInputFactory = { MissionReturnStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "MIS-RETURN-missionId123-playerId123"
+                    "${category.code}-${stopInput.missionId}-$playerId"
+                }
+            )
         }
     }
 
@@ -92,11 +124,18 @@ class Server(
                     val elapsed = measureTimeMillis {
                         val data = buffer.copyOfRange(0, bytesRead)
 
-                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '�'): String {
+                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '.'): String {
                             val decoded = String(this, Charsets.UTF_8)
                             val sanitized = decoded.map { ch ->
                                 if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
-                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(' ', '.', ',', ':', ';', '-', '_', '{', '}', '[', ']', '(', ')', '"', '\'', '/', '\\', '?', '=', '+', '*', '%', '&', '|', '<', '>', '!', '@', '#', '$', '^', '~')) placeholder
+                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(
+                                        ' ', '.', ',', ':', ';', '-', '_',
+                                        '{', '}', '[', ']', '(', ')', '"',
+                                        '\'', '/', '\\', '?', '=', '+', '*',
+                                        '%', '&', '|', '<', '>', '!', '@',
+                                        '#', '$', '^', '~'
+                                    )
+                                ) placeholder
                                 else ch
                             }.joinToString("")
                             return sanitized.take(max) + if (sanitized.length > max) "..." else ""
@@ -127,7 +166,7 @@ class Server(
                     Logger.debug {
                         buildString {
                             appendLine("<===== [SOCKET END] of type $msgType handled for playerId=${connection.playerId} in ${elapsed}ms")
-                            append("————————————————————————————————————————————————————————————————————————————————————————————————————————")
+                            append("====================================================================================================")
                         }
                     }
                 }

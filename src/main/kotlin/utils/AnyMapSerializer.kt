@@ -18,6 +18,7 @@ object AnyMapSerializer : KSerializer<Map<String, Any>> {
     override val descriptor: SerialDescriptor =
         MapSerializer(String.serializer(), JsonElement.serializer()).descriptor
 
+    @Suppress("UNCHECKED_CAST")
     override fun serialize(encoder: Encoder, value: Map<String, Any>) {
         val jsonEncoder = encoder as? JsonEncoder
             ?: error("This serializer only works with JSON")

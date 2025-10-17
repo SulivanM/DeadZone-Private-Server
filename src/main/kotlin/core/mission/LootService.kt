@@ -171,7 +171,10 @@ class LootService(
         val shuffledLocs = locs.shuffled()
         var i = 0
 
-        while (lootResults.size < lootsAmount) {
+        // upperbound for potential infinite loop
+        val maxAttempts = lootsAmount * shuffledLocs.size + 1
+
+        while (lootResults.size < lootsAmount && i < maxAttempts) {
             val loc = shuffledLocs[i % shuffledLocs.size]
             weightedRandomTree(loc)?.let { lootResults.add(it) }
             i += 1

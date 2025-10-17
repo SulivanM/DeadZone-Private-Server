@@ -1,4 +1,5 @@
 package core.survivor
+
 import core.model.game.data.Survivor
 import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
@@ -15,12 +16,32 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
             transaction(database) {
                 PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
-                        val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                        val playerObjects =
+                            json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                         playerObjects.survivors
                     } ?: throw NoSuchElementException("No player found with id=$playerId")
             }
         }
     }
+
+    override suspend fun addSurvivor(playerId: String, survivor: Survivor): Result<Unit> {
+        return runCatching {
+            transaction(database) {
+                val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
+                    .singleOrNull()?.let { row ->
+                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    } ?: throw NoSuchElementException("No player found with id=$playerId")
+
+                val survivors = currentData.survivors.toMutableList()
+
+                val updatedData = currentData.copy(survivors = survivors + survivor)
+                PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
+                    it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                }
+            }
+        }
+    }
+
     override suspend fun updateSurvivor(playerId: String, srvId: String, updatedSurvivor: Survivor): Result<Unit> {
         return runCatching {
             transaction(database) {
@@ -41,6 +62,7 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
             }
         }
     }
+
     override suspend fun updateSurvivors(playerId: String, survivors: List<Survivor>): Result<Unit> {
         return runCatching {
             transaction(database) {
