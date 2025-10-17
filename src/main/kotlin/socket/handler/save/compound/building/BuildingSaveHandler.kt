@@ -259,6 +259,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val notEnoughCoinsErrorId = "55"
 
                 val response: BuildingSpeedUpResponse
+                var resourceResponse: GameResources? = null
                 if (playerFuel < 0) {
                     response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
                 } else {
@@ -305,11 +306,11 @@ class BuildingSaveHandler : SaveSubHandler {
                     }
 
                     if (newBuilding != null && cost != null) {
-                        println("newbuilding becomes: $newBuilding")
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         svc.compound.updateResource { resource ->
-                            resource.copy(cash = playerFuel - cost)
+                            resourceResponse = resource.copy(cash = playerFuel - cost)
+                            resourceResponse
                         }
 
                         // end the currently active building task
@@ -349,7 +350,8 @@ class BuildingSaveHandler : SaveSubHandler {
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
-                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                val resourceResponseJson = GlobalContext.json.encodeToString(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
             SaveDataMethod.BUILDING_REPAIR -> {
@@ -400,6 +402,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
+                var resourceResponse: GameResources? = null
                 val response: BuildingRepairSpeedUpResponse
                 if (playerFuel < 0) {
                     response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
@@ -450,7 +453,8 @@ class BuildingSaveHandler : SaveSubHandler {
                         // successful response
                         svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         svc.compound.updateResource { resource ->
-                            resource.copy(cash = playerFuel - cost)
+                            resourceResponse = resource.copy(cash = playerFuel - cost)
+                            resourceResponse
                         }
 
                         response = BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
@@ -490,7 +494,8 @@ class BuildingSaveHandler : SaveSubHandler {
                 }
 
                 val responseJson = GlobalContext.json.encodeToString(response)
-                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                val resourceResponseJson = GlobalContext.json.encodeToString(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
             SaveDataMethod.BUILDING_CREATE_BUY -> {
