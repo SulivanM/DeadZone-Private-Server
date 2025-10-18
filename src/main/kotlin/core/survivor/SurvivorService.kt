@@ -52,6 +52,19 @@ class SurvivorService(
         }
     }
 
+    suspend fun updateSurvivors(
+        survivors: List<Survivor>
+    ) {
+        val result = survivorRepository.updateSurvivors(playerId, survivors)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on updateSurvivors: ${it.message}" }
+        }
+        result.onSuccess {
+            this.survivors.clear()
+            this.survivors.addAll(survivors)
+        }
+    }
+
     override suspend fun init(playerId: String): Result<Unit> {
         return runCatching {
             this.playerId = playerId
