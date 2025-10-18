@@ -53,6 +53,7 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
             "PlayerObjects" -> {
                 val updatedBuildings = LazyDataUpdater.updateBuildingTimers(playerObjects.buildings)
                 val depletedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
+                val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
                 val updatedSurvivors = playerObjects.survivors.map { srv ->
                     srv.copy(
                         lastName = srv.lastName.takeIf { it.isNotEmpty() } ?: "DZ",
