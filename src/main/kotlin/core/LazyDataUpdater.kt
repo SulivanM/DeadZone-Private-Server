@@ -20,8 +20,8 @@ object LazyDataUpdater {
 
         val depleted = ceil(depletionRate * minutesPassed).toInt()
         return res.copy(
-            food = max(1, res.food - depleted),
-            water = max(1, res.water - depleted)
+            food = max(0, res.food - depleted),
+            water = max(0, res.water - depleted)
         )
     }
 
