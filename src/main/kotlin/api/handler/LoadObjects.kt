@@ -5,6 +5,7 @@ import api.message.db.LoadObjectsArgs
 import api.message.db.LoadObjectsOutput
 import api.utils.pioFraming
 import context.ServerContext
+import context.requirePlayerContext
 import data.collection.NeighborHistory
 import dev.deadzone.core.LazyDataUpdater
 import utils.LogConfigAPIError
@@ -51,9 +52,8 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
         val inventory = serverContext.db.loadInventory(playerId)!!
         val obj: BigDBObject? = when (objId.table) {
             "PlayerObjects" -> {
-                val updatedBuildings = LazyDataUpdater.updateBuildingTimers(playerObjects.buildings)
-                val depletedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
                 val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
+                val updatedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
                 val updatedSurvivors = playerObjects.survivors.map { srv ->
                     srv.copy(
                         lastName = srv.lastName.takeIf { it.isNotEmpty() } ?: "DZ",
@@ -61,20 +61,19 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
                     )
                 }
 
-                val updatedPlayerObjects = playerObjects.copy(
-                    buildings = updatedBuildings,
-                    resources = depletedResources,
-                    survivors = updatedSurvivors
-                )
-
                 try {
-                    serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+                    // must use service since they are already active
+                    val svc = serverContext.requirePlayerContext(playerId).services
+                    svc.compound.updateAllBuildings(updatedBuildings)
+                    svc.compound.updateResource { updatedResources }
+                    svc.survivor.updateSurvivors(updatedSurvivors)
                 } catch (e: Exception) {
                     Logger.error(LogConfigSocketToClient) { "Error while updating time-dynamic data: ${e.message}" }
                     return
                 }
 
-                LoadObjectsOutput.fromData(updatedPlayerObjects)
+                val reloadedPlayerObjects = serverContext.db.loadPlayerObjects(playerId)!!
+                LoadObjectsOutput.fromData(reloadedPlayerObjects)
             }
 
             "NeighborHistory" -> LoadObjectsOutput.fromData(
