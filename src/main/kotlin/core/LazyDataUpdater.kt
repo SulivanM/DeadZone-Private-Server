@@ -28,26 +28,27 @@ object LazyDataUpdater {
     @Suppress("CAST_NEVER_SUCCEEDS")
     fun removeBuildingTimerIfDone(buildings: List<BuildingLike>): List<BuildingLike> {
         return buildings.map { bld ->
-            val upgradeWasGoing = bld.upgrade != null
-            val repairWasGoing = bld.repair != null
+            if (bld is Building) {
+                val upgradeWasGoing = bld.upgrade != null
+                val repairWasGoing = bld.repair != null
 
-            if (upgradeWasGoing) {
-                val upgradeDone = bld.upgrade!!.hasEnded()
+                if (upgradeWasGoing) {
+                    val upgradeDone = bld.upgrade.hasEnded()
 
-                if (upgradeDone) {
-                    val level = (bld.upgrade?.data?.get("level") as? Int ?: 1)
-                    bld.copy(level = level, upgrade = null)
+                    if (upgradeDone) {
+                        val level = (bld.upgrade.data?.get("level") as? Int ?: 1)
+                        bld.copy(level = level, upgrade = null)
+                    }
+                }
+
+                if (repairWasGoing) {
+                    val repairDone = bld.repair.hasEnded()
+
+                    if (repairDone) {
+                        bld.copy(repair = null, destroyed = false)
+                    }
                 }
             }
-
-            if (repairWasGoing) {
-                val repairDone = bld.repair!!.hasEnded()
-
-                if (repairDone) {
-                    bld.copy(repair = null, destroyed = false)
-                }
-            }
-
             bld
         }
     }

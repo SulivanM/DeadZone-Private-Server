@@ -189,6 +189,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
             val now = getTimeMillis()
 
             for (bldLike in buildings) {
+                if (bldLike is JunkBuilding) continue
                 val lastUpdate = lastResourceValueUpdated[bldLike.id] ?: continue
                 val updateResult = updateBuilding(bldLike.id) { oldBld ->
                     oldBld.copy(resourceValue = calculateResource((now - lastUpdate).seconds))
