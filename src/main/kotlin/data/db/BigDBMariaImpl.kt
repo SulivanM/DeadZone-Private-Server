@@ -137,9 +137,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return transaction(database) {
             PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
-                    val playerobject = json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
-                    println("PBS: ${playerobject.buildings}")
-                    playerobject
+                    json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
                 }
         }
     }
