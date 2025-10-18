@@ -1,10 +1,10 @@
 package dev.deadzone.core
 
-import core.*
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.*
 import io.ktor.util.date.*
-import kotlin.math.min
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -12,15 +12,16 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 object LazyDataUpdater {
     fun depleteResources(lastLogin: Long, res: GameResources): GameResources {
-        val minutesPassed = min(0, (getTimeMillis() - lastLogin).milliseconds.inWholeMinutes)
-        val depletionRate = 0.02
-        // depletion formula: each minutes deplete res by 0.05, an hour is 3
+        val now = getTimeMillis()
+        val minutesPassed = max(0, (now - lastLogin).milliseconds.inWholeMinutes)
+        val depletionRate = 0.01
+        // TO-DO depletion should be based on the number of survivors
+        // depletion formula right now: each minutes deplete res by 0.01, an hour is 0.6, ceil the result
 
-        val depleted = depletionRate * minutesPassed
-
+        val depleted = ceil(depletionRate * minutesPassed).toInt()
         return res.copy(
-            food = min(1, res.food - (depleted).toInt()),
-            water = min(1, res.water - (depleted).toInt())
+            food = max(1, res.food - depleted),
+            water = max(1, res.water - depleted)
         )
     }
 
