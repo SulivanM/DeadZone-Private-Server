@@ -13,12 +13,7 @@ import org.jetbrains.exposed.sql.update
 import user.model.UserProfile
 import kotlin.io.encoding.Base64
 
-class PlayerAccountRepositoryMaria(private val database: Database?) : PlayerAccountRepository {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-    }
-
+class PlayerAccountRepositoryMaria(private val database: Database?, private val json: Json) : PlayerAccountRepository {
     override suspend fun verifyCredentials(username: String, password: String): Result<String?> {
         return try {
             transaction(database) {

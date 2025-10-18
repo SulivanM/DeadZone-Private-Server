@@ -9,9 +9,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
-class InventoryRepositoryMaria(private val database: Database) : InventoryRepository {
-    private val json = Json { ignoreUnknownKeys = true }
-
+class InventoryRepositoryMaria(private val database: Database, private val json: Json) : InventoryRepository {
     override fun getInventory(playerId: String): Result<Inventory> {
         return runCatching {
             transaction(database) {
