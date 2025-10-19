@@ -9,8 +9,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 
-class SurvivorRepositoryMaria(private val database: Database) : SurvivorRepository {
-    private val json = Json { ignoreUnknownKeys = true }
+class SurvivorRepositoryMaria(private val database: Database, private val json: Json) : SurvivorRepository {
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {
         return runCatching {
             transaction(database) {

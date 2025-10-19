@@ -22,5 +22,9 @@ interface CompoundRepository {
         bldId: String,
         updatedBuilding: BuildingLike
     ): Result<Unit>
+    suspend fun updateAllBuildings(
+        playerId: String,
+        updatedBuildings: List<BuildingLike>
+    ): Result<Unit>
     suspend fun deleteBuilding(playerId: String, bldId: String): Result<Unit>
 }

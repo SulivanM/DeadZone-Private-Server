@@ -56,6 +56,23 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         }
     }
 
+    suspend fun updateAllBuildings(buildings: List<BuildingLike>): Result<Unit> {
+        return try {
+            val result = compoundRepository.updateAllBuildings(playerId, buildings)
+            result.onFailure {
+                Logger.error(LogConfigSocketError) { "Error on updateAllBuildings: ${it.message}" }
+            }
+            result.onSuccess {
+                this.buildings.clear()
+                this.buildings.addAll(buildings)
+            }
+            result
+        } catch (e: Exception) {
+            Logger.error(LogConfigSocketError) { "Failed to update all buildings for playerId=$playerId: ${e.message}" }
+            Result.failure(e)
+        }
+    }
+
     suspend fun createBuilding(createAction: suspend () -> (BuildingLike)) {
         val create = createAction()
         val result = compoundRepository.createBuilding(playerId, create)
@@ -172,6 +189,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
             val now = getTimeMillis()
 
             for (bldLike in buildings) {
+                if (bldLike is JunkBuilding) continue
                 val lastUpdate = lastResourceValueUpdated[bldLike.id] ?: continue
                 val updateResult = updateBuilding(bldLike.id) { oldBld ->
                     oldBld.copy(resourceValue = calculateResource((now - lastUpdate).seconds))

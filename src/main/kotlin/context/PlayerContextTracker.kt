@@ -8,13 +8,10 @@ import core.metadata.PlayerObjectsMetadataRepositoryMaria
 import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorRepositoryMaria
 import core.survivor.SurvivorService
-import context.PlayerContext
-import context.PlayerServices
 import data.db.BigDB
 import data.db.BigDBMariaImpl
+import io.ktor.util.date.*
 import socket.core.Connection
-import io.ktor.util.date.getTimeMillis
-import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerContextTracker {
@@ -46,15 +43,15 @@ class PlayerContextTracker {
         val playerObjects = requireNotNull(db.loadPlayerObjects(playerId)) { 
             "Weird, PlayerObjects for playerId=$playerId is null" 
         }
-        
-        val json = Json { ignoreUnknownKeys = true }
-        
+
+        val json = GlobalContext.json
+
         val survivor = SurvivorService(
             survivorLeaderId = playerObjects.playerSurvivor!!,
-            survivorRepository = SurvivorRepositoryMaria(database)
+            survivorRepository = SurvivorRepositoryMaria(database, json)
         )
         
-        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria(database))
+        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria(database, json))
         val compound = CompoundService(compoundRepository = CompoundRepositoryMaria(database, json))
         val playerObjectMetadata = PlayerObjectsMetadataService(
             playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database, json)

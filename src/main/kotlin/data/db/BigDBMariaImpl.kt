@@ -1,24 +1,18 @@
 package data.db
 
 import com.toxicbakery.bcrypt.Bcrypt
+import context.GlobalContext
 import core.data.AdminData
-import core.metadata.model.ByteArrayAsBase64Serializer
-import data.collection.Inventory
-import data.collection.NeighborHistory
-import data.collection.PlayerAccount
-import data.collection.PlayerObjects
-import data.collection.ServerMetadata
-import utils.Emoji
-import utils.Logger
-import utils.UUID
+import data.collection.*
 import io.ktor.util.date.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import utils.Emoji
+import utils.Logger
+import utils.UUID
 import kotlin.io.encoding.Base64
 
 object PlayerAccounts : Table("player_accounts") {
@@ -53,13 +47,7 @@ object InventoryTable : Table("inventory") {
 }
 
 class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) : BigDB {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        serializersModule = SerializersModule {
-            contextual(ByteArray::class, ByteArrayAsBase64Serializer)
-        }
-    }
+    private val json = GlobalContext.json
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -149,7 +137,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return transaction(database) {
             PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
-                    json.decodeFromString(row[PlayerObjectsTable.dataJson])
+                    json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
                 }
         }
     }

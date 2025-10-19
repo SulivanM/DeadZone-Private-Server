@@ -78,6 +78,15 @@ class CompoundRepositoryMaria(
         }
     }
 
+    override suspend fun updateAllBuildings(
+        playerId: String,
+        updatedBuildings: List<BuildingLike>
+    ): Result<Unit> {
+        return updatePlayerObjectsData(playerId) { currentData ->
+            currentData.copy(buildings = updatedBuildings)
+        }
+    }
+
     override suspend fun deleteBuilding(playerId: String, bldId: String): Result<Unit> {
         return updatePlayerObjectsData(playerId) { currentData ->
             val updatedBuildings = currentData.buildings.filterNot { it.id == bldId }

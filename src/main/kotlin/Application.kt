@@ -9,6 +9,7 @@ import context.PlayerContextTracker
 import context.ServerConfig
 import context.ServerContext
 import core.data.GameDefinitions
+import core.metadata.model.ByteArrayAsBase64Serializer
 import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
@@ -81,6 +82,7 @@ fun Application.module() {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
             subclass(JunkBuilding::class, JunkBuilding.serializer())
+            contextual(ByteArray::class, ByteArrayAsBase64Serializer)
         }
     }
     val json = Json {
@@ -128,7 +130,7 @@ fun Application.module() {
         throw e
     }
     val sessionManager = SessionManager()
-    val playerAccountRepository = PlayerAccountRepositoryMaria(database.database)
+    val playerAccountRepository = PlayerAccountRepositoryMaria(database.database, json)
     val onlinePlayerRegistry = OnlinePlayerRegistry()
     val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
     val taskDispatcher = ServerTaskDispatcher()

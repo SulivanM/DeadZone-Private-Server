@@ -11,9 +11,9 @@ import socket.tasks.impl.TimeUpdateTask
  * Handle `ic` message by:
  *
  * 1. Do the necessary setup in server.
+ * 2. Send data update to client if necessary.
  *
- * Very important signal sent by client. It doesn't expects a response, so likely a one-way signal.
- * In here the game is guaranteed to be loaded (in timeline screen). So we could do some setup here.
+ * INIT_COMPLETE is a signal sent by client to notify server that the player's game is now active.
  */
 class InitCompleteHandler(private val serverContext: ServerContext) :
     SocketMessageHandler {

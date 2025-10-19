@@ -8,7 +8,7 @@ data class BuildingCollection(
 ) {
     companion object {
         fun starterBase(): List<BuildingLike> {
-            // player starter junks, based on compound.xml; id based on name.
+            // player starter junks, based on compound.xml; id randomized, name based on 'name' field on XML.
             val junks = listOf(
                 JunkBuilding(name = "junk", type = "junk-tutorial", pos = "-650,950,-1", rot = "0,0,0"),
                 JunkBuilding(name = "junk1", type = "junk-pile-corner", pos = "-927,-1026,0", rot = "0,0,90"),
