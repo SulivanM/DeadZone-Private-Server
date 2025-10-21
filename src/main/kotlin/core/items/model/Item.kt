@@ -39,3 +39,7 @@ data class Item(
 fun Item.compactString(): String {
     return "Item(id=${this.id}, type=${this.type})"
 }
+
+fun Item.quantityString(): String {
+    return "Item(type=${this.type}, qty=${this.qty})"
+}
