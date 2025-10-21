@@ -25,8 +25,8 @@ val ALL_LOCS = listOf(
     "random", "office", "store", "military", "weapon", "resource", "police",
     "gear", "tutorial", "fuel", "food", "fridge", "water", "vending", "car",
     "body", "basement", "ammo", "wood", "metal", "cloth", "comms", "hospital",
-    "island", "firstaid"
-) // + the tutorial convenience store (tutorialfuel)
+    "island", "firstaid", "anything", "zmas", "tutorialfuel"
+)
 
 class LootService(
     private val gameDefinitions: GameDefinitions = GlobalContext.gameDefinitions,
