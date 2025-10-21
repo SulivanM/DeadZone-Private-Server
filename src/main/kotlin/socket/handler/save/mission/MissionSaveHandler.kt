@@ -1,3 +1,4 @@
+// src/main/kotlin/socket/handler/save/mission/MissionSaveHandler.kt
 package socket.handler.save.mission
 
 import context.GlobalContext
@@ -146,11 +147,9 @@ class MissionSaveHandler : SaveSubHandler {
                     currentLeader.copy(xp = newXp, level = newLevel)
                 }
 
-                // Update player's inventory
-                // TO-DO move inventory update to MissionReturnTask execute()
-                // items and injuries are sent to player after mission return complete
-                svc.inventory.updateInventory { items ->
-                    items + addedInventoryItems
+                // Update player's inventory with stacked items
+                svc.inventory.updateInventory { existingItems ->
+                    stackItems(existingItems + addedInventoryItems)
                 }
 
                 val returnTime = 20.seconds
@@ -411,15 +410,20 @@ class MissionSaveHandler : SaveSubHandler {
         // "loot" must be a list of string which contains items ids
         val itemIdsOfLoots: List<String> =
             requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
-        val items = mutableSetOf<Item>()
+        val items = mutableMapOf<String, Item>() // Map of itemType to Item
         val itemCounts = mutableMapOf<String, Int>() // itemId (which is item.type) to count
 
         itemIdsOfLoots.forEach { itemId ->
-            items.add(ItemFactory.createItemFromId(idInXML = itemId))
-            itemCounts[itemId] = itemCounts.getOrDefault(itemId, 0) + 1
+            val itemType = itemId.uppercase()
+            itemCounts[itemType] = itemCounts.getOrDefault(itemType, 0) + 1
+
+            // Only create one item per type
+            if (!items.containsKey(itemType)) {
+                items[itemType] = ItemFactory.createItemFromId(idInXML = itemId)
+            }
         }
 
-        return items.toList() to itemCounts
+        return items.values.toList() to itemCounts
     }
 
     private fun buildNewInventoryItems(items: List<Item>, counter: Map<String, Int>): List<Item> {
@@ -430,9 +434,8 @@ class MissionSaveHandler : SaveSubHandler {
             // Resource type of item (e.g., water, food) does not need to be added to the inventory
             if (!GlobalContext.gameDefinitions.isResourceItem(item.type)) {
                 if (count != null) {
-                    repeat(count) {
-                        inventory.add(item)
-                    }
+                    // Create item with the total quantity
+                    inventory.add(item.copy(qty = count.toUInt()))
                 } else {
                     Logger.warn(logFull = true) { "buildNewInventoryItems: Item counter is null for itemId: ${item.id}, items: ${items.map { it.compactString() }}, counter: $counter" }
                 }
@@ -440,6 +443,51 @@ class MissionSaveHandler : SaveSubHandler {
         }
 
         return inventory
+    }
+
+    /**
+     * Stack items by combining quantities of items with the same type and matching properties
+     */
+    private fun stackItems(items: List<Item>): List<Item> {
+        val stackedMap = mutableMapOf<String, Item>()
+
+        for (item in items) {
+            // Create a key based on item properties that should match for stacking
+            val stackKey = buildStackKey(item)
+
+            if (stackedMap.containsKey(stackKey)) {
+                // Stack with existing item
+                val existing = stackedMap[stackKey]!!
+                stackedMap[stackKey] = existing.copy(qty = existing.qty + item.qty)
+            } else {
+                // Add new item to map
+                stackedMap[stackKey] = item
+            }
+        }
+
+        return stackedMap.values.toList()
+    }
+
+    /**
+     * Build a unique key for stacking items
+     * Items with the same key can be stacked together
+     */
+    private fun buildStackKey(item: Item): String {
+        return buildString {
+            append(item.type)
+            append("|")
+            append(item.level)
+            append("|")
+            append(item.quality ?: "null")
+            append("|")
+            append(item.mod1 ?: "")
+            append("|")
+            append(item.mod2 ?: "")
+            append("|")
+            append(item.mod3 ?: "")
+            append("|")
+            append(item.bind ?: "null")
+        }
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
