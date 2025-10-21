@@ -7,6 +7,7 @@ import core.items.model.Item
 import core.items.model.compactString
 import core.mission.LootService
 import core.mission.model.LootParameter
+import core.model.game.data.GameResources
 import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
@@ -138,7 +139,7 @@ class MissionSaveHandler : SaveSubHandler {
 
                 // to show loot results, the game expects a unique set of loot with its quantity
                 val (itemLooted, quantity) = summarizeLoots(data)
-                val addedInventoryItems = buildNewInventoryItems(itemLooted, quantity)
+                val (addedInventoryItems, obtainedResources) = buildInventoryAndResource(itemLooted, quantity)
 
                 // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
@@ -154,6 +155,11 @@ class MissionSaveHandler : SaveSubHandler {
                 // items and injuries are sent to player after mission return complete
                 svc.inventory.updateInventory { items ->
                     items.combineItems(addedInventoryItems, GlobalContext.gameDefinitions)
+                }
+
+                svc.compound.updateResource { currentRes ->
+                    // TO-DO resource addition should adhere to resource cap (according to storage)
+                    currentRes + obtainedResources
                 }
 
                 val returnTime = 20.seconds
@@ -425,8 +431,12 @@ class MissionSaveHandler : SaveSubHandler {
         return items.toList() to itemCounts
     }
 
-    private fun buildNewInventoryItems(items: List<Item>, counter: Map<String, Int>): List<Item> {
+    private fun buildInventoryAndResource(
+        items: List<Item>,
+        counter: Map<String, Int>
+    ): Pair<List<Item>, GameResources> {
         val inventory = mutableListOf<Item>()
+        var totalRes = GameResources()
 
         for (item in items) {
             val count = counter[item.type.uppercase()]
@@ -448,10 +458,17 @@ class MissionSaveHandler : SaveSubHandler {
                 } else {
                     Logger.warn(logFull = true) { "buildNewInventoryItems: Item counter is null for itemId: ${item.id}, items: ${items.map { it.compactString() }}, counter: $counter" }
                 }
+            } else {
+                val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
+                if (resAmount != null) {
+                    totalRes += resAmount
+                } else {
+                    Logger.warn { "Unexpected scenario: item=${item.compactString()} was classified as resource item but getResourceAmount returns null" }
+                }
             }
         }
 
-        return inventory
+        return inventory to totalRes
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
