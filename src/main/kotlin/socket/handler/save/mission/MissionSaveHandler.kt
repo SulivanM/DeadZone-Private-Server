@@ -10,6 +10,7 @@ import core.mission.model.LootParameter
 import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
+import data.collection.combineItems
 import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import dev.deadzone.socket.handler.save.mission.response.MissionSpeedUpResponse
@@ -22,6 +23,8 @@ import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.UUID
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -150,7 +153,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // TO-DO move inventory update to MissionReturnTask execute()
                 // items and injuries are sent to player after mission return complete
                 svc.inventory.updateInventory { items ->
-                    items + addedInventoryItems
+                    items.combineItems(addedInventoryItems, GlobalContext.gameDefinitions)
                 }
 
                 val returnTime = 20.seconds
@@ -430,8 +433,17 @@ class MissionSaveHandler : SaveSubHandler {
             // Resource type of item (e.g., water, food) does not need to be added to the inventory
             if (!GlobalContext.gameDefinitions.isResourceItem(item.type)) {
                 if (count != null) {
-                    repeat(count) {
-                        inventory.add(item)
+                    val maxStack = GlobalContext.gameDefinitions.getMaxStackOfItem(idInXml = item.type)
+                    // e.g., 18 items with max stack of 10 should produce 2 item units (10 and 8)
+                    val totalItemUnits = count / maxStack
+                    val overflowCounts = count % maxStack
+
+                    repeat(totalItemUnits) {
+                        inventory.add(item.copy(qty = min(maxStack, count).toUInt()))
+                    }
+                    if (overflowCounts > 0) {
+                        // regenerate UUID as it is a new item
+                        inventory.add(item.copy(id = UUID.new(), qty = overflowCounts.toUInt()))
                     }
                 } else {
                     Logger.warn(logFull = true) { "buildNewInventoryItems: Item counter is null for itemId: ${item.id}, items: ${items.map { it.compactString() }}, counter: $counter" }
