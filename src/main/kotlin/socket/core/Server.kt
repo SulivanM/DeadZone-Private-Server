@@ -141,12 +141,15 @@ class Server(
                             return sanitized.take(max) + if (sanitized.length > max) "..." else ""
                         }
 
-                        Logger.debug {
-                            "=====> [SOCKET START]: ${data.decode()} for playerId=${connection.playerId}, bytes=$bytesRead"
-                        }
-
                         if (data.startsWithBytes(POLICY_FILE_REQUEST.toByteArray())) {
+                            Logger.debug { "=====> [SOCKET START]: POLICY_FILE_REQUEST from connection=$connection" }
                             connection.sendRaw(POLICY_FILE_RESPONSE.toByteArray())
+                            Logger.debug {
+                                buildString {
+                                    appendLine("<===== [SOCKET END]  : Responded to POLICY_FILE_REQUEST for connection=$connection")
+                                    append("====================================================================================================")
+                                }
+                            }
                             break
                         }
 
@@ -156,9 +159,16 @@ class Server(
 
                         val deserialized = PIODeserializer.deserialize(data2)
                         val msg = SocketMessage.fromRaw(deserialized)
-                        if (msg.isEmpty()) continue
+                        if (msg.isEmpty()) {
+                            Logger.debug { "==== [SOCKET] Ignored empty message from connection=$connection, raw: $msg" }
+                            continue
+                        }
 
                         msgType = msg.msgTypeToString()
+
+                        Logger.debug {
+                            "=====> [SOCKET START]: of type $msgType, raw: ${data.decode()} for playerId=${connection.playerId}, bytes=$bytesRead"
+                        }
 
                         socketDispatcher.findHandlerFor(msg).handle(HandlerContext(connection, msg))
                     }

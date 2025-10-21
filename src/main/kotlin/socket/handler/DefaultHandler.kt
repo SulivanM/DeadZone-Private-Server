@@ -14,7 +14,7 @@ class DefaultHandler() : SocketMessageHandler {
 
     override suspend fun handle(ctx: HandlerContext) = with(ctx) {
         Logger.warn(LogConfigSocketError) {
-            "Handler is either unregistered (register it on Server.kt) or unimplemented for message: ${message.msgTypeToString()}"
+            "Handler of type=${message.msgTypeToString()} is either unregistered (register it on Server.kt) or unimplemented"
         }
         send(PIOSerializer.serialize(listOf("\u0000\u0000\u0000\u0000")))
     }

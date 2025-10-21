@@ -80,6 +80,6 @@ class Connection(
     }
 
     override fun toString(): String {
-        return "[ADDR]: ${this.socket.remoteAddress} | connectionId=$connectionId"
+        return "Connnection(playerId=$playerId, connectionId=$connectionId, address=${socket.remoteAddress})"
     }
 }
