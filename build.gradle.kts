@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "dev.deadzone"
-version = "2025.07.11"
+version = "2025.10.22"
 
 repositories {
     mavenCentral()
@@ -31,13 +31,18 @@ tasks.withType<ShadowJar> {
     }
 }
 
-tasks.register<Copy>("copyRunScripts") {
+val copyGameFiles by tasks.registering(Copy::class) {
+    from("static")
+    into("deploy/static")
+}
+
+val copyRunScripts by tasks.registering(Copy::class) {
     from("autorun.bat", "autorun.sh")
     into("deploy")
 }
 
-tasks.named("shadowJar") {
-    finalizedBy("copyRunScripts")
+tasks.shadowJar {
+    finalizedBy(copyGameFiles, copyRunScripts)
 }
 
 dependencies {

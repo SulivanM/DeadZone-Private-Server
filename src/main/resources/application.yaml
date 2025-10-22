@@ -2,7 +2,7 @@ ktor:
   application:
     modules:
       - dev.deadzone.ApplicationKt.module
-  development: true
+  development: "$DEV_MODE:true"
   deployment:
     port: 8080
 game:
@@ -10,7 +10,7 @@ game:
 maria:
   url: jdbc:mariadb://localhost:3306/prod_deadzone_game
   user: root
-  password: ""
+  password: "adm123"
 logger:
   level: 0
   colorful: true
