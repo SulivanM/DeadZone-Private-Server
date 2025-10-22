@@ -1,1 +1,1 @@
-start "Recapturing-The-DeadZone" cmd /k ".\gradlew.bat run"
+start "DeadZone-Server" cmd /k ".\gradlew.bat run"
