@@ -138,9 +138,9 @@ class LootService(
                 val itmsElement = doc.createElement("itms")
 
                 val loots = getRollsFromLocs(srchNode.textContent.split(","))
-                for ((_, type, q) in loots) {
+                for ((lootId, type, q) in loots) {
                     val itm = doc.createElement("itm")
-                    itm.setAttribute("id", UUID.new())
+                    itm.setAttribute("id", lootId)
                     itm.setAttribute("type", type)
                     itm.setAttribute("q", q.toString())
                     itmsElement.appendChild(itm)
