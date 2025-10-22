@@ -4,10 +4,9 @@ import core.items.model.combineItems
 import core.items.model.quantityString
 import core.items.model.stackOwnItems
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class TestMissionSaveHandler {
+class TestInventory {
     private val def = GameDefinitions()
 
     @Test
