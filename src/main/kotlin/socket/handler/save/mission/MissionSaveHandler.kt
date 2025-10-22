@@ -5,6 +5,7 @@ import context.requirePlayerContext
 import core.items.model.Item
 import core.items.model.combineItems
 import core.items.model.compactString
+import core.items.model.stackOwnItems
 import core.mission.LootService
 import core.mission.model.LootContent
 import core.mission.model.LootParameter
@@ -192,12 +193,7 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 )
 
-                // TO-DO change resource with obtained loot...
-                // need to lookup on how much resources does each resource item grant
-                // e.g., wood scrap gives 10 wood
-                val currentResource = svc.compound.getResources()
-
-                val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
+                val resourceResponseJson = GlobalContext.json.encodeToString(svc.compound.getResources())
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
                 // TO-DO update player's task collection to include the mission return task
@@ -436,25 +432,10 @@ class MissionSaveHandler : SaveSubHandler {
     }
 
     private fun buildInventoryAndResource(items: List<Item>): Pair<List<Item>, GameResources> {
-        val inventory = mutableListOf<Item>()
         var totalRes = GameResources()
 
         for (item in items) {
-            // Resource type of item (e.g., water, food) does not need to be added to the inventory
-            if (!GlobalContext.gameDefinitions.isResourceItem(item.type)) {
-                val maxStack = GlobalContext.gameDefinitions.getMaxStackOfItem(idInXml = item.type).toUInt()
-                // e.g., 18 items with max stack of 10 should produce 2 item units (10 and 8)
-                val totalItemUnits = item.qty / maxStack
-                val overflowCounts = item.qty % maxStack
-
-                repeat(totalItemUnits.toInt()) {
-                    inventory.add(item.copy(qty = min(maxStack, item.qty)))
-                }
-                if (overflowCounts > 0u) {
-                    // regenerate UUID as it is a new item
-                    inventory.add(item.copy(id = UUID.new(), qty = overflowCounts, new = true))
-                }
-            } else {
+            if (GlobalContext.gameDefinitions.isResourceItem(item.type)) {
                 val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
                 if (resAmount != null) {
                     totalRes += resAmount
@@ -464,7 +445,7 @@ class MissionSaveHandler : SaveSubHandler {
             }
         }
 
-        return inventory to totalRes
+        return items.stackOwnItems(GlobalContext.gameDefinitions) to totalRes
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
