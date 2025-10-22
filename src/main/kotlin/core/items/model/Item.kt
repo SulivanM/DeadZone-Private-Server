@@ -99,6 +99,42 @@ fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions)
     return result
 }
 
+fun List<Item>.stackOwnItems(def: GameDefinitions): List<Item> {
+    if (isEmpty()) return emptyList()
+
+    val stacked = mutableListOf<Item>()
+
+    // Group all items that can stack
+    val grouped = mutableMapOf<String, MutableList<Item>>()
+    for (item in this) {
+        val key = "${item.type}|${item.level}|${item.quality}|${item.mod1}|${item.mod2}|${item.mod3}|${item.bind}"
+        grouped.getOrPut(key) { mutableListOf() }.add(item)
+    }
+
+    // For each group, merge and split according to maxStack
+    for ((_, group) in grouped) {
+        val base = group.first()
+        val totalQty = group.sumOf { it.qty.toLong() }.toUInt()
+
+        val maxStack = def.getMaxStackOfItem(base.type).toUInt()
+
+        if (maxStack <= 1u) {
+            // Non-stackable item, each instance remains unique
+            stacked.addAll(group)
+            continue
+        }
+
+        var remaining = totalQty
+        while (remaining > 0u) {
+            val stackQty = minOf(remaining, maxStack)
+            stacked.add(base.copy(id = UUID.new(), qty = stackQty, new = true))
+            remaining -= stackQty
+        }
+    }
+
+    return stacked
+}
+
 /**
  * Check if two items can be stacked together
  */
