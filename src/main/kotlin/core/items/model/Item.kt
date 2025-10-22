@@ -104,18 +104,14 @@ fun List<Item>.stackOwnItems(def: GameDefinitions): List<Item> {
 
     val stacked = mutableListOf<Item>()
 
-    // Group all items that can stack
-    val grouped = mutableMapOf<String, MutableList<Item>>()
-    for (item in this) {
-        val key = "${item.type}|${item.level}|${item.quality}|${item.mod1}|${item.mod2}|${item.mod3}|${item.bind}"
-        grouped.getOrPut(key) { mutableListOf() }.add(item)
+    // Group all items that can stack using a single pass
+    val grouped = groupBy { item ->
+        "${item.type}|${item.level}|${item.quality}|${item.mod1}|${item.mod2}|${item.mod3}|${item.bind}"
     }
 
     // For each group, merge and split according to maxStack
     for ((_, group) in grouped) {
         val base = group.first()
-        val totalQty = group.sumOf { it.qty.toLong() }.toUInt()
-
         val maxStack = def.getMaxStackOfItem(base.type).toUInt()
 
         if (maxStack <= 1u) {
@@ -124,7 +120,8 @@ fun List<Item>.stackOwnItems(def: GameDefinitions): List<Item> {
             continue
         }
 
-        var remaining = totalQty
+        // Sum quantities and create stacks in one pass
+        var remaining = group.sumOf { it.qty.toLong() }.toUInt()
         while (remaining > 0u) {
             val stackQty = minOf(remaining, maxStack)
             stacked.add(base.copy(id = UUID.new(), qty = stackQty, new = true))

@@ -1,5 +1,6 @@
 package socket.handler.save.item
 
+import context.requirePlayerContext
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import socket.handler.save.SaveSubHandler
 import socket.messaging.SaveDataMethod
@@ -32,7 +33,13 @@ class ItemSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.ITEM_CLEAR_NEW -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'ITEM_CLEAR_NEW' message [not implemented]" }
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+
+                svc.inventory.updateInventory { items ->
+                    items.map { item -> item.copy(new = false) }
+                }
+
+                Logger.info(LogConfigSocketToClient) { "Cleared 'new' flag on all items for player ${connection.playerId}" }
             }
 
             SaveDataMethod.ITEM_BATCH_RECYCLE -> {

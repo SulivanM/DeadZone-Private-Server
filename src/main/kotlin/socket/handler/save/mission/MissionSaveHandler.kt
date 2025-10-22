@@ -165,8 +165,18 @@ class MissionSaveHandler : SaveSubHandler {
                 }
 
                 svc.compound.updateResource { currentRes ->
-                    // TO-DO resource addition should adhere to resource cap (according to storage)
-                    currentRes + obtainedResources
+                    // Cap resources at storage limit (default 100 per resource type)
+                    val storageLimit = 100 // TODO: Get actual limit from GameDefinitions based on storage buildings
+                    val cappedResources = GameResources(
+                        wood = minOf(currentRes.wood + obtainedResources.wood, storageLimit),
+                        metal = minOf(currentRes.metal + obtainedResources.metal, storageLimit),
+                        cloth = minOf(currentRes.cloth + obtainedResources.cloth, storageLimit),
+                        water = minOf(currentRes.water + obtainedResources.water, storageLimit),
+                        food = minOf(currentRes.food + obtainedResources.food, storageLimit),
+                        ammunition = minOf(currentRes.ammunition + obtainedResources.ammunition, storageLimit),
+                        cash = currentRes.cash + obtainedResources.cash // Cash has no limit
+                    )
+                    cappedResources
                 }
 
                 val returnTime = 20.seconds

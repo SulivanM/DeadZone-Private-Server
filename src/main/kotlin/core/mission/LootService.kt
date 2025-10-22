@@ -163,17 +163,24 @@ class LootService(
     }
 
     private fun getRollsFromLocs(locs: List<String>): List<LootContent> {
-        // roll 0-6 items per container
+        // roll 1-6 items per container (ensure at least 1 item)
         val lootsAmount = (0..6).random()
         val lootResults: MutableList<LootContent> = mutableListOf()
 
+        // Filter to only locations that have loot available
+        val availableLocs = locs.filter { cumulativeLootsPerLoc.containsKey(it) }
+        
+        if (availableLocs.isEmpty()) {
+            return emptyList()
+        }
+
         // shuffle the list of locs, and pick one item per loc
         // go back to start if still need more item
-        val shuffledLocs = locs.shuffled()
+        val shuffledLocs = availableLocs.shuffled()
         var i = 0
 
         // upperbound for potential infinite loop
-        val maxAttempts = lootsAmount * shuffledLocs.size + 1
+        val maxAttempts = lootsAmount * shuffledLocs.size + 10
 
         while (lootResults.size < lootsAmount && i < maxAttempts) {
             val loc = shuffledLocs[i % shuffledLocs.size]
