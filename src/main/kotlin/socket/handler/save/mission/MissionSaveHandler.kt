@@ -2,11 +2,11 @@ package socket.handler.save.mission
 
 import context.GlobalContext
 import context.requirePlayerContext
-import core.items.ItemFactory
 import core.items.model.Item
 import core.items.model.combineItems
 import core.items.model.compactString
 import core.mission.LootService
+import core.mission.model.LootContent
 import core.mission.model.LootParameter
 import core.model.game.data.GameResources
 import core.model.game.data.MissionStats
@@ -39,8 +39,8 @@ class MissionSaveHandler : SaveSubHandler {
     private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
 
     // when player start a mission, generate missionId
-    // this map from playerId to missionId
-    private val activeMissionIds = mutableMapOf<String, String>()
+    // this map from playerId to (missionId, insertedLoots)
+    private val activeMissions = mutableMapOf<String, Pair<String, List<LootContent>>>()
 
     override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
@@ -81,7 +81,7 @@ class MissionSaveHandler : SaveSubHandler {
                     fuelLimit = 50
                 )
                 val lootService = LootService(GlobalContext.gameDefinitions, sceneXML, lootParameter)
-                val sceneXMLWithLoot = lootService.insertLoots()
+                val (sceneXMLWithLoot, insertedLoots) = lootService.insertLoots()
 
                 val zombies = listOf(
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
@@ -96,7 +96,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // this enables deterministic ID therefore can avoid memory leak
                 // later, should save the missionId as task to DB in MISSION_END
                 val missionId = connection.playerId
-                activeMissionIds[connection.playerId] = missionId
+                activeMissions[connection.playerId] = missionId to insertedLoots
 
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionStartResponse(
@@ -137,9 +137,11 @@ class MissionSaveHandler : SaveSubHandler {
                 val playerStats = missionStats[connection.playerId] ?: MissionStats()
                 val earnedXp = calculateMissionXp(playerStats.killData)
 
-                // to show loot results, the game expects a unique set of loot with its quantity
-                val (itemLooted, quantity) = summarizeLoots(data)
-                val (addedInventoryItems, obtainedResources) = buildInventoryAndResource(itemLooted, quantity)
+                val (missionId, insertedLoots) =
+                    requireNotNull(activeMissions[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
+
+                val lootedItems = summarizeLoots(data, insertedLoots)
+                val (addedInventoryItems, obtainedResources) = buildInventoryAndResource(lootedItems)
 
                 // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
@@ -174,8 +176,11 @@ class MissionSaveHandler : SaveSubHandler {
                             data = mapOf("return" to returnTime.toInt(DurationUnit.SECONDS))
                         ),
                         lockTimer = null,
-                        loot = itemLooted,
-                        itmCounters = quantity,
+                        loot = lootedItems,
+
+                        // itmCounters is not related to item quantity
+                        // it is some kind of internal weapon state (i.e., kill count)
+                        itmCounters = emptyMap(),
                         injuries = null,
                         survivors = emptyList(),
                         player = PlayerSurvivor(
@@ -195,9 +200,6 @@ class MissionSaveHandler : SaveSubHandler {
                 val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
-                val missionId =
-                    requireNotNull(activeMissionIds[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
-
                 // TO-DO update player's task collection to include the mission return task
                 serverContext.taskDispatcher.runTaskFor(
                     connection = connection,
@@ -213,7 +215,7 @@ class MissionSaveHandler : SaveSubHandler {
                 )
 
                 missionStats.remove(connection.playerId)
-                activeMissionIds.remove(connection.playerId)
+                activeMissions.remove(connection.playerId)
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
@@ -416,46 +418,41 @@ class MissionSaveHandler : SaveSubHandler {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
-        val itemIdsOfLoots: List<String> =
+    private fun summarizeLoots(data: Map<String, Any?>, serverInsertedLoots: List<LootContent>): List<Item> {
+        val lootedIds: List<String> =
             requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
         val items = mutableSetOf<Item>()
-        val itemCounts = mutableMapOf<String, Int>() // itemId (which is item.type) to count
 
-        itemIdsOfLoots.forEach { itemId ->
-            items.add(ItemFactory.createItemFromId(idInXML = itemId))
-            itemCounts[itemId] = itemCounts.getOrDefault(itemId, 0) + 1
+        lootedIds.forEach { lootId ->
+            val loot = serverInsertedLoots.find { it.lootId == lootId }
+            if (loot != null) {
+                items.add(Item(id = UUID.new(), type = loot.itemIdInXML, qty = loot.quantity.toUInt(), new = true))
+            } else {
+                Logger.warn { "Unexpected scenario: player reportedly loot:$lootId but it doesn't exist in serverInsertedLoots." }
+            }
         }
 
-        return items.toList() to itemCounts
+        return items.toList()
     }
 
-    private fun buildInventoryAndResource(
-        items: List<Item>,
-        counter: Map<String, Int>
-    ): Pair<List<Item>, GameResources> {
+    private fun buildInventoryAndResource(items: List<Item>): Pair<List<Item>, GameResources> {
         val inventory = mutableListOf<Item>()
         var totalRes = GameResources()
 
         for (item in items) {
-            val count = counter[item.type.uppercase()]
             // Resource type of item (e.g., water, food) does not need to be added to the inventory
             if (!GlobalContext.gameDefinitions.isResourceItem(item.type)) {
-                if (count != null) {
-                    val maxStack = GlobalContext.gameDefinitions.getMaxStackOfItem(idInXml = item.type)
-                    // e.g., 18 items with max stack of 10 should produce 2 item units (10 and 8)
-                    val totalItemUnits = count / maxStack
-                    val overflowCounts = count % maxStack
+                val maxStack = GlobalContext.gameDefinitions.getMaxStackOfItem(idInXml = item.type).toUInt()
+                // e.g., 18 items with max stack of 10 should produce 2 item units (10 and 8)
+                val totalItemUnits = item.qty / maxStack
+                val overflowCounts = item.qty % maxStack
 
-                    repeat(totalItemUnits) {
-                        inventory.add(item.copy(qty = min(maxStack, count).toUInt()))
-                    }
-                    if (overflowCounts > 0) {
-                        // regenerate UUID as it is a new item
-                        inventory.add(item.copy(id = UUID.new(), qty = overflowCounts.toUInt()))
-                    }
-                } else {
-                    Logger.warn(logFull = true) { "buildNewInventoryItems: Item counter is null for itemId: ${item.id}, items: ${items.map { it.compactString() }}, counter: $counter" }
+                repeat(totalItemUnits.toInt()) {
+                    inventory.add(item.copy(qty = min(maxStack, item.qty)))
+                }
+                if (overflowCounts > 0u) {
+                    // regenerate UUID as it is a new item
+                    inventory.add(item.copy(id = UUID.new(), qty = overflowCounts, new = true))
                 }
             } else {
                 val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
