@@ -67,7 +67,7 @@ fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions)
         // find item of same type and quantity still lower than maximum
         val existingItem = this.find { it.type == item.type && it.qty < maxStack.toUInt() }
 
-        if (existingItem != null) {
+        if (existingItem != null && existingItem.canStack(item)) {
             // both item's quantity are guaranteed to be lower than the max stack
             // adding two of them should only produce 2 unit maximum
             // (i.e., 99 + 99 = 198 (100, 98) if max stack = 100)
@@ -84,7 +84,7 @@ fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions)
             }
             alreadyCombined.add(existingItem.id)
         } else {
-            // either no item is found or each of them are already at maximum amount
+            // either no item is found, each of them are already at maximum amount, or they cannot stack
             // add to result directly
             result.add(item)
         }
