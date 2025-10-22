@@ -163,7 +163,7 @@ class LootService(
     }
 
     private fun getRollsFromLocs(locs: List<String>): List<LootContent> {
-        // roll 1-6 items per container (ensure at least 1 item)
+        // roll 0-6 items per container
         val lootsAmount = (0..6).random()
         val lootResults: MutableList<LootContent> = mutableListOf()
 
