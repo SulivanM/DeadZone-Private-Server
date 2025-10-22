@@ -34,4 +34,8 @@ data class ServerConfig(
     val mariaUser: String,
     val mariaPassword: String,
     val isProd: Boolean,
+    val broadcastEnabled: Boolean = true,
+    val broadcastHost: String = "0.0.0.0",
+    val broadcastPorts: List<Int> = listOf(2121, 2122, 2123),
+    val broadcastPolicyServerEnabled: Boolean = true,
 )

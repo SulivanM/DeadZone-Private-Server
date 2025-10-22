@@ -1,5 +1,6 @@
 package socket.handler.save.crate
 
+import broadcast.BroadcastService
 import context.GlobalContext
 import core.items.ItemFactory
 import dev.deadzone.socket.handler.save.SaveHandlerContext
@@ -20,16 +21,29 @@ class CrateSaveHandler : SaveSubHandler {
                 val keyId = data["keyId"] as String?
                 val crateId = (data["crateId"] ?: "") as String?
 
+                val item = ItemFactory.getRandomItem()
+
                 val responseJson = GlobalContext.json.encodeToString(
                     CrateUnlockResponse(
                         success = true,
-                        item = ItemFactory.getRandomItem(),
+                        item = item,
                         keyId = keyId,
                         crateId = crateId,
                     )
                 )
 
                 Logger.info(LogConfigSocketToClient) { "Opening crateId=$crateId with keyId=$keyId" }
+
+                // Broadcast item unboxed
+                try {
+                    val playerName = connection.playerId // You might want to get the actual player name
+                    val itemName = item.name ?: "Unknown Item"
+                    val quality = item.quality?.toString() ?: ""
+
+                    BroadcastService.broadcastItemUnboxed(playerName, itemName, quality)
+                } catch (e: Exception) {
+                    Logger.warn("Failed to broadcast item unboxed: ${e.message}")
+                }
 
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }

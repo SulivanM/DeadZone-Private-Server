@@ -1,5 +1,6 @@
 package socket.handler.save.mission
 
+import broadcast.BroadcastService
 import context.GlobalContext
 import context.requirePlayerContext
 import core.data.GameDefinitions
@@ -152,6 +153,27 @@ class MissionSaveHandler : SaveSubHandler {
                 // Update the leader's XP and level
                 svc.survivor.updateSurvivor(leader.id) { currentLeader ->
                     currentLeader.copy(xp = newXp, level = newLevel)
+                }
+
+                // Broadcast level up if player leveled up
+                if (newLevelPts > 0) {
+                    try {
+                        BroadcastService.broadcastUserLevel(connection.playerId, newLevel)
+                    } catch (e: Exception) {
+                        Logger.warn("Failed to broadcast user level: ${e.message}")
+                    }
+                }
+
+                // Broadcast rare items found
+                try {
+                    combinedLootedItems.forEach { item ->
+                        val quality = item.quality?.toString() ?: ""
+                        if (quality.equals("legendary", ignoreCase = true) || quality.equals("epic", ignoreCase = true)) {
+                            BroadcastService.broadcastItemFound(connection.playerId, item.type, quality)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Logger.warn("Failed to broadcast items found: ${e.message}")
                 }
 
                 // Update player's inventory

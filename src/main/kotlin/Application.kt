@@ -2,8 +2,11 @@ package dev.deadzone
 
 import api.routes.apiRoutes
 import api.routes.authRoutes
+import api.routes.broadcastRoutes
 import api.routes.caseInsensitiveStaticResources
 import api.routes.fileRoutes
+import broadcast.BroadcastService
+import broadcast.BroadcastTestController
 import context.GlobalContext
 import context.PlayerContextTracker
 import context.ServerConfig
@@ -114,6 +117,13 @@ fun Application.module() {
         mariaUser = environment.config.propertyOrNull("maria.user")?.getString() ?: "root",
         mariaPassword = environment.config.propertyOrNull("maria.password")?.getString() ?: "",
         isProd = !developmentMode,
+        broadcastEnabled = environment.config.propertyOrNull("broadcast.enabled")?.getString()?.toBooleanStrictOrNull()
+            ?: true,
+        broadcastHost = environment.config.propertyOrNull("broadcast.host")?.getString() ?: "0.0.0.0",
+        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() }
+            ?: listOf(2121, 2122, 2123),
+        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()?.toBooleanStrictOrNull()
+            ?: true,
     )
     Logger.info("${Emoji.Database} Connecting to MariaDB...")
     val database = try {
@@ -174,13 +184,25 @@ fun Application.module() {
         caseInsensitiveStaticResources("/game/data", File("static"))
         authRoutes(serverContext)
         apiRoutes(serverContext)
+        broadcastRoutes(serverContext)
     }
     val server = Server(context = serverContext).also { it.start() }
+
+    // Initialize broadcast service
+    BroadcastService.initialize(
+        host = config.broadcastHost,
+        ports = config.broadcastPorts,
+        enabled = config.broadcastEnabled,
+        enablePolicyServer = config.broadcastPolicyServerEnabled
+    )
+
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
     Logger.info("${Emoji.Internet} API server available at $SERVER_HOST:$API_SERVER_PORT")
+
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
+        BroadcastService.shutdown()
         Logger.info("${Emoji.Red} Server shutdown complete")
     })
 }

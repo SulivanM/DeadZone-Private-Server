@@ -6,7 +6,12 @@ ktor:
   deployment:
     port: 8080
 game:
-  enableAdmin: true
+  enableAdmin: false
+broadcast:
+  enabled: true
+  host: "0.0.0.0"
+  ports: "2121,2122,2123"
+  enablePolicyServer: true
 maria:
   url: jdbc:mariadb://localhost:3306/prod_deadzone_game
   user: root
