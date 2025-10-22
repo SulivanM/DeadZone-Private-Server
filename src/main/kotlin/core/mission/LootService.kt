@@ -113,7 +113,12 @@ class LootService(
         }
     }
 
-    fun insertLoots(): String {
+    /**
+     * Insert loots to the given scene XML from constructor.
+     *
+     * @return The updated XML with loots inserted and the list of [LootContent]s inserted.
+     */
+    fun insertLoots(): Pair<String, List<LootContent>> {
         val docBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc: Document = docBuilder.parse(InputSource(StringReader(sceneXML)))
 
@@ -135,11 +140,7 @@ class LootService(
                 val loots = getRollsFromLocs(srchNode.textContent.split(","))
                 for ((_, type, q) in loots) {
                     val itm = doc.createElement("itm")
-                    // the id here is not used to construct an Item
-                    // it is used for reference, in which client will send it during mission end
-                    // to let server know which items are looted.
-                    // therefore, we used type for the id
-                    itm.setAttribute("id", type)
+                    itm.setAttribute("id", UUID.new())
                     itm.setAttribute("type", type)
                     itm.setAttribute("q", q.toString())
                     itmsElement.appendChild(itm)
@@ -158,7 +159,7 @@ class LootService(
 
         val writer = StringWriter()
         transformer.transform(DOMSource(doc), StreamResult(writer))
-        return writer.toString()
+        return writer.toString() to insertedLoots
     }
 
     private fun getRollsFromLocs(locs: List<String>): List<LootContent> {
@@ -205,7 +206,7 @@ class LootService(
         // i.e., weapon, schematics, is limited to 1 but junk items can be 5
 
         return LootContent(
-            itemId = UUID.new(),
+            lootId = UUID.new(),
             itemIdInXML = res.idInXML,
             quantity = qty,
         )
