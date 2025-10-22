@@ -4,27 +4,15 @@ TLS:DZ private server (revival).
 
 ## How to Play?
 
-1. Install [Java 25](https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.exe). We recommend installing it in the default directory.
-
+1. Install [Java 25](https://www.oracle.com/java/technologies/downloads) for your platforms. We recommend installing it in the default directory.
 2. Install MariaDB using our companion repository:  
    👉 https://github.com/SwitchCompagnie/Deadzone-Revive-Website-Game  
    This repo provides a ready-to-use setup for MariaDB.
-
 3. Create a new database named `prod_deadzone_game` in MariaDB.  
    ⚠️ Tables will be created automatically on first server run.
-
-4. Download the latest server :  
-   👉 [Latest Release](https://github.com/SulivanM/DeadZone-Private-Server/releases) (`deploy.zip`)
-
-5. Extract the zip archive.
-
-6. Run the game server using the provided script:  
-   - `autorun.bat` (Windows)  
-   - `autorun.sh` (Linux/macOS)  
-   This script will automatically detect your Java installation.
-
-7. Use a Flash-compatible browser (Ruffle is **not supported**).  
-   We recommend using [Basilisk with Flash (debug)](https://www.mediafire.com/file/tmecqq7ke0uhqm7/Basilisk_with_Flash_%2528debug%2529.zip/file)
+4. Build the server by running `build.bat` (Windows) or `build.sh` (Linux/macOS). This process may take a while.
+5. Open the `deploy` folder and run the server using the provided script `autorun.bat` (Windows) or `autorun.sh` (Linux/macOS). This script will automatically detect your Java installation.
+6. Then access the game in `http://127.0.0.1:8080` using the website from step 2.
 
 👉 Join our [Discord](https://discord.gg/jFyAePxDBJ) for questions, updates, or community support.
 
@@ -32,10 +20,20 @@ TLS:DZ private server (revival).
 
 ## Development
 
-### Requirements
+The requirements are:
 
 - Java 25
-- MariaDB (installed via: [Deadzone-Revive-Website-Game](https://github.com/SwitchCompagnie/Deadzone-Revive-Website-Game))
+- MariaDB (installed via: [Deadzone-Revive-Website-Game](https://github.com/SwitchCompagnie/Deadzone-Revive-Website-Game)).
+
+### Run Server
+
+Ensure that MariaDB is running, then run the following command:
+
+```bash
+.\gradlew run
+```
+
+You can also double-click on `runserver.bat` or `runserver.sh`; or run the `main` function in `Application.kt` through IntelliJ IDE run plugin.
 
 ### Database Configuration
 
@@ -55,15 +53,28 @@ maria:
 ⚠️ You must create the `prod_deadzone_game` database manually in MariaDB.  
 The required tables will be generated automatically when the server starts.
 
-### Running the Server
+### Logging Configuration
 
-1. Ensure your MariaDB service is running.
+You can switch log levels and toggle color display in the same `application.yaml`
 
-2. Start the server using the provided script:  
-   - `runserver.bat` (Windows)  
-   - `runserver.sh` (Linux/macOS)
+Default configuration:
 
----
+```yaml
+logger:
+  level: 0
+  colorful: true
+```
+
+### Development Flag
+
+By default, the development mode is always on. You can turn it off by setting an environment flag.
+
+For example, in Powershell (to set variables temporarily before running the server):
+
+```bash
+$env:DEV_MODE = "false"
+java -jar zpr-server.jar
+```
 
 ## Documentation
 
