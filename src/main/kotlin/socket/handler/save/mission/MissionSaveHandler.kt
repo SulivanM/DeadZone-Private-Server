@@ -140,8 +140,8 @@ class MissionSaveHandler : SaveSubHandler {
                 val (missionId, insertedLoots) =
                     requireNotNull(activeMissions[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
 
-                val lootedItems = summarizeLoots(data, insertedLoots)
-                val (addedInventoryItems, obtainedResources) = buildInventoryAndResource(lootedItems)
+                val rawLootedItems = summarizeLoots(data, insertedLoots)
+                val (combinedLootedItems, obtainedResources) = buildInventoryAndResource(rawLootedItems)
 
                 // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
@@ -156,7 +156,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // TO-DO move inventory update to MissionReturnTask execute()
                 // items and injuries are sent to player after mission return complete
                 svc.inventory.updateInventory { items ->
-                    items.combineItems(addedInventoryItems, GlobalContext.gameDefinitions)
+                    items.combineItems(combinedLootedItems, GlobalContext.gameDefinitions)
                 }
 
                 svc.compound.updateResource { currentRes ->
@@ -176,7 +176,7 @@ class MissionSaveHandler : SaveSubHandler {
                             data = mapOf("return" to returnTime.toInt(DurationUnit.SECONDS))
                         ),
                         lockTimer = null,
-                        loot = lootedItems,
+                        loot = combinedLootedItems,
 
                         // itmCounters is not related to item quantity
                         // it is some kind of internal weapon state (i.e., kill count)
