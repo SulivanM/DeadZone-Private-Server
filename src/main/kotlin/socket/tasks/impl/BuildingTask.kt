@@ -65,7 +65,7 @@ class BuildingRepairTask(
         createTaskInput().apply(taskInputBlock)
     }
 
-    override val category = TaskCategory.Building.Create
+    override val category = TaskCategory.Building.Repair
     override val config = TaskConfig(
         startDelay = taskInput.repairDuration
     )

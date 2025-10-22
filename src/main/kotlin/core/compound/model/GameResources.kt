@@ -11,7 +11,17 @@ data class GameResources(
     val food: Int = 0,
     val ammunition: Int = 0,
     val cash: Int = 0
-)
+) {
+    operator fun plus(other: GameResources): GameResources = GameResources(
+        wood = this.wood + other.wood,
+        metal = this.metal + other.metal,
+        cloth = this.cloth + other.cloth,
+        water = this.water + other.water,
+        food = this.food + other.food,
+        ammunition = this.ammunition + other.ammunition,
+        cash = this.cash + other.cash
+    )
+}
 
 fun GameResources.getNonEmptyResAmountOrNull(): Int? {
     val nonEmpty = listOf(

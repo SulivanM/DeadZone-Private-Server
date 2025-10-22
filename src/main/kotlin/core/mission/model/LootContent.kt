@@ -1,7 +1,7 @@
 package core.mission.model
 
 data class LootContent(
-    val itemId: String,
+    val lootId: String,
     val itemIdInXML: String,
     val quantity: Int,
 )

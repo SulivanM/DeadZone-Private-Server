@@ -1,8 +1,10 @@
 package data.collection
 
 import core.data.AdminData
+import core.data.GameDefinitions
 import core.items.ItemFactory
 import core.items.model.Item
+import core.items.model.combineItems
 import kotlinx.serialization.Serializable
 
 /**
@@ -52,8 +54,16 @@ data class Inventory(
         fun newgame(pid: String): Inventory {
             // give good weapon to do tutorial easier
             val free = setOf(
-                "morningStar-2", "PKP", "an94", "goldAK47-special", "fal-winter-2017-3",
-                "M249", "m107cq-arctic", "shotgun", "axe-halloween-2015-birthday-2017", "polehammer-halloween-2015-birthday-2017",
+                "morningStar-2",
+                "PKP",
+                "an94",
+                "goldAK47-special",
+                "fal-winter-2017-3",
+                "M249",
+                "m107cq-arctic",
+                "shotgun",
+                "axe-halloween-2015-birthday-2017",
+                "polehammer-halloween-2015-birthday-2017",
             )
             val items = listOf(
                 Item(type = "pocketKnife"),
@@ -85,4 +95,11 @@ data class Inventory(
         result = 31 * result + schematics.contentHashCode()
         return result
     }
+}
+
+/**
+ * Combine two inventory semantically (according to the game definition).
+ */
+fun Inventory.combineItems(other: Inventory, gameDefinitions: GameDefinitions): Inventory {
+    return this.copy(inventory = this.inventory.combineItems(other.inventory, gameDefinitions))
 }

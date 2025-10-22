@@ -2,11 +2,15 @@ package socket.handler.save.mission
 
 import context.GlobalContext
 import context.requirePlayerContext
-import core.items.ItemFactory
+import core.data.GameDefinitions
 import core.items.model.Item
+import core.items.model.combineItems
 import core.items.model.compactString
+import core.items.model.stackOwnItems
 import core.mission.LootService
+import core.mission.model.LootContent
 import core.mission.model.LootParameter
+import core.model.game.data.GameResources
 import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
@@ -22,6 +26,8 @@ import socket.messaging.SaveDataMethod
 import socket.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.UUID
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -35,8 +41,8 @@ class MissionSaveHandler : SaveSubHandler {
     private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
 
     // when player start a mission, generate missionId
-    // this map from playerId to missionId
-    private val activeMissionIds = mutableMapOf<String, String>()
+    // this map from playerId to (missionId, insertedLoots)
+    private val activeMissions = mutableMapOf<String, Pair<String, List<LootContent>>>()
 
     override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
@@ -77,7 +83,7 @@ class MissionSaveHandler : SaveSubHandler {
                     fuelLimit = 50
                 )
                 val lootService = LootService(GlobalContext.gameDefinitions, sceneXML, lootParameter)
-                val sceneXMLWithLoot = lootService.insertLoots()
+                val (sceneXMLWithLoot, insertedLoots) = lootService.insertLoots()
 
                 val zombies = listOf(
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
@@ -92,7 +98,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // this enables deterministic ID therefore can avoid memory leak
                 // later, should save the missionId as task to DB in MISSION_END
                 val missionId = connection.playerId
-                activeMissionIds[connection.playerId] = missionId
+                activeMissions[connection.playerId] = missionId to insertedLoots
 
                 val responseJson = GlobalContext.json.encodeToString(
                     MissionStartResponse(
@@ -133,9 +139,11 @@ class MissionSaveHandler : SaveSubHandler {
                 val playerStats = missionStats[connection.playerId] ?: MissionStats()
                 val earnedXp = calculateMissionXp(playerStats.killData)
 
-                // to show loot results, the game expects a unique set of loot with its quantity
-                val (itemLooted, quantity) = summarizeLoots(data)
-                val stackedInventoryItems = buildStackedInventoryItems(itemLooted, quantity)
+                val (missionId, insertedLoots) =
+                    requireNotNull(activeMissions[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
+
+                val rawLootedItems = summarizeLoots(data, insertedLoots)
+                val (combinedLootedItems, obtainedResources) = buildInventoryAndResource(rawLootedItems)
 
                 // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
@@ -146,9 +154,19 @@ class MissionSaveHandler : SaveSubHandler {
                     currentLeader.copy(xp = newXp, level = newLevel)
                 }
 
-                // Update player's inventory with stacked items
-                svc.inventory.updateInventory { existingItems ->
-                    stackInventoryItems(existingItems, stackedInventoryItems)
+                // Update player's inventory
+                // TO-DO move inventory update to MissionReturnTask execute()
+                // items and injuries are sent to player after mission return complete
+                svc.inventory.updateInventory { items ->
+                    items.combineItems(
+                        combinedLootedItems.filter { !GlobalContext.gameDefinitions.isResourceItem(it.type) },
+                        GlobalContext.gameDefinitions
+                    )
+                }
+
+                svc.compound.updateResource { currentRes ->
+                    // TO-DO resource addition should adhere to resource cap (according to storage)
+                    currentRes + obtainedResources
                 }
 
                 val returnTime = 20.seconds
@@ -163,8 +181,11 @@ class MissionSaveHandler : SaveSubHandler {
                             data = mapOf("return" to returnTime.toInt(DurationUnit.SECONDS))
                         ),
                         lockTimer = null,
-                        loot = itemLooted,
-                        itmCounters = quantity,
+                        loot = combinedLootedItems,
+
+                        // itmCounters is not related to item quantity
+                        // it is some kind of internal weapon state (i.e., kill count)
+                        itmCounters = emptyMap(),
                         injuries = null,
                         survivors = emptyList(),
                         player = PlayerSurvivor(
@@ -176,16 +197,8 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 )
 
-                // TO-DO change resource with obtained loot...
-                // need to lookup on how much resources does each resource item grant
-                // e.g., wood scrap gives 10 wood
-                val currentResource = svc.compound.getResources()
-
-                val resourceResponseJson = GlobalContext.json.encodeToString(currentResource)
+                val resourceResponseJson = GlobalContext.json.encodeToString(svc.compound.getResources())
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
-
-                val missionId =
-                    requireNotNull(activeMissionIds[connection.playerId]) { "Mission ID for playerId=$playerId was somehow null in MISSION_END request." }
 
                 // TO-DO update player's task collection to include the mission return task
                 serverContext.taskDispatcher.runTaskFor(
@@ -202,7 +215,7 @@ class MissionSaveHandler : SaveSubHandler {
                 )
 
                 missionStats.remove(connection.playerId)
-                activeMissionIds.remove(connection.playerId)
+                activeMissions.remove(connection.playerId)
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
@@ -405,70 +418,38 @@ class MissionSaveHandler : SaveSubHandler {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
-        val itemIdsOfLoots: List<String> =
+    private fun summarizeLoots(data: Map<String, Any?>, serverInsertedLoots: List<LootContent>): List<Item> {
+        val lootedIds: List<String> =
             requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
+        val items = mutableSetOf<Item>()
 
-        val itemCounts = mutableMapOf<String, Int>()
-        itemIdsOfLoots.forEach { itemId ->
-            val itemType = itemId.uppercase()
-            itemCounts[itemType] = itemCounts.getOrDefault(itemType, 0) + 1
+        lootedIds.forEach { lootId ->
+            val loot = serverInsertedLoots.find { it.lootId == lootId }
+            if (loot != null) {
+                items.add(Item(id = UUID.new(), type = loot.itemIdInXML, qty = loot.quantity.toUInt(), new = true))
+            } else {
+                Logger.warn { "Unexpected scenario: player reportedly loot:$lootId but it doesn't exist in serverInsertedLoots." }
+            }
         }
 
-        val uniqueItems = itemCounts.keys.map { itemType ->
-            ItemFactory.createItemFromId(idInXML = itemType.lowercase())
-        }
-
-        return uniqueItems to itemCounts
+        return items.toList()
     }
 
-    private fun buildStackedInventoryItems(items: List<Item>, counter: Map<String, Int>): List<Item> {
-        return items.mapNotNull { item ->
+    private fun buildInventoryAndResource(items: List<Item>): Pair<List<Item>, GameResources> {
+        var totalRes = GameResources()
+
+        for (item in items) {
             if (GlobalContext.gameDefinitions.isResourceItem(item.type)) {
-                null
-            } else {
-                val count = counter[item.type.uppercase()] ?: 1
-                item.copy(qty = count.toUInt())
-            }
-        }
-    }
-
-    /**
-     * Stack new items into existing inventory efficiently
-     */
-    private fun stackInventoryItems(existingItems: List<Item>, newItems: List<Item>): List<Item> {
-        val result = existingItems.toMutableList()
-
-        newItems.forEach { newItem ->
-            // Find if there's already an item that can be stacked with this one
-            val existingIndex = result.indexOfFirst { existing ->
-                canStack(existing, newItem)
-            }
-
-            if (existingIndex >= 0) {
-                // Stack with existing item
-                val existing = result[existingIndex]
-                result[existingIndex] = existing.copy(qty = existing.qty + newItem.qty)
-            } else {
-                // Add as new item
-                result.add(newItem)
+                val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
+                if (resAmount != null) {
+                    totalRes += resAmount
+                } else {
+                    Logger.warn { "Unexpected scenario: item=${item.compactString()} was classified as resource item but getResourceAmount returns null" }
+                }
             }
         }
 
-        return result
-    }
-
-    /**
-     * Check if two items can be stacked together
-     */
-    private fun canStack(item1: Item, item2: Item): Boolean {
-        return item1.type == item2.type &&
-                item1.level == item2.level &&
-                item1.quality == item2.quality &&
-                item1.mod1 == item2.mod1 &&
-                item1.mod2 == item2.mod2 &&
-                item1.mod3 == item2.mod3 &&
-                item1.bind == item2.bind
+        return items.stackOwnItems(GlobalContext.gameDefinitions) to totalRes
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {

@@ -2,11 +2,13 @@
 
 package core.items.model
 
+import core.data.GameDefinitions
 import core.model.game.data.CraftingInfo
 import utils.UUID
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlin.math.min
 
 @Serializable
 data class Item(
@@ -38,4 +40,110 @@ data class Item(
 
 fun Item.compactString(): String {
     return "Item(id=${this.id}, type=${this.type})"
+}
+
+fun Item.quantityString(): String {
+    return "Item(type=${this.type}, qty=${this.qty})"
+}
+
+/**
+ * Combine two list of items semantically (according to the game definition).
+ *
+ * It assumes that the [other] list of items are already semantically correct.
+ */
+fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions): List<Item> {
+    val result = mutableListOf<Item>()
+    val alreadyCombined = mutableSetOf<String>()
+
+    for (item in other) {
+        val maxStack = gameDefinitions.getMaxStackOfItem(item.type)
+
+        // item already hit the max stack, add to result directly
+        if (item.qty >= maxStack.toUInt()) {
+            result.add(item)
+            continue
+        }
+
+        // find item of same type and quantity still lower than maximum
+        val existingItem = this.find { it.type == item.type && it.qty < maxStack.toUInt() }
+
+        if (existingItem != null && existingItem.canStack(item)) {
+            // both item's quantity are guaranteed to be lower than the max stack
+            // adding two of them should only produce 2 unit maximum
+            // (i.e., 99 + 99 = 198 (100, 98) if max stack = 100)
+            val totalQty = existingItem.qty + item.qty
+
+            // add first unit
+            result.add(item.copy(qty = min(totalQty, maxStack.toUInt())))
+
+            // add second unit if overflow
+            val overflowCounts = totalQty.toInt() - maxStack
+            if (overflowCounts > 0) {
+                // regenerate UUID as it is a new item
+                result.add(item.copy(id = UUID.new(), qty = overflowCounts.toUInt()))
+            }
+            alreadyCombined.add(existingItem.id)
+        } else {
+            // either no item is found, each of them are already at maximum amount, or they cannot stack
+            // add to result directly
+            result.add(item)
+        }
+    }
+
+    for (item in this) {
+        if (!alreadyCombined.contains(item.id)) {
+            result.add(item)
+        }
+    }
+
+    return result
+}
+
+fun List<Item>.stackOwnItems(def: GameDefinitions): List<Item> {
+    if (isEmpty()) return emptyList()
+
+    val stacked = mutableListOf<Item>()
+
+    // Group all items that can stack
+    val grouped = mutableMapOf<String, MutableList<Item>>()
+    for (item in this) {
+        val key = "${item.type}|${item.level}|${item.quality}|${item.mod1}|${item.mod2}|${item.mod3}|${item.bind}"
+        grouped.getOrPut(key) { mutableListOf() }.add(item)
+    }
+
+    // For each group, merge and split according to maxStack
+    for ((_, group) in grouped) {
+        val base = group.first()
+        val totalQty = group.sumOf { it.qty.toLong() }.toUInt()
+
+        val maxStack = def.getMaxStackOfItem(base.type).toUInt()
+
+        if (maxStack <= 1u) {
+            // Non-stackable item, each instance remains unique
+            stacked.addAll(group)
+            continue
+        }
+
+        var remaining = totalQty
+        while (remaining > 0u) {
+            val stackQty = minOf(remaining, maxStack)
+            stacked.add(base.copy(id = UUID.new(), qty = stackQty, new = true))
+            remaining -= stackQty
+        }
+    }
+
+    return stacked
+}
+
+/**
+ * Check if two items can be stacked together
+ */
+fun Item.canStack(other: Item): Boolean {
+    return this.type == other.type &&
+            this.level == other.level &&
+            this.quality == other.quality &&
+            this.mod1 == other.mod1 &&
+            this.mod2 == other.mod2 &&
+            this.mod3 == other.mod3 &&
+            this.bind == other.bind
 }
