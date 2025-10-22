@@ -2,6 +2,7 @@ package socket.handler.save.mission
 
 import context.GlobalContext
 import context.requirePlayerContext
+import core.data.GameDefinitions
 import core.items.model.Item
 import core.items.model.combineItems
 import core.items.model.compactString
@@ -157,7 +158,10 @@ class MissionSaveHandler : SaveSubHandler {
                 // TO-DO move inventory update to MissionReturnTask execute()
                 // items and injuries are sent to player after mission return complete
                 svc.inventory.updateInventory { items ->
-                    items.combineItems(combinedLootedItems, GlobalContext.gameDefinitions)
+                    items.combineItems(
+                        combinedLootedItems.filter { !GlobalContext.gameDefinitions.isResourceItem(it.type) },
+                        GlobalContext.gameDefinitions
+                    )
                 }
 
                 svc.compound.updateResource { currentRes ->
