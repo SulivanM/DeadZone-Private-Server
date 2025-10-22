@@ -4,6 +4,7 @@ import context.GlobalContext
 import context.requirePlayerContext
 import core.items.ItemFactory
 import core.items.model.Item
+import core.items.model.combineItems
 import core.items.model.compactString
 import core.mission.LootService
 import core.mission.model.LootParameter
@@ -11,7 +12,6 @@ import core.model.game.data.GameResources
 import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
-import data.collection.combineItems
 import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import dev.deadzone.socket.handler.save.mission.response.MissionSpeedUpResponse
@@ -468,19 +468,6 @@ class MissionSaveHandler : SaveSubHandler {
         }
 
         return inventory to totalRes
-    }
-
-    /**
-     * Check if two items can be stacked together
-     */
-    private fun canStack(item1: Item, item2: Item): Boolean {
-        return item1.type == item2.type &&
-                item1.level == item2.level &&
-                item1.quality == item2.quality &&
-                item1.mod1 == item2.mod1 &&
-                item1.mod2 == item2.mod2 &&
-                item1.mod3 == item2.mod3 &&
-                item1.bind == item2.bind
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {

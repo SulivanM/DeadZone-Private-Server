@@ -1,14 +1,11 @@
 package data.collection
 
-import context.GlobalContext
 import core.data.AdminData
 import core.data.GameDefinitions
 import core.items.ItemFactory
 import core.items.model.Item
+import core.items.model.combineItems
 import kotlinx.serialization.Serializable
-import utils.UUID
-import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Inventory table
@@ -105,57 +102,4 @@ data class Inventory(
  */
 fun Inventory.combineItems(other: Inventory, gameDefinitions: GameDefinitions): Inventory {
     return this.copy(inventory = this.inventory.combineItems(other.inventory, gameDefinitions))
-}
-
-/**
- * Combine two list of items semantically (according to the game definition).
- *
- * It assumes that the [other] list of items are already semantically correct.
- */
-fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions): List<Item> {
-    val result = mutableListOf<Item>()
-    val alreadyCombined = mutableSetOf<String>()
-
-    for (item in other) {
-        val maxStack = gameDefinitions.getMaxStackOfItem(item.type)
-
-        // item already hit the max stack, add to result directly
-        if (item.qty >= maxStack.toUInt()) {
-            result.add(item)
-            continue
-        }
-
-        // find item of same type and quantity still lower than maximum
-        val existingItem = this.find { it.type == item.type && it.qty < maxStack.toUInt() }
-
-        if (existingItem != null) {
-            // both item's quantity are guaranteed to be lower than the max stack
-            // adding two of them should only produce 2 unit maximum
-            // (i.e., 99 + 99 = 198 (100, 98) if max stack = 100)
-            val totalQty = existingItem.qty + item.qty
-
-            // add first unit
-            result.add(item.copy(qty = min(totalQty, maxStack.toUInt())))
-
-            // add second unit if overflow
-            val overflowCounts = totalQty.toInt() - maxStack
-            if (overflowCounts > 0) {
-                // regenerate UUID as it is a new item
-                result.add(item.copy(id = UUID.new(), qty = overflowCounts.toUInt()))
-            }
-            alreadyCombined.add(existingItem.id)
-        } else {
-            // either no item is found or each of them are already at maximum amount
-            // add to result directly
-            result.add(item)
-        }
-    }
-
-    for (item in this) {
-        if (!alreadyCombined.contains(item.id)) {
-            result.add(item)
-        }
-    }
-
-    return result
 }

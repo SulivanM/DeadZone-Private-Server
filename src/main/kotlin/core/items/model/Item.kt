@@ -2,11 +2,13 @@
 
 package core.items.model
 
+import core.data.GameDefinitions
 import core.model.game.data.CraftingInfo
 import utils.UUID
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlin.math.min
 
 @Serializable
 data class Item(
@@ -42,4 +44,70 @@ fun Item.compactString(): String {
 
 fun Item.quantityString(): String {
     return "Item(type=${this.type}, qty=${this.qty})"
+}
+
+/**
+ * Combine two list of items semantically (according to the game definition).
+ *
+ * It assumes that the [other] list of items are already semantically correct.
+ */
+fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions): List<Item> {
+    val result = mutableListOf<Item>()
+    val alreadyCombined = mutableSetOf<String>()
+
+    for (item in other) {
+        val maxStack = gameDefinitions.getMaxStackOfItem(item.type)
+
+        // item already hit the max stack, add to result directly
+        if (item.qty >= maxStack.toUInt()) {
+            result.add(item)
+            continue
+        }
+
+        // find item of same type and quantity still lower than maximum
+        val existingItem = this.find { it.type == item.type && it.qty < maxStack.toUInt() }
+
+        if (existingItem != null) {
+            // both item's quantity are guaranteed to be lower than the max stack
+            // adding two of them should only produce 2 unit maximum
+            // (i.e., 99 + 99 = 198 (100, 98) if max stack = 100)
+            val totalQty = existingItem.qty + item.qty
+
+            // add first unit
+            result.add(item.copy(qty = min(totalQty, maxStack.toUInt())))
+
+            // add second unit if overflow
+            val overflowCounts = totalQty.toInt() - maxStack
+            if (overflowCounts > 0) {
+                // regenerate UUID as it is a new item
+                result.add(item.copy(id = UUID.new(), qty = overflowCounts.toUInt()))
+            }
+            alreadyCombined.add(existingItem.id)
+        } else {
+            // either no item is found or each of them are already at maximum amount
+            // add to result directly
+            result.add(item)
+        }
+    }
+
+    for (item in this) {
+        if (!alreadyCombined.contains(item.id)) {
+            result.add(item)
+        }
+    }
+
+    return result
+}
+
+/**
+ * Check if two items can be stacked together
+ */
+fun Item.canStack(other: Item): Boolean {
+    return this.type == other.type &&
+            this.level == other.level &&
+            this.quality == other.quality &&
+            this.mod1 == other.mod1 &&
+            this.mod2 == other.mod2 &&
+            this.mod3 == other.mod3 &&
+            this.bind == other.bind
 }
