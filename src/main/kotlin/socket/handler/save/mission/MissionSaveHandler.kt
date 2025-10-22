@@ -417,7 +417,6 @@ class MissionSaveHandler : SaveSubHandler {
 
     @Suppress("UNCHECKED_CAST")
     private fun summarizeLoots(data: Map<String, Any?>): Pair<List<Item>, Map<String, Int>> {
-        // "loot" must be a list of string which contains items ids
         val itemIdsOfLoots: List<String> =
             requireNotNull(data["loot"] as? List<String>) { "Error: 'loot' structure in data is not as expected, data: $data" }
         val items = mutableSetOf<Item>()
@@ -471,6 +470,19 @@ class MissionSaveHandler : SaveSubHandler {
         return inventory to totalRes
     }
 
+    /**
+     * Check if two items can be stacked together
+     */
+    private fun canStack(item1: Item, item2: Item): Boolean {
+        return item1.type == item2.type &&
+                item1.level == item2.level &&
+                item1.quality == item2.quality &&
+                item1.mod1 == item2.mod1 &&
+                item1.mod2 == item2.mod2 &&
+                item1.mod3 == item2.mod3 &&
+                item1.bind == item2.bind
+    }
+
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {
         var level = currentLevel
         var levelPts = 0
@@ -491,21 +503,15 @@ class MissionSaveHandler : SaveSubHandler {
     }
 
     private fun calculateXpForNextLevel(currentLevel: Int): Int {
-        // This formula creates a more gradual XP curve
         return (100 * (currentLevel.toDouble().pow(1.5))).toInt()
     }
 
     private fun calculateMissionXp(killData: Map<String, Int>): Int {
-        // Base XP for completing a mission
         var totalXp = 50
-
-        // XP for different types of kills
-        totalXp += (killData["zombie"] ?: 0) * 5  // 5 XP per normal zombie
-        totalXp += (killData["runner"] ?: 0) * 10 // 10 XP per runner
-        totalXp += (killData["fatty"] ?: 0) * 15  // 15 XP per fatty
-        totalXp += (killData["boss"] ?: 0) * 100  // 100 XP per boss
-
-        // Cap the maximum XP that can be earned in a single mission
+        totalXp += (killData["zombie"] ?: 0) * 5
+        totalXp += (killData["runner"] ?: 0) * 10
+        totalXp += (killData["fatty"] ?: 0) * 15
+        totalXp += (killData["boss"] ?: 0) * 100
         return totalXp.coerceAtMost(1000)
     }
 }
