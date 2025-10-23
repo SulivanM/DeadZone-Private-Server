@@ -18,7 +18,7 @@ import kotlin.time.toDuration
  * @property runningInstances Map of task IDs to currently running [TaskInstance]s.
  * @property stopIdProviders  Map of each [TaskCategory] to a function capable of deriving a task ID
  *                            from a `playerId`, [TaskCategory], and a generic [StopInput] type.
- *                            Every [ServerTask] implementation **must** call [registerStopId] (in Server.kt)
+ *                            Every [ServerTask] implementation **must** call [registerStopId] (in GameServer.kt)
  *                            to register how the dispatcher should compute a task ID for that category when stopping tasks.
  * @property stopInputFactories Map of each [TaskCategory] to a factory function that
  *                              creates a new instance of its corresponding `StopInput` type.
@@ -50,7 +50,7 @@ class ServerTaskDispatcher : TaskScheduler {
                 val msg = buildString {
                     appendLine("[registerStopId] Type mismatch when deriving stop ID:")
                     appendLine("- Category: $category")
-                    appendLine("- Most likely cause: duplicate registration in Server.kt for same category or wrong factory return type.")
+                    appendLine("- Most likely cause: duplicate registration in GameServer.kt for same category or wrong factory return type.")
                 }
 
                 throw IllegalStateException(msg, e)
@@ -68,7 +68,7 @@ class ServerTaskDispatcher : TaskScheduler {
         val stopInput = taskToRun.createStopInput().apply(taskToRun.stopInputBlock)
 
         val deriveStopId = stopIdProviders[taskToRun.category]
-            ?: error("stopIdProvider not registered for ${taskToRun.category.code} (register in Server.kt)")
+            ?: error("stopIdProvider not registered for ${taskToRun.category.code} (register in GameServer.kt)")
         val taskId = deriveStopId(connection.playerId, taskToRun.category, stopInput)
 
         val job = connection.scope.launch {
@@ -193,13 +193,13 @@ class ServerTaskDispatcher : TaskScheduler {
         stopInputBlock: StopInput.() -> Unit = {}
     ) {
         val factory = stopInputFactories[category]
-            ?: error("No stopInputFactory registered for $category (register in Server.kt)")
+            ?: error("No stopInputFactory registered for $category (register in GameServer.kt)")
 
         try {
             val stopInput = (factory() as StopInput).apply(stopInputBlock)
 
             val deriveId = stopIdProviders[category]
-                ?: error("No stopIdProvider registered for $category (register in Server.kt)")
+                ?: error("No stopIdProvider registered for $category (register in GameServer.kt)")
 
             val taskId = deriveId(connection.playerId, category, stopInput)
             val instance = runningInstances.remove(taskId)
@@ -220,7 +220,7 @@ class ServerTaskDispatcher : TaskScheduler {
             val msg = buildString {
                 appendLine("[stopTaskFor] Type mismatch when casting factory stop ID:")
                 appendLine("- Category: $category")
-                appendLine("- Most likely cause: mismatch between registered StopInput in Server.kt and generic type used in stopTaskFor()")
+                appendLine("- Most likely cause: mismatch between registered StopInput in GameServer.kt and generic type used in stopTaskFor()")
             }
 
             throw IllegalStateException(msg, e)

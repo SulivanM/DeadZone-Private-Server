@@ -15,7 +15,7 @@ import socket.core.Connection
  * The derived ID is used for referencing and cancelling tasks consistently across server components.
  * Typically it is derived from a combination of the player ID, [category], and [StopInput] instance (e.g., a `buildingId`).
  *
- * Example (register in Server.kt)
+ * Example (register in GameServer.kt)
  * ```
  * context.taskDispatcher.registerStopId(
  *     category = TaskCategory.TimeUpdate,

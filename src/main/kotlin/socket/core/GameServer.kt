@@ -32,7 +32,7 @@ const val POLICY_FILE_REQUEST = "<policy-file-request/>"
 const val POLICY_FILE_RESPONSE =
     "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"7777\"/></cross-domain-policy>\u0000"
 
-class Server(
+class GameServer(
     private val host: String = SERVER_HOST,
     private val port: Int = SOCKET_SERVER_PORT,
     private val context: ServerContext,

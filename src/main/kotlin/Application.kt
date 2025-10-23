@@ -6,7 +6,6 @@ import api.routes.broadcastRoutes
 import api.routes.caseInsensitiveStaticResources
 import api.routes.fileRoutes
 import broadcast.BroadcastService
-import broadcast.BroadcastTestController
 import context.GlobalContext
 import context.PlayerContextTracker
 import context.ServerConfig
@@ -37,7 +36,7 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.exposed.sql.Database
 import socket.core.OnlinePlayerRegistry
-import socket.core.Server
+import socket.core.GameServer
 import socket.handler.save.arena.ArenaSaveHandler
 import socket.handler.save.bounty.BountySaveHandler
 import socket.handler.save.chat.ChatSaveHandler
@@ -186,7 +185,7 @@ fun Application.module() {
         apiRoutes(serverContext)
         broadcastRoutes(serverContext)
     }
-    val server = Server(context = serverContext).also { it.start() }
+    val server = GameServer(context = serverContext).also { it.start() }
 
     // Initialize broadcast service
     BroadcastService.initialize(
