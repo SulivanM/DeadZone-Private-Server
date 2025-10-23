@@ -35,6 +35,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -195,18 +196,19 @@ fun Application.module() {
         broadcastRoutes(serverContext)
     }
 
+    lateinit var broadcastServer: BroadcastServer
+
     val servers = buildList {
         add(GameServer(GameServerConfig(host = "127.0.0.1", port = 7777)))
 
         if (config.broadcastEnabled) {
-            add(
-                BroadcastServer(
-                    BroadcastServerConfig(
-                        host = config.broadcastHost,
-                        ports = config.broadcastPorts
-                    )
-                ).also { BroadcastService.initialize(it) }
+            broadcastServer = BroadcastServer(
+                BroadcastServerConfig(
+                    host = config.broadcastHost,
+                    ports = config.broadcastPorts
+                )
             )
+            add(broadcastServer)
         }
 
         if (config.broadcastPolicyServerEnabled) {
@@ -222,14 +224,21 @@ fun Application.module() {
         }
     }
 
-    val server = MainServer(servers, serverContext).also { it.start() }
+    val server = MainServer(servers, serverContext)
+    runBlocking {
+        server.initializeAll()
+        server.startAll()
+    }
+    BroadcastService.initialize(broadcastServer)
 
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
     Logger.info("${Emoji.Internet} API server available at $SERVER_HOST:$API_SERVER_PORT")
 
     Runtime.getRuntime().addShutdownHook(Thread {
-        server.shutdown()
+        runBlocking {
+            server.shutdownAll()
+        }
         Logger.info("${Emoji.Red} Server shutdown complete")
     })
 }

@@ -13,22 +13,16 @@ class MainServer(private val servers: List<Server>, private val context: ServerC
     private val job = SupervisorJob()
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default + job)
 
-    init {
-        coroutineScope.launch {
-            servers.forEach { it.initialize(coroutineScope, context) }
-        }
+    suspend fun initializeAll() {
+        servers.forEach { it.initialize(coroutineScope, context) }
     }
 
-    fun start() {
-        coroutineScope.launch {
-            servers.forEach { it.start() }
-        }
+    suspend fun startAll() {
+        servers.forEach { it.start() }
     }
 
-    fun shutdown() {
-        coroutineScope.launch {
-            servers.forEach { it.shutdown() }
-            job.cancelAndJoin()
-        }
+    suspend fun shutdownAll() {
+        servers.forEach { it.shutdown() }
+        job.cancelAndJoin()
     }
 }
