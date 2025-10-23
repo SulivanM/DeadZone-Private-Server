@@ -21,6 +21,7 @@ import data.db.BigDBMariaImpl
 import dev.deadzone.socket.core.BroadcastServer
 import dev.deadzone.socket.core.BroadcastServerConfig
 import dev.deadzone.socket.core.MainServer
+import dev.deadzone.socket.core.Server
 import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -194,19 +195,34 @@ fun Application.module() {
         broadcastRoutes(serverContext)
     }
 
-    val server = MainServer(
-        servers = listOf(
-            GameServer(config = GameServerConfig(host = "127.0.0.1", port = 7777)),
-            BroadcastServer(config = BroadcastServerConfig(host = "0.0.0.0", ports = listOf(2121, 2122, 2123))),
-            PolicyFileServer(
-                config = PolicyFileServerConfig(
-                    host = "0.0.0.0",
-                    port = 843,
-                    allowedPorts = listOf(2121, 2122, 2123)
+    val servers = buildList {
+        add(GameServer(GameServerConfig(host = "127.0.0.1", port = 7777)))
+
+        if (config.broadcastEnabled) {
+            add(
+                BroadcastServer(
+                    BroadcastServerConfig(
+                        host = config.broadcastHost,
+                        ports = config.broadcastPorts
+                    )
+                ).also { BroadcastService.initialize(it) }
+            )
+        }
+
+        if (config.broadcastPolicyServerEnabled) {
+            add(
+                PolicyFileServer(
+                    PolicyFileServerConfig(
+                        host = "0.0.0.0",
+                        port = 843,
+                        allowedPorts = config.broadcastPorts
+                    )
                 )
             )
-        ), serverContext
-    ).also { it.start() }
+        }
+    }
+
+    val server = MainServer(servers, serverContext).also { it.start() }
 
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")

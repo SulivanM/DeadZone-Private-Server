@@ -1,42 +1,28 @@
 package broadcast
 
+import broadcast.BroadcastService.initialize
 import dev.deadzone.socket.core.BroadcastServer
-import utils.Logger
 
 /**
- * Service for managing broadcast messages to all connected clients.
+ * A singleton service that provides a simple API for broadcasting messages to all connected clients.
+ *
+ * This service offers one-line call to broadcast over [BroadcastServer].
+ * It must be initialized via [initialize] with an instance of [BroadcastServer] before use.
+ *
+ * Note that this service does **not** manage the server lifecycle — it should not start or shut down
+ * the server. Its sole responsibility is to hold a reference to the broadcast server and delegate
+ * broadcast operations.
  */
 @Suppress("unused")
-class BroadcastService(
-    private val server: BroadcastServer,
-    private val policyServer: PolicyFileServer,
-    private var enabled: Boolean
-) {
-    /**
-     * Initializes the broadcast service with the given configuration
-     */
-    suspend fun initialize(enabled: Boolean = true, enablePolicyServer: Boolean = true) {
-        if (!enabled) {
-            Logger.info("Broadcast service is disabled")
-            return
-        }
-
-        // Start policy file server (required for Flash)
-        if (enablePolicyServer) {
-            policyServer.start()
-        }
-
-        // Start broadcast server
-        server.start()
-    }
+object BroadcastService {
+    private lateinit var broadcastServer: BroadcastServer
+    private var enabled = true
 
     /**
-     * Shuts down the broadcast service
+     * Initialize the broadcast service
      */
-    suspend fun shutdown() {
-        server.shutdown()
-        policyServer.shutdown()
-        enabled = false
+    fun initialize(broadcastServer: BroadcastServer) {
+        this.broadcastServer = broadcastServer
     }
 
     /**
@@ -44,7 +30,7 @@ class BroadcastService(
      */
     suspend fun broadcast(message: BroadcastMessage) {
         if (!enabled) return
-        server.broadcast(message)
+        broadcastServer.broadcast(message)
     }
 
     /**
@@ -52,13 +38,13 @@ class BroadcastService(
      */
     suspend fun broadcast(message: String) {
         if (!enabled) return
-        server.broadcast(message)
+        broadcastServer.broadcast(message)
     }
 
     /**
      * Returns the number of connected clients
      */
-    fun getClientCount(): Int = server.getClientCount()
+    fun getClientCount(): Int = broadcastServer.getClientCount()
 
     /**
      * Checks if the broadcast service is enabled

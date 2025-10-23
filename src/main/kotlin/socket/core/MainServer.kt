@@ -4,10 +4,10 @@ import context.ServerContext
 import kotlinx.coroutines.*
 
 /**
- * The main server that composes all sub-servers.
+ * The main server that orchestrates all sub-servers.
  *
- * It provides a one-entry to initialize, start, and shut down all servers.
- * Acts as the root coroutine context shared by sub-servers and client connections.
+ * Provides a single entry point to initialize, start, and shut down all sub-servers.
+ * Serves as the root coroutine context, shared by sub-servers and client connections.
  */
 class MainServer(private val servers: List<Server>, private val context: ServerContext) {
     private val job = SupervisorJob()
