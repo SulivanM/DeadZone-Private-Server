@@ -6,7 +6,7 @@ ktor:
   deployment:
     port: 8080
 game:
-  enableAdmin: "$ADMIN:false"
+  enableAdmin: "$ADMIN:true"
 broadcast:
   enabled: true
   host: "0.0.0.0"
@@ -15,7 +15,7 @@ broadcast:
 maria:
   url: jdbc:mariadb://localhost:3306/prod_deadzone_game
   user: root
-  password: ""
+  password: "adm123"
 logger:
   level: 0
   colorful: true

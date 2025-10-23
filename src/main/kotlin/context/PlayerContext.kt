@@ -5,7 +5,7 @@ import core.items.InventoryService
 import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorService
 import data.collection.PlayerAccount
-import socket.core.Connection
+import server.core.Connection
 
 /**
  * A player-scoped data holder. This includes player's socket connection, metadata,

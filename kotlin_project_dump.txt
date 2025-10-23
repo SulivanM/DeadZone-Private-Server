@@ -38,24 +38,24 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.exposed.sql.Database
-import socket.core.OnlinePlayerRegistry
-import socket.core.Server
-import socket.handler.save.arena.ArenaSaveHandler
-import socket.handler.save.bounty.BountySaveHandler
-import socket.handler.save.chat.ChatSaveHandler
-import socket.handler.save.command.CommandSaveHandler
-import socket.handler.save.compound.building.BuildingSaveHandler
-import socket.handler.save.compound.misc.CmpMiscSaveHandler
-import socket.handler.save.compound.task.TaskSaveHandler
-import socket.handler.save.crate.CrateSaveHandler
-import socket.handler.save.item.ItemSaveHandler
-import socket.handler.save.misc.MiscSaveHandler
-import socket.handler.save.mission.MissionSaveHandler
-import socket.handler.save.purchase.PurchaseSaveHandler
-import socket.handler.save.quest.QuestSaveHandler
-import socket.handler.save.raid.RaidSaveHandler
-import socket.handler.save.survivor.SurvivorSaveHandler
-import socket.tasks.ServerTaskDispatcher
+import server.core.OnlinePlayerRegistry
+import server.core.Server
+import server.handler.save.arena.ArenaSaveHandler
+import server.handler.save.bounty.BountySaveHandler
+import server.handler.save.chat.ChatSaveHandler
+import server.handler.save.command.CommandSaveHandler
+import server.handler.save.compound.building.BuildingSaveHandler
+import server.handler.save.compound.misc.CmpMiscSaveHandler
+import server.handler.save.compound.task.TaskSaveHandler
+import server.handler.save.crate.CrateSaveHandler
+import server.handler.save.item.ItemSaveHandler
+import server.handler.save.misc.MiscSaveHandler
+import server.handler.save.mission.MissionSaveHandler
+import server.handler.save.purchase.PurchaseSaveHandler
+import server.handler.save.quest.QuestSaveHandler
+import server.handler.save.raid.RaidSaveHandler
+import server.handler.save.survivor.SurvivorSaveHandler
+import server.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepositoryMaria
 import user.auth.SessionManager
 import user.auth.WebsiteAuthProvider
@@ -1449,7 +1449,7 @@ import core.items.InventoryService
 import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorService
 import data.collection.PlayerAccount
-import socket.core.Connection
+import server.core.Connection
 
 /**
  * A player-scoped data holder. This includes player's socket connection, metadata,
@@ -1491,7 +1491,7 @@ import core.survivor.SurvivorService
 import data.db.BigDB
 import data.db.BigDBMariaImpl
 import io.ktor.util.date.*
-import socket.core.Connection
+import server.core.Connection
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerContextTracker {
@@ -1575,9 +1575,9 @@ class PlayerContextTracker {
 package context
 
 import data.db.BigDB
-import socket.core.OnlinePlayerRegistry
-import socket.handler.save.SaveSubHandler
-import socket.tasks.ServerTaskDispatcher
+import server.core.OnlinePlayerRegistry
+import server.handler.save.SaveSubHandler
+import server.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepository
 import user.auth.AuthProvider
 import user.auth.SessionManager
@@ -3404,7 +3404,7 @@ object ItemFactory {
 package core.items.model
 
 import kotlinx.serialization.Serializable
-import socket.handler.save.crate.response.gachaPoolExample
+import server.handler.save.crate.response.gachaPoolExample
 
 @Serializable
 data class CrateItem(
@@ -8648,7 +8648,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
 
 package socket.core
 
-import socket.protocol.PIOSerializer
+import server.protocol.PIOSerializer
 import utils.Logger
 import utils.UUID
 import io.ktor.network.sockets.Socket
@@ -8792,9 +8792,9 @@ import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
 import dev.deadzone.socket.messaging.HandlerContext
 import dev.deadzone.socket.tasks.impl.MissionReturnStopParameter
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageDispatcher
-import socket.protocol.PIODeserializer
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageDispatcher
+import server.protocol.PIODeserializer
 import utils.Logger
 import utils.UUID
 import io.ktor.network.selector.*
@@ -8802,16 +8802,16 @@ import io.ktor.network.sockets.*
 import io.ktor.util.date.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
-import socket.handler.AuthHandler
-import socket.handler.InitCompleteHandler
-import socket.handler.JoinHandler
-import socket.handler.QuestProgressHandler
-import socket.handler.RequestSurvivorCheckHandler
-import socket.handler.SaveHandler
-import socket.handler.ZombieAttackHandler
-import socket.tasks.TaskCategory
-import socket.tasks.impl.BuildingCreateStopParameter
-import socket.tasks.impl.BuildingRepairStopParameter
+import server.handler.AuthHandler
+import server.handler.InitCompleteHandler
+import server.handler.JoinHandler
+import server.handler.QuestProgressHandler
+import server.handler.RequestSurvivorCheckHandler
+import server.handler.SaveHandler
+import server.handler.ZombieAttackHandler
+import server.tasks.TaskCategory
+import server.tasks.impl.BuildingCreateStopParameter
+import server.tasks.impl.BuildingRepairStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -9021,8 +9021,8 @@ fun ByteArray.startsWithBytes(prefix: ByteArray): Boolean {
 package socket.handler
 
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -9049,9 +9049,9 @@ class AuthHandler() : SocketMessageHandler {
 package socket.handler
 
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
-import socket.protocol.PIOSerializer
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketError
 import utils.Logger
 
@@ -9078,10 +9078,10 @@ package socket.handler
 
 import context.ServerContext
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
-import socket.tasks.impl.TimeUpdateTask
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
+import server.tasks.impl.TimeUpdateTask
 
 /**
  * Handle `ic` message by:
@@ -9121,10 +9121,10 @@ package socket.handler
 import context.ServerContext
 import core.LoginStateBuilder
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
-import socket.protocol.PIOSerializer
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
+import server.protocol.PIOSerializer
 import utils.Logger
 import utils.Time
 import java.io.ByteArrayOutputStream
@@ -9282,10 +9282,10 @@ fun ByteArrayOutputStream.writeIntLE(value: Int) {
 package socket.handler
 
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
-import socket.protocol.PIOSerializer
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
+import server.protocol.PIOSerializer
 
 /**
  * Handle `qp` message by:
@@ -9323,10 +9323,10 @@ import context.ServerContext
 import context.requirePlayerContext
 import core.model.game.data.Survivor
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
-import socket.protocol.PIOSerializer
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
+import server.protocol.PIOSerializer
 import utils.Logger
 import utils.Time
 import kotlin.collections.random
@@ -9430,9 +9430,9 @@ package socket.handler
 import context.ServerContext
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
 import utils.LogConfigSocketError
 import utils.Logger
 import utils.Time
@@ -9496,10 +9496,10 @@ fun buildMsg(saveId: String?, vararg payloads: Any): List<Any> {
 package socket.handler
 
 import dev.deadzone.socket.messaging.HandlerContext
-import socket.protocol.PIOSerializer
-import socket.messaging.NetworkMessage
-import socket.messaging.SocketMessage
-import socket.messaging.SocketMessageHandler
+import server.protocol.PIOSerializer
+import server.messaging.NetworkMessage
+import server.messaging.SocketMessage
+import server.messaging.SocketMessageHandler
 
 class ZombieAttackHandler(): SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
@@ -9541,7 +9541,7 @@ open class BaseResponse {
 package dev.deadzone.socket.handler.save
 
 import context.ServerContext
-import socket.core.Connection
+import server.core.Connection
 
 /**
  * Encapsulate objects and data needed by save handlers to handle message.
@@ -9595,8 +9595,8 @@ interface SaveSubHandler {
 package socket.handler.save.arena
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -9649,8 +9649,8 @@ class ArenaSaveHandler : SaveSubHandler {
 package socket.handler.save.bounty
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -9691,8 +9691,8 @@ class BountySaveHandler : SaveSubHandler {
 package socket.handler.save.chat
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -9757,10 +9757,10 @@ import core.items.model.CrateItem
 import core.items.model.Item
 import core.items.model.SchematicItem
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.messaging.CommandMessage
-import socket.protocol.PIOSerializer
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.messaging.CommandMessage
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -9981,16 +9981,16 @@ import dev.deadzone.core.model.game.data.reduceByHalf
 import dev.deadzone.core.model.game.data.removeIfFinished
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.handler.save.compound.building.response.*
-import socket.messaging.SaveDataMethod
-import socket.protocol.PIOSerializer
-import socket.tasks.TaskCategory
-import socket.tasks.impl.BuildingCreateStopParameter
-import socket.tasks.impl.BuildingCreateTask
-import socket.tasks.impl.BuildingRepairStopParameter
-import socket.tasks.impl.BuildingRepairTask
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.handler.save.compound.building.response.*
+import server.messaging.SaveDataMethod
+import server.protocol.PIOSerializer
+import server.tasks.TaskCategory
+import server.tasks.impl.BuildingCreateStopParameter
+import server.tasks.impl.BuildingCreateTask
+import server.tasks.impl.BuildingRepairStopParameter
+import server.tasks.impl.BuildingRepairTask
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
@@ -10670,7 +10670,7 @@ data class BuildingCreateResponse(
 
 package socket.handler.save.compound.building.response
 
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10758,7 +10758,7 @@ data class BuildingSpeedUpResponse(
 package socket.handler.save.compound.building.response
 
 import dev.deadzone.core.model.game.data.TimerData
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10778,8 +10778,8 @@ data class BuildingUpgradeResponse(
 package socket.handler.save.compound.misc
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -10834,10 +10834,10 @@ package socket.handler.save.compound.task
 import context.GlobalContext
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import kotlinx.serialization.Serializable
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
-import socket.protocol.PIOSerializer
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -10951,11 +10951,11 @@ package socket.handler.save.crate
 import context.GlobalContext
 import core.items.ItemFactory
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.handler.save.crate.response.CrateUnlockResponse
-import socket.messaging.SaveDataMethod
-import socket.protocol.PIOSerializer
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.handler.save.crate.response.CrateUnlockResponse
+import server.messaging.SaveDataMethod
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -11041,8 +11041,8 @@ val gachaPoolExample = listOf(
 package socket.handler.save.item
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -11101,8 +11101,8 @@ package socket.handler.save.misc
 import context.requirePlayerContext
 import core.metadata.model.PlayerFlags_Constants
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 import kotlin.experimental.inv
@@ -11200,12 +11200,12 @@ import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import dev.deadzone.socket.handler.save.mission.response.MissionSpeedUpResponse
 import dev.deadzone.socket.tasks.impl.MissionReturnTask
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.handler.save.mission.response.*
-import socket.messaging.NetworkMessage
-import socket.messaging.SaveDataMethod
-import socket.protocol.PIOSerializer
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.handler.save.mission.response.*
+import server.messaging.NetworkMessage
+import server.messaging.SaveDataMethod
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 import kotlin.math.pow
@@ -11674,7 +11674,7 @@ class MissionSaveHandler : SaveSubHandler {
 
 package socket.handler.save.mission.response
 
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 /**
@@ -11782,7 +11782,7 @@ data class MissionSpeedUpResponse(
 
 package socket.handler.save.mission.response
 
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.InputStreamReader
@@ -12096,8 +12096,8 @@ val areaTypeToScenes = mapOf(
 package socket.handler.save.purchase
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -12154,8 +12154,8 @@ class PurchaseSaveHandler : SaveSubHandler {
 package socket.handler.save.quest
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -12204,8 +12204,8 @@ class QuestSaveHandler : SaveSubHandler {
 package socket.handler.save.raid
 
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.save.SaveSubHandler
-import socket.messaging.SaveDataMethod
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -12246,12 +12246,12 @@ import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import core.model.game.data.HumanAppearance
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import socket.handler.buildMsg
-import socket.handler.save.SaveSubHandler
-import socket.handler.save.survivor.response.PlayerCustomResponse
-import socket.handler.save.survivor.response.SurvivorEditResponse
-import socket.messaging.SaveDataMethod
-import socket.protocol.PIOSerializer
+import server.handler.buildMsg
+import server.handler.save.SaveSubHandler
+import server.handler.save.survivor.response.PlayerCustomResponse
+import server.handler.save.survivor.response.SurvivorEditResponse
+import server.messaging.SaveDataMethod
+import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -12418,7 +12418,7 @@ class SurvivorSaveHandler : SaveSubHandler {
 
 package socket.handler.save.survivor.response
 
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 /**
@@ -12447,7 +12447,7 @@ data class PlayerCustomResponse(
 
 package socket.handler.save.survivor.response
 
-import socket.handler.save.BaseResponse
+import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12538,8 +12538,8 @@ object CommandMessage {
 
 package dev.deadzone.socket.messaging
 
-import socket.core.Connection
-import socket.messaging.SocketMessage
+import server.core.Connection
+import server.messaging.SocketMessage
 
 /**
  * Encapsulate objects and data needed by handlers to handle message.
@@ -13108,7 +13108,7 @@ class SocketMessage(private val raw: List<Any>) {
 
 package socket.messaging
 
-import socket.handler.DefaultHandler
+import server.handler.DefaultHandler
 import utils.Logger
 
 /**
@@ -13482,7 +13482,7 @@ object PIOSerializer {
 
 package socket.tasks
 
-import socket.core.Connection
+import server.core.Connection
 
 /**
  * Represents a server-side task with a well-defined lifecycle.
@@ -13654,7 +13654,7 @@ package socket.tasks
 
 import io.ktor.util.date.*
 import kotlinx.coroutines.*
-import socket.core.Connection
+import server.core.Connection
 import utils.LogConfigSocketError
 import utils.LogSource
 import utils.Logger
@@ -14010,7 +14010,7 @@ data class TaskConfig(
 
 package socket.tasks
 
-import socket.core.Connection
+import server.core.Connection
 
 /**
  * Represents a component that handles timing, repetition, and lifecycle of a task as defined by [TaskConfig].
@@ -14055,9 +14055,9 @@ annotation class InternalTaskAPI
 
 package socket.tasks.impl
 
-import socket.core.Connection
-import socket.messaging.NetworkMessage
-import socket.tasks.*
+import server.core.Connection
+import server.messaging.NetworkMessage
+import server.tasks.*
 import kotlin.time.Duration
 
 /**
@@ -14152,13 +14152,13 @@ data class BuildingRepairStopParameter(
 
 package dev.deadzone.socket.tasks.impl
 
-import socket.core.Connection
-import socket.messaging.NetworkMessage
-import socket.tasks.InternalTaskAPI
-import socket.tasks.ServerTask
-import socket.tasks.TaskCategory
-import socket.tasks.TaskConfig
-import socket.tasks.TaskScheduler
+import server.core.Connection
+import server.messaging.NetworkMessage
+import server.tasks.InternalTaskAPI
+import server.tasks.ServerTask
+import server.tasks.TaskCategory
+import server.tasks.TaskConfig
+import server.tasks.TaskScheduler
 import kotlin.time.Duration
 
 /**
@@ -14210,9 +14210,9 @@ data class MissionReturnStopParameter(
 
 package socket.tasks.impl
 
-import socket.core.Connection
-import socket.messaging.NetworkMessage
-import socket.tasks.*
+import server.core.Connection
+import server.messaging.NetworkMessage
+import server.tasks.*
 import utils.Time
 import kotlin.time.Duration.Companion.seconds
 
@@ -15215,7 +15215,7 @@ object UUID {
 import core.data.GameDefinitions
 import core.mission.LootService
 import core.mission.model.LootParameter
-import socket.handler.save.mission.response.loadSceneXML
+import server.handler.save.mission.response.loadSceneXML
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

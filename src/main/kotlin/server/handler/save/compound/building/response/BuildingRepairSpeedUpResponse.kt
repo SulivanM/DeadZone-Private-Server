@@ -1,0 +1,10 @@
+package server.handler.save.compound.building.response
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class BuildingRepairSpeedUpResponse(
+    val error: String, // not enough fuel error: PlayerIOError.NotEnoughCoins.errorID
+    val success: Boolean = true,
+    val cost: Int,
+)
