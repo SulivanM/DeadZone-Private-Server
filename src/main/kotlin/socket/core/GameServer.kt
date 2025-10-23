@@ -33,10 +33,13 @@ const val POLICY_FILE_REQUEST = "<policy-file-request/>"
 const val POLICY_FILE_RESPONSE =
     "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"7777\"/></cross-domain-policy>\u0000"
 
-class GameServer() : Server {
+data class GameServerConfig(
+    val host: String = "127.0.0.1",
+    val port: Int = 7777
+)
+
+class GameServer(private val config: GameServerConfig) : Server {
     override val name: String = "GameServer"
-    private val host: String = SERVER_HOST
-    private val port: Int = SOCKET_SERVER_PORT
 
     private lateinit var gameServerScope: CoroutineScope
     private lateinit var serverContext: ServerContext
@@ -102,7 +105,7 @@ class GameServer() : Server {
         gameServerScope.launch {
             try {
                 val selectorManager = SelectorManager(Dispatchers.IO)
-                val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
+                val serverSocket = aSocket(selectorManager).tcp().bind(config.host, config.port)
 
                 while (isActive) {
                     val socket = serverSocket.accept()

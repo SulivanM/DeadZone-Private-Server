@@ -35,7 +35,7 @@ class BroadcastService(
      */
     suspend fun shutdown() {
         server.shutdown()
-        policyServer.stop()
+        policyServer.shutdown()
         enabled = false
     }
 

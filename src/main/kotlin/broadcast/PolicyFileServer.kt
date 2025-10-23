@@ -11,16 +11,19 @@ import utils.Logger
 
 val POLICY_FILE_REQUEST = "<policy-file-request/>".toByteArray()
 
+data class PolicyFileServerConfig(
+    val host: String = "0.0.0.0",
+    val port: Int = 843,
+    val allowedPorts: List<Int> = listOf(2121, 2122, 2123)
+)
+
 /**
  * Flash Player policy file server
  * Required for Flash to establish socket connections
  * Must run on port 843 (requires admin/root on Linux)
  */
-class PolicyFileServer : Server {
+class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
     override val name: String = "PolicyFileServer"
-    private val host: String = "0.0.0.0"
-    private val port: Int = 843
-    private val allowedPorts: List<Int> = listOf(2121, 2122, 2123)
 
     private lateinit var policyServerScope: CoroutineScope
 
@@ -46,14 +49,14 @@ class PolicyFileServer : Server {
         policyServerScope.launch {
             try {
                 val selectorManager = SelectorManager(Dispatchers.IO)
-                val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
+                val serverSocket = aSocket(selectorManager).tcp().bind(config.host, config.port)
 
                 while (isActive) {
                     val socket = serverSocket.accept()
                     handleClient(socket)
                 }
             } catch (e: Exception) {
-                Logger.error { "ERROR in policy file server on port $port: ${e.message}" }
+                Logger.error { "ERROR in policy file server on port ${config.port}: ${e.message}" }
                 Logger.warn { "Note: Port 843 requires administrator/root privileges on most systems" }
                 shutdown()
             }
@@ -92,7 +95,7 @@ class PolicyFileServer : Server {
 
     // Policy file response
     private fun generatePolicyFile(): String {
-        val portsString = allowedPorts.joinToString(",")
+        val portsString = config.allowedPorts.joinToString(",")
         return """<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
 <cross-domain-policy>

@@ -11,10 +11,13 @@ import utils.Logger
 import java.io.IOException
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class BroadcastServer : Server {
+data class BroadcastServerConfig(
+    val host: String = "0.0.0.0",
+    val ports: List<Int> = listOf(2121, 2122, 2123),
+)
+
+class BroadcastServer(private val config: BroadcastServerConfig) : Server {
     override val name: String = "BroadcastServer"
-    private val host: String = "0.0.0.0"
-    private val ports: List<Int> = listOf(2121, 2122, 2123)
 
     private lateinit var broadcastServerScope: CoroutineScope
 
@@ -46,13 +49,13 @@ class BroadcastServer : Server {
         }
         running = true
 
-        ports.forEach { port ->
+        config.ports.forEach { port ->
             val job = broadcastServerScope.launch(Dispatchers.IO + SupervisorJob()) {
                 try {
-                    val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
+                    val serverSocket = aSocket(selectorManager).tcp().bind(config.host, port)
                     serverSockets.add(serverSocket)
 
-                    Logger.info("${Emoji.Satellite} Broadcast listening on $host:$port")
+                    Logger.info("${Emoji.Satellite} Broadcast listening on ${config.host}:$port")
 
                     while (isActive) {
                         val socket = serverSocket.accept()

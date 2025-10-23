@@ -6,6 +6,8 @@ import api.routes.broadcastRoutes
 import api.routes.caseInsensitiveStaticResources
 import api.routes.fileRoutes
 import broadcast.BroadcastService
+import broadcast.PolicyFileServer
+import broadcast.PolicyFileServerConfig
 import context.GlobalContext
 import context.PlayerContextTracker
 import context.ServerConfig
@@ -16,6 +18,8 @@ import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
+import dev.deadzone.socket.core.BroadcastServer
+import dev.deadzone.socket.core.BroadcastServerConfig
 import dev.deadzone.socket.core.MainServer
 import utils.Emoji
 import io.ktor.http.*
@@ -38,6 +42,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.exposed.sql.Database
 import socket.core.OnlinePlayerRegistry
 import socket.core.GameServer
+import socket.core.GameServerConfig
 import socket.handler.save.arena.ArenaSaveHandler
 import socket.handler.save.bounty.BountySaveHandler
 import socket.handler.save.chat.ChatSaveHandler
@@ -120,9 +125,11 @@ fun Application.module() {
         broadcastEnabled = environment.config.propertyOrNull("broadcast.enabled")?.getString()?.toBooleanStrictOrNull()
             ?: true,
         broadcastHost = environment.config.propertyOrNull("broadcast.host")?.getString() ?: "0.0.0.0",
-        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() }
+        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")
+            ?.mapNotNull { it.trim().toIntOrNull() }
             ?: listOf(2121, 2122, 2123),
-        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()?.toBooleanStrictOrNull()
+        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()
+            ?.toBooleanStrictOrNull()
             ?: true,
     )
     Logger.info("${Emoji.Database} Connecting to MariaDB...")
@@ -187,15 +194,19 @@ fun Application.module() {
         broadcastRoutes(serverContext)
     }
 
-    val server = MainServer(servers = listOf(GameServer()), serverContext)
-
-    // Initialize broadcast service
-    BroadcastService.initialize(
-        host = config.broadcastHost,
-        ports = config.broadcastPorts,
-        enabled = config.broadcastEnabled,
-        enablePolicyServer = config.broadcastPolicyServerEnabled
-    )
+    val server = MainServer(
+        servers = listOf(
+            GameServer(config = GameServerConfig(host = "127.0.0.1", port = 7777)),
+            BroadcastServer(config = BroadcastServerConfig(host = "0.0.0.0", ports = listOf(2121, 2122, 2123))),
+            PolicyFileServer(
+                config = PolicyFileServerConfig(
+                    host = "0.0.0.0",
+                    port = 843,
+                    allowedPorts = listOf(2121, 2122, 2123)
+                )
+            )
+        ), serverContext
+    ).also { it.start() }
 
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
@@ -203,7 +214,6 @@ fun Application.module() {
 
     Runtime.getRuntime().addShutdownHook(Thread {
         server.shutdown()
-        BroadcastService.shutdown()
         Logger.info("${Emoji.Red} Server shutdown complete")
     })
 }
