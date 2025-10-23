@@ -1,32 +1,94 @@
 package broadcast
 
+import context.ServerContext
+import dev.deadzone.socket.core.Server
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.*
+import kotlinx.coroutines.*
+import socket.core.startsWithBytes
 import utils.Logger
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
-import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
-import kotlin.concurrent.thread
+
+val POLICY_FILE_REQUEST = "<policy-file-request/>".toByteArray()
 
 /**
  * Flash Player policy file server
  * Required for Flash to establish socket connections
  * Must run on port 843 (requires admin/root on Linux)
  */
-class PolicyFileServer(
-    private val host: String = "0.0.0.0",
-    private val port: Int = 843,
+class PolicyFileServer : Server {
+    override val name: String = "PolicyFileServer"
+    private val host: String = "0.0.0.0"
+    private val port: Int = 843
     private val allowedPorts: List<Int> = listOf(2121, 2122, 2123)
-) {
-    private var serverChannel: ServerSocketChannel? = null
-    private var selector: Selector? = null
-    private var running = false
-    private var serverThread: Thread? = null
 
-    // Policy file request from Flash
-    private val POLICY_REQUEST = "<policy-file-request/>\u0000"
+    private lateinit var policyServerScope: CoroutineScope
+
+    private val selectorManager = SelectorManager(Dispatchers.IO)
+
+    private var running = false
+    override fun isRunning(): Boolean = running
+
+    override suspend fun initialize(scope: CoroutineScope, context: ServerContext) {
+        this.policyServerScope = CoroutineScope(scope.coroutineContext + SupervisorJob() + Dispatchers.IO)
+    }
+
+    /**
+     * Starts the policy file server
+     */
+    override suspend fun start() {
+        if (running) {
+            Logger.warn("Policy file server already running")
+            return
+        }
+        running = true
+
+        policyServerScope.launch {
+            try {
+                val selectorManager = SelectorManager(Dispatchers.IO)
+                val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
+
+                while (isActive) {
+                    val socket = serverSocket.accept()
+                    handleClient(socket)
+                }
+            } catch (e: Exception) {
+                Logger.error { "ERROR in policy file server on port $port: ${e.message}" }
+                Logger.warn { "Note: Port 843 requires administrator/root privileges on most systems" }
+                shutdown()
+            }
+        }
+    }
+
+    fun handleClient(socket: Socket) {
+        policyServerScope.launch(Dispatchers.IO + SupervisorJob()) {
+            val input = socket.openReadChannel()
+            val output = socket.openWriteChannel(autoFlush = true)
+
+            try {
+                val buffer = ByteArray(4096)
+
+                while (isActive) {
+                    val bytesRead = input.readAvailable(buffer, 0, buffer.size)
+                    if (bytesRead <= 0) break
+
+                    // Check if it's policy file request
+                    val request = buffer.copyOfRange(0, bytesRead)
+                    if (request.startsWithBytes(POLICY_FILE_REQUEST)) {
+                        val policyFile = generatePolicyFile().toByteArray(Charsets.UTF_8)
+                        output.writeFully(policyFile)
+                    }
+
+                    // Break, then close connection after sending response
+                    break
+                }
+            } catch (e: Exception) {
+                Logger.error("Error in policy file server during handling a client: ${e.message}")
+            } finally {
+                socket.close()
+            }
+        }
+    }
 
     // Policy file response
     private fun generatePolicyFile(): String {
@@ -39,130 +101,8 @@ class PolicyFileServer(
 """
     }
 
-    /**
-     * Starts the policy file server
-     */
-    fun start() {
-        if (running) {
-            Logger.warn("Policy file server already running")
-            return
-        }
-
-        try {
-            running = true
-            selector = Selector.open()
-
-            serverChannel = ServerSocketChannel.open()
-            serverChannel?.configureBlocking(false)
-            serverChannel?.bind(InetSocketAddress(host, port))
-            serverChannel?.register(selector, SelectionKey.OP_ACCEPT)
-
-            serverThread = thread(name = "PolicyFileServer") {
-                runServerLoop()
-            }
-        } catch (e: IOException) {
-            Logger.error("Failed to start policy file server on port $port: ${e.message}")
-            Logger.warn("Note: Port 843 requires administrator/root privileges on most systems")
-            running = false
-        }
-    }
-
-    /**
-     * Stops the policy file server
-     */
-    fun stop() {
-        if (!running) return
-
-        running = false
-        Logger.info("Stopping policy file server...")
-
-        serverChannel?.close()
-        serverChannel = null
-
-        selector?.close()
-        selector = null
-
-        serverThread?.interrupt()
-        serverThread = null
-
-    }
-
-    /**
-     * Main server loop
-     */
-    private fun runServerLoop() {
-        while (running) {
-            try {
-                val readyCount = selector?.select(1000) ?: 0
-                if (readyCount == 0) continue
-
-                val selectedKeys = selector?.selectedKeys() ?: continue
-                val iterator = selectedKeys.iterator()
-
-                while (iterator.hasNext()) {
-                    val key = iterator.next()
-                    iterator.remove()
-
-                    when {
-                        !key.isValid -> continue
-                        key.isAcceptable -> handleAccept(key)
-                        key.isReadable -> handleRead(key)
-                    }
-                }
-            } catch (e: Exception) {
-                if (running) {
-                    Logger.error("Error in policy file server loop: ${e.message}")
-                }
-            }
-        }
-    }
-
-    /**
-     * Handles new client connections
-     */
-    private fun handleAccept(key: SelectionKey) {
-        val serverChannel = key.channel() as ServerSocketChannel
-        try {
-            val clientChannel = serverChannel.accept()
-            clientChannel.configureBlocking(false)
-            clientChannel.register(selector, SelectionKey.OP_READ)
-        } catch (e: IOException) {
-            Logger.error("Failed to accept policy file request: ${e.message}")
-        }
-    }
-
-    /**
-     * Handles policy file requests
-     */
-    private fun handleRead(key: SelectionKey) {
-        val clientChannel = key.channel() as SocketChannel
-        val buffer = ByteBuffer.allocate(256)
-
-        try {
-            val bytesRead = clientChannel.read(buffer)
-
-            if (bytesRead == -1) {
-                clientChannel.close()
-                return
-            }
-
-            buffer.flip()
-            val request = String(buffer.array(), 0, buffer.limit(), Charsets.UTF_8)
-
-            // Check if it's a policy file request
-            if (request.startsWith("<policy-file-request/>")) {
-                val policyFile = generatePolicyFile()
-                val response = ByteBuffer.wrap(policyFile.toByteArray(Charsets.UTF_8))
-                clientChannel.write(response)
-            }
-
-            // Close connection after sending response
-            clientChannel.close()
-        } catch (e: IOException) {
-            try {
-                clientChannel.close()
-            } catch (ignored: IOException) {
-            }
-        }
+    override suspend fun shutdown() {
+        selectorManager.close()
+        Logger.info("Policy file server stopped")
     }
 }
