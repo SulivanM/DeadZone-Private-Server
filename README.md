@@ -65,7 +65,7 @@ logger:
   colorful: true
 ```
 
-### Development Flag
+### Development & Admin Flag
 
 By default, the development mode is always on. You can turn it off by setting an environment flag.
 
@@ -73,8 +73,11 @@ For example, in Powershell (to set variables temporarily before running the serv
 
 ```bash
 $env:DEV_MODE = "false"
+$env:ADMIN = "true"
 java -jar zpr-server.jar
 ```
+
+The similar can be done to enable the admin account: `givemeadmin`.
 
 ## Documentation
 
