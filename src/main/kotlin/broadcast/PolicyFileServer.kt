@@ -105,6 +105,7 @@ class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
     }
 
     override suspend fun shutdown() {
+        policyServerScope.cancel()
         selectorManager.close()
         Logger.info("Policy file server stopped")
     }

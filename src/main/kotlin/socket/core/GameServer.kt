@@ -239,6 +239,7 @@ class GameServer(private val config: GameServerConfig) : Server {
         serverContext.sessionManager.shutdown()
         serverContext.taskDispatcher.shutdown()
         socketDispatcher.shutdown()
+        gameServerScope.cancel()
     }
 }
 
