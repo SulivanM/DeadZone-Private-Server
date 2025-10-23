@@ -90,16 +90,21 @@ class GameServer() : Server {
                 }
             )
         }
-        running = true
     }
 
     override suspend fun start() {
+        if (running) {
+            Logger.warn("Game server is already running")
+            return
+        }
+        running = true
+
         gameServerScope.launch {
             try {
                 val selectorManager = SelectorManager(Dispatchers.IO)
                 val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
 
-                while (true) {
+                while (isActive) {
                     val socket = serverSocket.accept()
 
                     val connection = Connection(
@@ -126,7 +131,7 @@ class GameServer() : Server {
             try {
                 val buffer = ByteArray(4096)
 
-                while (true) {
+                while (isActive) {
                     val bytesRead = input.readAvailable(buffer, 0, buffer.size)
                     if (bytesRead <= 0) break
 
