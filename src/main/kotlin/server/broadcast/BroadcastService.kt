@@ -2,6 +2,7 @@ package server.broadcast
 
 import server.broadcast.BroadcastService.initialize
 import dev.deadzone.socket.core.BroadcastServer
+import utils.Logger
 
 /**
  * A singleton service that provides a simple API for broadcasting messages to all connected clients.
@@ -29,7 +30,9 @@ object BroadcastService {
      * Broadcasts a message to all connected clients
      */
     suspend fun broadcast(message: BroadcastMessage) {
-        if (!enabled) return
+        if (!enabled) {
+            Logger.warn { "Broadcast is not enabled" }
+        }
         broadcastServer.broadcast(message)
     }
 
@@ -37,7 +40,9 @@ object BroadcastService {
      * Broadcasts a raw message string to all connected clients
      */
     suspend fun broadcast(message: String) {
-        if (!enabled) return
+        if (!enabled) {
+            Logger.warn { "Broadcast is not enabled" }
+        }
         broadcastServer.broadcast(message)
     }
 

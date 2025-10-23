@@ -18,7 +18,6 @@ object BroadcastTestController {
      * Starts sending test broadcast messages periodically
      */
     fun startTestBroadcasts(scope: CoroutineScope) {
-
         scope.launch(SupervisorJob() + Dispatchers.IO) {
             delay(5000) // Wait 5 seconds after server start
 
