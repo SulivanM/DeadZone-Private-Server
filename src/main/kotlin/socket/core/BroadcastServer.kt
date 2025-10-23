@@ -9,11 +9,21 @@ import kotlinx.coroutines.*
 import utils.Emoji
 import utils.Logger
 import java.io.IOException
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 data class BroadcastServerConfig(
     val host: String = "0.0.0.0",
     val ports: List<Int> = listOf(2121, 2122, 2123),
+)
+
+data class BroadcastClient(
+    val clientId: UUID,
+    val remoteAddress: String,
+    // coroutine reference, must cancel when client disconnects
+    val job: Job,
+    // write reference, used to send broadcast message
+    val output: ByteWriteChannel
 )
 
 class BroadcastServer(private val config: BroadcastServerConfig) : Server {
@@ -22,18 +32,22 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
     private lateinit var broadcastServerScope: CoroutineScope
 
     private val selectorManager = SelectorManager(Dispatchers.IO)
+
+    // reference to all server's socket for each pots
     private val serverSockets = mutableListOf<ServerSocket>()
+
+    // reference to all server's coroutine for each ports
     private val serverJobs = mutableListOf<Job>()
+
+    private val clients = ConcurrentHashMap<UUID, BroadcastClient>()
 
     private var running = false
     override fun isRunning(): Boolean = running
 
-    private val clientChannels = ConcurrentLinkedQueue<ByteWriteChannel>()
-
     /**
      * Returns the number of connected clients
      */
-    fun getClientCount(): Int = clientChannels.size
+    fun getClientCount(): Int = clients.size
 
     override suspend fun initialize(scope: CoroutineScope, context: ServerContext) {
         broadcastServerScope = CoroutineScope(scope.coroutineContext + SupervisorJob() + Dispatchers.IO)
@@ -50,6 +64,7 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
         running = true
 
         config.ports.forEach { port ->
+            // launch coroutine for each port
             val job = broadcastServerScope.launch(Dispatchers.IO + SupervisorJob()) {
                 try {
                     val serverSocket = aSocket(selectorManager).tcp().bind(config.host, port)
@@ -71,12 +86,11 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
 
     private fun handleClient(socket: Socket) {
         val address = socket.remoteAddress
+        val clientId = UUID.randomUUID()
         Logger.info("New broadcast connection from $address")
 
-        broadcastServerScope.launch(Dispatchers.IO + SupervisorJob()) {
+        val job = broadcastServerScope.launch(Dispatchers.IO + SupervisorJob()) {
             val input = socket.openReadChannel()
-            val output = socket.openWriteChannel(autoFlush = true)
-            clientChannels.add(output)
 
             try {
                 val buffer = ByteArray(1024)
@@ -89,18 +103,24 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
             } catch (e: Exception) {
                 Logger.warn("Broadcast socket error for $address: ${e.message}")
             } finally {
-                removeClient(output)
+                removeClient(clientId)
                 socket.close()
                 Logger.info("Closed broadcast connection $address")
             }
         }
+        clients[clientId] = BroadcastClient(
+            clientId = clientId,
+            remoteAddress = address.toString(),
+            job = job,
+            output = socket.openWriteChannel(autoFlush = true)
+        )
     }
 
-    private fun removeClient(channel: ByteWriteChannel) {
-        if (clientChannels.remove(channel)) {
-            Logger.info("${Emoji.Phone} Client disconnected from broadcast (${clientChannels.size} total)")
+    private fun removeClient(clientId: UUID) {
+        if (clients.remove(clientId) != null) {
+            Logger.info("${Emoji.Phone} Client disconnected from broadcast (${clients.size} total)")
         } else {
-            Logger.warn("${Emoji.Phone} Requested to remove client, but it wasn't in the collection (${clientChannels.size} total)")
+            Logger.warn("${Emoji.Phone} Requested to remove client, but it wasn't in the collection (${clients.size} total)")
         }
     }
 
@@ -116,19 +136,19 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
      * Broadcasts a raw string message to all connected clients
      */
     suspend fun broadcast(message: String) {
-        if (clientChannels.isEmpty()) {
+        if (clients.isEmpty()) {
             return
         }
 
         val bytesData = message.toByteArray(Charsets.UTF_8)
-        val disconnectedClients = mutableListOf<ByteWriteChannel>()
+        val disconnectedClients = mutableListOf<UUID>()
 
-        clientChannels.forEach { client ->
+        clients.values.forEach { client ->
             try {
-                client.writeFully(bytesData)
+                client.output.writeFully(bytesData)
             } catch (e: IOException) {
                 Logger.warn("Failed to send broadcast to client: ${e.message}")
-                disconnectedClients.add(client)
+                disconnectedClients.add(client.clientId)
             }
         }
 
@@ -140,9 +160,14 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
 
     override suspend fun shutdown() {
         running = false
-        clientChannels.clear()
+        clients.clear()
+        clients.forEach { (_, u) ->
+            u.output.flushAndClose()
+            u.job.cancelAndJoin()
+        }
         serverSockets.forEach { it.close() }
         serverJobs.forEach { it.cancelAndJoin() }
+        broadcastServerScope.cancel()
         selectorManager.close()
         Logger.info("${Emoji.Satellite} Broadcast server stopped.")
     }
