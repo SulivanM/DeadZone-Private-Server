@@ -19,7 +19,7 @@ class Connection(
     var playerId: String = "[Undetermined]",
     val connectionId: String = UUID.new(),
     val socket: Socket,
-    val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    val scope: CoroutineScope,
     private val output: ByteWriteChannel,
 ) {
     private var lastActivity = System.currentTimeMillis()

@@ -16,6 +16,7 @@ import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
+import dev.deadzone.socket.core.MainServer
 import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -185,7 +186,8 @@ fun Application.module() {
         apiRoutes(serverContext)
         broadcastRoutes(serverContext)
     }
-    val server = GameServer(context = serverContext).also { it.start() }
+
+    val server = MainServer(servers = listOf(GameServer()), serverContext)
 
     // Initialize broadcast service
     BroadcastService.initialize(

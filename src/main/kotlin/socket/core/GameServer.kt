@@ -3,6 +3,7 @@ package socket.core
 import dev.deadzone.SERVER_HOST
 import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
+import dev.deadzone.socket.core.Server
 import dev.deadzone.socket.messaging.HandlerContext
 import dev.deadzone.socket.tasks.impl.MissionReturnStopParameter
 import socket.messaging.SocketMessage
@@ -32,15 +33,22 @@ const val POLICY_FILE_REQUEST = "<policy-file-request/>"
 const val POLICY_FILE_RESPONSE =
     "<cross-domain-policy><allow-access-from domain=\"*\" to-ports=\"7777\"/></cross-domain-policy>\u0000"
 
-class GameServer(
-    private val host: String = SERVER_HOST,
-    private val port: Int = SOCKET_SERVER_PORT,
-    private val context: ServerContext,
-    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-) {
+class GameServer() : Server {
+    override val name: String = "GameServer"
+    private val host: String = SERVER_HOST
+    private val port: Int = SOCKET_SERVER_PORT
+
+    private lateinit var gameServerScope: CoroutineScope
+    private lateinit var serverContext: ServerContext
     private val socketDispatcher = SocketMessageDispatcher()
 
-    init {
+    private var running = false
+    override fun isRunning(): Boolean = running
+
+    override suspend fun initialize(scope: CoroutineScope, context: ServerContext) {
+        this.gameServerScope = CoroutineScope(scope.coroutineContext + SupervisorJob() + Dispatchers.IO)
+        this.serverContext = context
+
         with(context) {
             socketDispatcher.register(JoinHandler(this))
             socketDispatcher.register(AuthHandler())
@@ -49,7 +57,7 @@ class GameServer(
             socketDispatcher.register(SaveHandler(this))
             socketDispatcher.register(ZombieAttackHandler())
             socketDispatcher.register(RequestSurvivorCheckHandler(this))
-            context.taskDispatcher.registerStopId<Unit>(
+            context.taskDispatcher.registerStopId(
                 category = TaskCategory.TimeUpdate,
                 stopInputFactory = {},
                 deriveId = { playerId, category, _ ->
@@ -57,7 +65,7 @@ class GameServer(
                     "${category.code}-$playerId"
                 }
             )
-            context.taskDispatcher.registerStopId<BuildingCreateStopParameter>(
+            context.taskDispatcher.registerStopId(
                 category = TaskCategory.Building.Create,
                 stopInputFactory = { BuildingCreateStopParameter() },
                 deriveId = { playerId, category, stopInput ->
@@ -65,7 +73,7 @@ class GameServer(
                     "${category.code}-${stopInput.buildingId}-$playerId"
                 }
             )
-            context.taskDispatcher.registerStopId<BuildingRepairStopParameter>(
+            context.taskDispatcher.registerStopId(
                 category = TaskCategory.Building.Repair,
                 stopInputFactory = { BuildingRepairStopParameter() },
                 deriveId = { playerId, category, stopInput ->
@@ -73,7 +81,7 @@ class GameServer(
                     "${category.code}-${stopInput.buildingId}-$playerId"
                 }
             )
-            context.taskDispatcher.registerStopId<MissionReturnStopParameter>(
+            context.taskDispatcher.registerStopId(
                 category = TaskCategory.Mission.Return,
                 stopInputFactory = { MissionReturnStopParameter() },
                 deriveId = { playerId, category, stopInput ->
@@ -82,10 +90,11 @@ class GameServer(
                 }
             )
         }
+        running = true
     }
 
-    fun start() {
-        coroutineScope.launch {
+    override suspend fun start() {
+        gameServerScope.launch {
             try {
                 val selectorManager = SelectorManager(Dispatchers.IO)
                 val serverSocket = aSocket(selectorManager).tcp().bind(host, port)
@@ -96,6 +105,7 @@ class GameServer(
                     val connection = Connection(
                         connectionId = UUID.new(),
                         socket = socket,
+                        scope = CoroutineScope(gameServerScope.coroutineContext + SupervisorJob() + Dispatchers.Default),
                         output = socket.openWriteChannel(autoFlush = true),
                     )
                     Logger.info { "New client: ${connection.socket.remoteAddress}" }
@@ -109,7 +119,7 @@ class GameServer(
     }
 
     private fun handleClient(connection: Connection) {
-        coroutineScope.launch {
+        connection.scope.launch {
             val socket = connection.socket
             val input = socket.openReadChannel()
 
@@ -207,10 +217,10 @@ class GameServer(
 
                 // Only perform cleanup if playerId is set (client was authenticated)
                 if (connection.playerId != "[Undetermined]") {
-                    context.onlinePlayerRegistry.markOffline(connection.playerId)
-                    context.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
-                    context.playerContextTracker.removePlayer(connection.playerId)
-                    context.taskDispatcher.stopAllTasksForPlayer(connection.playerId)
+                    serverContext.onlinePlayerRegistry.markOffline(connection.playerId)
+                    serverContext.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())
+                    serverContext.playerContextTracker.removePlayer(connection.playerId)
+                    serverContext.taskDispatcher.stopAllTasksForPlayer(connection.playerId)
                 }
 
                 connection.shutdown()
@@ -218,11 +228,12 @@ class GameServer(
         }
     }
 
-    fun shutdown() {
-        context.playerContextTracker.shutdown()
-        context.onlinePlayerRegistry.shutdown()
-        context.sessionManager.shutdown()
-        context.taskDispatcher.shutdown()
+    override suspend fun shutdown() {
+        running = false
+        serverContext.playerContextTracker.shutdown()
+        serverContext.onlinePlayerRegistry.shutdown()
+        serverContext.sessionManager.shutdown()
+        serverContext.taskDispatcher.shutdown()
         socketDispatcher.shutdown()
     }
 }
