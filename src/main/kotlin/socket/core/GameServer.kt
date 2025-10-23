@@ -1,7 +1,5 @@
 package socket.core
 
-import dev.deadzone.SERVER_HOST
-import dev.deadzone.SOCKET_SERVER_PORT
 import context.ServerContext
 import dev.deadzone.socket.core.Server
 import dev.deadzone.socket.messaging.HandlerContext
@@ -112,11 +110,12 @@ class GameServer(private val config: GameServerConfig) : Server {
 
                     val connection = Connection(
                         connectionId = UUID.new(),
-                        socket = socket,
-                        scope = CoroutineScope(gameServerScope.coroutineContext + SupervisorJob() + Dispatchers.Default),
+                        remoteAddress = socket.remoteAddress.toString(),
+                        connectionScope = CoroutineScope(gameServerScope.coroutineContext + SupervisorJob() + Dispatchers.Default),
+                        input = socket.openReadChannel(),
                         output = socket.openWriteChannel(autoFlush = true),
                     )
-                    Logger.info { "New client: ${connection.socket.remoteAddress}" }
+                    Logger.info { "New client: ${connection.remoteAddress}" }
                     handleClient(connection)
                 }
             } catch (e: Exception) {
@@ -127,15 +126,12 @@ class GameServer(private val config: GameServerConfig) : Server {
     }
 
     private fun handleClient(connection: Connection) {
-        connection.scope.launch {
-            val socket = connection.socket
-            val input = socket.openReadChannel()
-
+        connection.connectionScope.launch {
             try {
                 val buffer = ByteArray(4096)
 
                 while (isActive) {
-                    val bytesRead = input.readAvailable(buffer, 0, buffer.size)
+                    val bytesRead = connection.input.readAvailable(buffer, 0, buffer.size)
                     if (bytesRead <= 0) break
 
                     var msgType = "[Undetermined]"
@@ -200,28 +196,28 @@ class GameServer(private val config: GameServerConfig) : Server {
                 }
             } catch (_: ClosedByteChannelException) {
                 // Handle connection reset gracefully - this is expected when clients disconnect abruptly
-                Logger.info { "Client ${connection.socket.remoteAddress} disconnected abruptly (connection reset)" }
+                Logger.info { "Client ${connection.remoteAddress} disconnected abruptly (connection reset)" }
             } catch (e: SocketException) {
                 // Handle other socket-related exceptions gracefully
                 when {
                     e.message?.contains("Connection reset") == true -> {
-                        Logger.info { "Client ${connection.socket.remoteAddress} connection was reset by peer" }
+                        Logger.info { "Client ${connection.remoteAddress} connection was reset by peer" }
                     }
 
                     e.message?.contains("Broken pipe") == true -> {
-                        Logger.info { "Client ${connection.socket.remoteAddress} connection broken (broken pipe)" }
+                        Logger.info { "Client ${connection.remoteAddress} connection broken (broken pipe)" }
                     }
 
                     else -> {
-                        Logger.warn { "Socket exception for ${connection.socket.remoteAddress}: ${e.message}" }
+                        Logger.warn { "Socket exception for ${connection.remoteAddress}: ${e.message}" }
                     }
                 }
             } catch (e: Exception) {
-                Logger.error { "Unexpected error in socket for ${connection.socket.remoteAddress}: $e" }
+                Logger.error { "Unexpected error in socket for ${connection.remoteAddress}: $e" }
                 e.printStackTrace()
             } finally {
                 // Cleanup logic - this will run regardless of how the connection ended
-                Logger.info { "Cleaning up connection for ${connection.socket.remoteAddress}" }
+                Logger.info { "Cleaning up connection for ${connection.remoteAddress}" }
 
                 // Only perform cleanup if playerId is set (client was authenticated)
                 if (connection.playerId != "[Undetermined]") {

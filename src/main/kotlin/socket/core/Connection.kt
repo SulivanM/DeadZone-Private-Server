@@ -3,12 +3,10 @@ package socket.core
 import socket.protocol.PIOSerializer
 import utils.Logger
 import utils.UUID
-import io.ktor.network.sockets.Socket
+import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 /**
@@ -18,9 +16,10 @@ import kotlinx.coroutines.cancel
 class Connection(
     var playerId: String = "[Undetermined]",
     val connectionId: String = UUID.new(),
-    val socket: Socket,
-    val scope: CoroutineScope,
-    private val output: ByteWriteChannel,
+    val remoteAddress: String,
+    val input: ByteReadChannel,
+    val output: ByteWriteChannel,
+    val connectionScope: CoroutineScope,
 ) {
     private var lastActivity = System.currentTimeMillis()
 
@@ -42,7 +41,7 @@ class Connection(
             output.writeFully(b)
             updateActivity()
         } catch (e: Exception) {
-            Logger.error { "Failed to send raw message to ${socket.remoteAddress}: ${e.message}" }
+            Logger.error { "Failed to send raw message to $remoteAddress: ${e.message}" }
             throw e
         }
     }
@@ -65,21 +64,20 @@ class Connection(
             output.writeFully(bytes)
             updateActivity()
         } catch (e: Exception) {
-            Logger.error { "Failed to send message of type '$type' to ${socket.remoteAddress}: ${e.message}" }
+            Logger.error { "Failed to send message of type '$type' to $remoteAddress: ${e.message}" }
             throw e
         }
     }
 
     fun shutdown() {
         try {
-            scope.cancel()
-            socket.close()
+            connectionScope.cancel()
         } catch (e: Exception) {
             Logger.warn { "Exception during connection shutdown: ${e.message}" }
         }
     }
 
     override fun toString(): String {
-        return "Connnection(playerId=$playerId, connectionId=$connectionId, address=${socket.remoteAddress})"
+        return "Connnection(playerId=$playerId, connectionId=$connectionId, address=$remoteAddress)"
     }
 }

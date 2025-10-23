@@ -71,7 +71,7 @@ class ServerTaskDispatcher : TaskScheduler {
             ?: error("stopIdProvider not registered for ${taskToRun.category.code} (register in GameServer.kt)")
         val taskId = deriveStopId(connection.playerId, taskToRun.category, stopInput)
 
-        val job = connection.scope.launch {
+        val job = connection.connectionScope.launch {
             try {
                 Logger.info(LogSource.SOCKET) { "[runTask Hello] Task ${taskToRun.category.code} has been scheduled to run (waiting for startDelay) for playerId=${connection.playerId}, taskId=$taskId" }
                 val scheduler = taskToRun.scheduler ?: this@ServerTaskDispatcher
