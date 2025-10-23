@@ -1,7 +1,7 @@
 package core.items.model
 
 import kotlinx.serialization.Serializable
-import socket.handler.save.crate.response.gachaPoolExample
+import server.handler.save.crate.response.gachaPoolExample
 
 @Serializable
 data class CrateItem(

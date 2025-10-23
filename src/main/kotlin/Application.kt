@@ -5,8 +5,9 @@ import api.routes.authRoutes
 import api.routes.broadcastRoutes
 import api.routes.caseInsensitiveStaticResources
 import api.routes.fileRoutes
-import broadcast.BroadcastService
-import broadcast.BroadcastTestController
+import server.broadcast.BroadcastService
+import server.PolicyFileServer
+import server.PolicyFileServerConfig
 import context.GlobalContext
 import context.PlayerContextTracker
 import context.ServerConfig
@@ -17,6 +18,9 @@ import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
+import dev.deadzone.socket.core.BroadcastServer
+import dev.deadzone.socket.core.BroadcastServerConfig
+import server.MainServer
 import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -30,30 +34,32 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.exposed.sql.Database
-import socket.core.OnlinePlayerRegistry
-import socket.core.Server
-import socket.handler.save.arena.ArenaSaveHandler
-import socket.handler.save.bounty.BountySaveHandler
-import socket.handler.save.chat.ChatSaveHandler
-import socket.handler.save.command.CommandSaveHandler
-import socket.handler.save.compound.building.BuildingSaveHandler
-import socket.handler.save.compound.misc.CmpMiscSaveHandler
-import socket.handler.save.compound.task.TaskSaveHandler
-import socket.handler.save.crate.CrateSaveHandler
-import socket.handler.save.item.ItemSaveHandler
-import socket.handler.save.misc.MiscSaveHandler
-import socket.handler.save.mission.MissionSaveHandler
-import socket.handler.save.purchase.PurchaseSaveHandler
-import socket.handler.save.quest.QuestSaveHandler
-import socket.handler.save.raid.RaidSaveHandler
-import socket.handler.save.survivor.SurvivorSaveHandler
-import socket.tasks.ServerTaskDispatcher
+import server.core.OnlinePlayerRegistry
+import server.GameServer
+import server.GameServerConfig
+import server.handler.save.arena.ArenaSaveHandler
+import server.handler.save.bounty.BountySaveHandler
+import server.handler.save.chat.ChatSaveHandler
+import server.handler.save.command.CommandSaveHandler
+import server.handler.save.compound.building.BuildingSaveHandler
+import server.handler.save.compound.misc.CmpMiscSaveHandler
+import server.handler.save.compound.task.TaskSaveHandler
+import server.handler.save.crate.CrateSaveHandler
+import server.handler.save.item.ItemSaveHandler
+import server.handler.save.misc.MiscSaveHandler
+import server.handler.save.mission.MissionSaveHandler
+import server.handler.save.purchase.PurchaseSaveHandler
+import server.handler.save.quest.QuestSaveHandler
+import server.handler.save.raid.RaidSaveHandler
+import server.handler.save.survivor.SurvivorSaveHandler
+import server.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepositoryMaria
 import user.auth.SessionManager
 import user.auth.WebsiteAuthProvider
@@ -120,9 +126,11 @@ fun Application.module() {
         broadcastEnabled = environment.config.propertyOrNull("broadcast.enabled")?.getString()?.toBooleanStrictOrNull()
             ?: true,
         broadcastHost = environment.config.propertyOrNull("broadcast.host")?.getString() ?: "0.0.0.0",
-        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")?.mapNotNull { it.trim().toIntOrNull() }
+        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")
+            ?.mapNotNull { it.trim().toIntOrNull() }
             ?: listOf(2121, 2122, 2123),
-        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()?.toBooleanStrictOrNull()
+        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()
+            ?.toBooleanStrictOrNull()
             ?: true,
     )
     Logger.info("${Emoji.Database} Connecting to MariaDB...")
@@ -186,23 +194,50 @@ fun Application.module() {
         apiRoutes(serverContext)
         broadcastRoutes(serverContext)
     }
-    val server = Server(context = serverContext).also { it.start() }
 
-    // Initialize broadcast service
-    BroadcastService.initialize(
-        host = config.broadcastHost,
-        ports = config.broadcastPorts,
-        enabled = config.broadcastEnabled,
-        enablePolicyServer = config.broadcastPolicyServerEnabled
-    )
+    lateinit var broadcastServer: BroadcastServer
+
+    val servers = buildList {
+        add(GameServer(GameServerConfig(host = "127.0.0.1", port = 7777)))
+
+        if (config.broadcastEnabled) {
+            broadcastServer = BroadcastServer(
+                BroadcastServerConfig(
+                    host = config.broadcastHost,
+                    ports = config.broadcastPorts
+                )
+            )
+            add(broadcastServer)
+        }
+
+        if (config.broadcastPolicyServerEnabled) {
+            add(
+                PolicyFileServer(
+                    PolicyFileServerConfig(
+                        host = "0.0.0.0",
+                        port = 843,
+                        allowedPorts = config.broadcastPorts
+                    )
+                )
+            )
+        }
+    }
+
+    val server = MainServer(servers, serverContext)
+    runBlocking {
+        server.initializeAll()
+        server.startAll()
+    }
+    BroadcastService.initialize(broadcastServer)
 
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
     Logger.info("${Emoji.Internet} API server available at $SERVER_HOST:$API_SERVER_PORT")
 
     Runtime.getRuntime().addShutdownHook(Thread {
-        server.shutdown()
-        BroadcastService.shutdown()
+        runBlocking {
+            server.shutdownAll()
+        }
         Logger.info("${Emoji.Red} Server shutdown complete")
     })
 }

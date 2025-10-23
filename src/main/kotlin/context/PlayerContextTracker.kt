@@ -11,7 +11,7 @@ import core.survivor.SurvivorService
 import data.db.BigDB
 import data.db.BigDBMariaImpl
 import io.ktor.util.date.*
-import socket.core.Connection
+import server.core.Connection
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerContextTracker {

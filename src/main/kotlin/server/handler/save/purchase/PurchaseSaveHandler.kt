@@ -1,0 +1,51 @@
+package server.handler.save.purchase
+
+import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveSubHandler
+import server.messaging.SaveDataMethod
+import utils.LogConfigSocketToClient
+import utils.Logger
+
+class PurchaseSaveHandler : SaveSubHandler {
+    override val supportedTypes: Set<String> = SaveDataMethod.PURCHASE_SAVES
+
+    override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
+        when (type) {
+            SaveDataMethod.RESOURCE_BUY -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'RESOURCE_BUY' message [not implemented]" }
+            }
+
+            SaveDataMethod.PROTECTION_BUY -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'PROTECTION_BUY' message [not implemented]" }
+            }
+
+            SaveDataMethod.PAYVAULT_BUY -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'PAYVAULT_BUY' message [not implemented]" }
+            }
+
+            SaveDataMethod.CLAIM_PROMO_CODE -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'CLAIM_PROMO_CODE' message [not implemented]" }
+            }
+
+            SaveDataMethod.BUY_PACKAGE -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'BUY_PACKAGE' message [not implemented]" }
+            }
+
+            SaveDataMethod.CHECK_APPLY_DIRECT_PURCHASE -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'CHECK_APPLY_DIRECT_PURCHASE' message [not implemented]" }
+            }
+
+            SaveDataMethod.HAS_PAYVAULT_ITEM -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'HAS_PAYVAULT_ITEM' message [not implemented]" }
+            }
+
+            SaveDataMethod.INCREMENT_PURCHASE_COUNT -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'INCREMENT_PURCHASE_COUNT' message [not implemented]" }
+            }
+
+            SaveDataMethod.DEATH_MOBILE_RENAME -> {
+                Logger.warn(LogConfigSocketToClient) { "Received 'DEATH_MOBILE_RENAME' message [not implemented]" }
+            }
+        }
+    }
+}
