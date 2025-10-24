@@ -189,7 +189,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // TODO respond to DB failure
                 svc.compound.updateResource { currentRes ->
                     // Cap resources at storage limit (default 100 per resource type)
-                    val storageLimit = 100 // TODO: Get actual limit from GameDefinitions based on storage buildings
+                    val storageLimit = 100_000_000 // TODO: Get actual limit from GameDefinitions based on storage buildings
                     val cappedResources = GameResources(
                         wood = minOf(currentRes.wood + obtainedResources.wood, storageLimit),
                         metal = minOf(currentRes.metal + obtainedResources.metal, storageLimit),

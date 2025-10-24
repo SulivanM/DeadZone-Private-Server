@@ -6,7 +6,6 @@ import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.core.model.game.data.reduceBy
 import dev.deadzone.core.model.game.data.reduceByHalf
-import dev.deadzone.core.model.game.data.removeIfFinished
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
@@ -22,7 +21,7 @@ import server.tasks.impl.BuildingRepairTask
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
-import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
@@ -197,10 +196,10 @@ class BuildingSaveHandler : SaveSubHandler {
                         res.getNonEmptyResAmountOrNull()?.toDouble()
                     ) { "Unexpected null on getNonEmptyResAmountOrNull during collect resource" }
                     val currentResource = svc.getResources()
-                    val limit = 999999999.0 // TODO: Base this on storage capacity from GameDefinitions
+                    val limit = 100_000_000.0 // TODO: Base this on storage capacity from GameDefinitions
                     val expectedResource = currentResource.wood + resAmount
                     val remainder = expectedResource - limit
-                    val total = max(limit, expectedResource)
+                    val total = min(limit, expectedResource)
                     response = BuildingCollectResponse(
                         success = true,
                         locked = false,
