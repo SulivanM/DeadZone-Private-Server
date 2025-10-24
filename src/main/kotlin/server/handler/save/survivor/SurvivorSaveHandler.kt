@@ -99,12 +99,15 @@ class SurvivorSaveHandler : SaveSubHandler {
 
                 val svc = serverContext.requirePlayerContext(playerId).services
 
+                // TODO respond to DB failure
                 svc.playerObjectMetadata.updatePlayerFlags(
                     flags = PlayerFlags.create(nicknameVerified = true)
                 )
 
+                // TODO respond to DB failure
                 svc.playerObjectMetadata.updatePlayerNickname(nickname = title)
 
+                // TODO respond to DB failure
                 svc.survivor.updateSurvivor(srvId = svc.survivor.survivorLeaderId) {
                     svc.survivor.getSurvivorLeader().copy(
                         title = title,
@@ -131,6 +134,7 @@ class SurvivorSaveHandler : SaveSubHandler {
 
                 val svc = serverContext.requirePlayerContext(playerId).services
 
+                // TODO respond to DB failure
                 svc.survivor.updateSurvivor(srvId = survivorId) { currentSurvivor ->
                     var updatedSurvivor = currentSurvivor
 

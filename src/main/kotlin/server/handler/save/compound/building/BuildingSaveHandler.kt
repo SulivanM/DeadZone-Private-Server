@@ -51,22 +51,20 @@ class BuildingSaveHandler : SaveSubHandler {
                     data = mapOf("level" to 0, "type" to "upgrade", "xp" to 50)
                 )
 
-                val result = runCatching {
-                    svc.createBuilding {
-                        Building(
-                            id = bldId,
-                            name = null,
-                            type = bldType,
-                            level = 0,
-                            rotation = r,
-                            tx = x,
-                            ty = y,
-                            destroyed = false,
-                            resourceValue = 0.0,
-                            upgrade = timer,
-                            repair = null
-                        )
-                    }
+                val result = svc.createBuilding {
+                    Building(
+                        id = bldId,
+                        name = null,
+                        type = bldType,
+                        level = 0,
+                        rotation = r,
+                        tx = x,
+                        ty = y,
+                        destroyed = false,
+                        resourceValue = 0.0,
+                        upgrade = timer,
+                        repair = null
+                    )
                 }
 
                 val response: BuildingCreateResponse
@@ -199,7 +197,7 @@ class BuildingSaveHandler : SaveSubHandler {
                         res.getNonEmptyResAmountOrNull()?.toDouble()
                     ) { "Unexpected null on getNonEmptyResAmountOrNull during collect resource" }
                     val currentResource = svc.getResources()
-                    val limit = 100.0 // TODO: Base this on storage capacity from GameDefinitions
+                    val limit = 999999999.0 // TODO: Base this on storage capacity from GameDefinitions
                     val expectedResource = currentResource.wood + resAmount
                     val remainder = expectedResource - limit
                     val total = max(limit, expectedResource)
@@ -307,10 +305,17 @@ class BuildingSaveHandler : SaveSubHandler {
 
                     if (newBuilding != null && cost != null) {
                         // successful response
-                        svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
-                        svc.compound.updateResource { resource ->
+                        val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        val updateResourceResult = svc.compound.updateResource { resource ->
                             resourceResponse = resource.copy(cash = playerFuel - cost)
                             resourceResponse
+                        }
+
+                        // if for some reason DB fail, do not proceed the speed up request
+                        response = if (updateBuildingResult.isFailure || updateResourceResult.isFailure) {
+                            BuildingSpeedUpResponse(error = "", success = false, cost = 0)
+                        } else {
+                            BuildingSpeedUpResponse(error = "", success = true, cost = cost)
                         }
 
                         // end the currently active building task
@@ -340,12 +345,10 @@ class BuildingSaveHandler : SaveSubHandler {
                                 }
                             )
                         )
-
-                        response = BuildingSpeedUpResponse(error = "", success = true, cost = cost)
                     } else {
                         // unexpected DB error response
                         Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        response = BuildingSpeedUpResponse(error = "", success = false, cost = 1)
+                        response = BuildingSpeedUpResponse(error = "", success = false, cost = 0)
                     }
                 }
 
@@ -451,13 +454,18 @@ class BuildingSaveHandler : SaveSubHandler {
 
                     if (newBuilding != null && cost != null) {
                         // successful response
-                        svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
-                        svc.compound.updateResource { resource ->
+                        val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
+                        val updateResourceResult = svc.compound.updateResource { resource ->
                             resourceResponse = resource.copy(cash = playerFuel - cost)
                             resourceResponse
                         }
 
-                        response = BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
+                        // if for some reason DB fail, do not proceed the speed up request
+                        response = if (updateBuildingResult.isFailure || updateResourceResult.isFailure) {
+                            BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
+                        } else {
+                            BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
+                        }
 
                         // end the currently active building repair task
                         serverContext.taskDispatcher.stopTaskFor<BuildingRepairStopParameter>(
@@ -489,7 +497,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     } else {
                         // unexpected DB error response
                         Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 1)
+                        response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
                     }
                 }
 
@@ -512,22 +520,20 @@ class BuildingSaveHandler : SaveSubHandler {
                     data = mapOf("level" to 0, "type" to "upgrade", "xp" to 50)
                 )
 
-                val result = runCatching {
-                    svc.createBuilding {
-                        Building(
-                            id = bldId,
-                            name = null,
-                            type = bldType,
-                            level = 0,
-                            rotation = r,
-                            tx = x,
-                            ty = y,
-                            destroyed = false,
-                            resourceValue = 0.0,
-                            upgrade = timer,
-                            repair = null
-                        )
-                    }
+                val result = svc.createBuilding {
+                    Building(
+                        id = bldId,
+                        name = null,
+                        type = bldType,
+                        level = 0,
+                        rotation = r,
+                        tx = x,
+                        ty = y,
+                        destroyed = false,
+                        resourceValue = 0.0,
+                        upgrade = timer,
+                        repair = null
+                    )
                 }
 
                 val response: BuildingCreateResponse

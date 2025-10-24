@@ -149,6 +149,7 @@ class MissionSaveHandler : SaveSubHandler {
                 val (newLevel, newLevelPts) = calculateNewLevelAndPoints(leader.level, leader.xp, newXp)
 
                 // Update the leader's XP and level
+                // TODO respond to DB failure
                 svc.survivor.updateSurvivor(leader.id) { currentLeader ->
                     currentLeader.copy(xp = newXp, level = newLevel)
                 }
@@ -177,6 +178,7 @@ class MissionSaveHandler : SaveSubHandler {
                 // Update player's inventory
                 // TO-DO move inventory update to MissionReturnTask execute()
                 // items and injuries are sent to player after mission return complete
+                // TODO respond to DB failure
                 svc.inventory.updateInventory { items ->
                     items.combineItems(
                         combinedLootedItems.filter { !GlobalContext.gameDefinitions.isResourceItem(it.type) },
@@ -184,6 +186,7 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 }
 
+                // TODO respond to DB failure
                 svc.compound.updateResource { currentRes ->
                     // Cap resources at storage limit (default 100 per resource type)
                     val storageLimit = 100 // TODO: Get actual limit from GameDefinitions based on storage buildings
