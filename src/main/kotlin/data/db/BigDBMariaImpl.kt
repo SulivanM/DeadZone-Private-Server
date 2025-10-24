@@ -9,11 +9,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import utils.Emoji
 import utils.Logger
 import utils.UUID
 import kotlin.io.encoding.Base64
+import kotlin.let
 
 object PlayerAccounts : Table("player_accounts") {
     val playerId = varchar("player_id", 36).uniqueIndex()
@@ -55,22 +56,22 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         }
     }
 
-    private fun setupDatabase() {
+    private suspend fun setupDatabase() {
         try {
-            transaction(database) {
+            database.suspendedTransaction {
                 SchemaUtils.create(PlayerAccounts, PlayerObjectsTable, NeighborHistoryTable, InventoryTable)
             }
-            val count = transaction(database) {
+            val count = database.suspendedTransaction {
                 PlayerAccounts.selectAll().count()
             }
             Logger.info { "${Emoji.Database} MariaDB: User table ready, contains $count users." }
             if (adminEnabled) {
-                val adminExists = transaction(database) {
+                val adminExists = database.suspendedTransaction {
                     PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq AdminData.PLAYER_ID }.count() > 0
                 }
                 if (!adminExists) {
                     val start = getTimeMillis()
-                    transaction(database) {
+                    database.suspendedTransaction {
                         val adminAccount = PlayerAccount.admin()
                         val adminObjects = PlayerObjects.admin()
                         val adminNeighbor = NeighborHistory.empty(AdminData.PLAYER_ID)
@@ -115,7 +116,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadPlayerAccount(playerId: String): PlayerAccount? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     PlayerAccount(
@@ -134,7 +135,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadPlayerObjects(playerId: String): PlayerObjects? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
@@ -143,7 +144,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadNeighborHistory(playerId: String): NeighborHistory? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             NeighborHistoryTable.selectAll().where { NeighborHistoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString(row[NeighborHistoryTable.dataJson])
@@ -152,7 +153,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadInventory(playerId: String): Inventory? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString(row[InventoryTable.dataJson])
@@ -161,7 +162,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects) {
-        transaction(database) {
+        database.suspendedTransaction {
             PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
                 it[dataJson] = json.encodeToString(updatedPlayerObjects)
             }
@@ -169,7 +170,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     @Suppress("UNCHECKED_CAST")
-    override suspend fun <T> getCollection(name: CollectionName): T {
+    override fun <T> getCollection(name: CollectionName): T {
         return when (name) {
             CollectionName.PLAYER_ACCOUNT_COLLECTION -> PlayerAccounts
             CollectionName.PLAYER_OBJECTS_COLLECTION -> PlayerObjectsTable
@@ -182,7 +183,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         val pid = UUID.new()
         val now = getTimeMillis()
 
-        transaction(database) {
+        database.suspendedTransaction {
             val account = PlayerAccount(
                 playerId = pid,
                 hashedPassword = hashPw(password),
@@ -234,5 +235,21 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return Base64.encode(Bcrypt.hash(password, 10))
     }
 
-    override suspend fun shutdown() {}
+    override suspend fun shutdown() = Unit
+}
+
+/**
+ * Non-blocking I/O wrapper for Exposed's transaction. It always use `Dispatchers.IO`.
+ */
+suspend fun <T> Database.suspendedTransaction(block: suspend Transaction.() -> T): T {
+    return newSuspendedTransaction(Dispatchers.IO, this, statement = block)
+}
+
+/**
+ * Executes a suspending transaction on the database and returns a Result wrapper with `runCatching`.
+ */
+suspend fun <T> Database.suspendedTransactionResult(
+    block: suspend Transaction.() -> T
+): Result<T> = runCatching {
+    this.suspendedTransaction(block)
 }

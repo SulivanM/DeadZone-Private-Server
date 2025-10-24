@@ -33,7 +33,7 @@ interface BigDB {
      * Typically used when repository independent of DB implementation needs
      * to its implementor collection.
      */
-    suspend fun <T> getCollection(name: CollectionName): T
+    fun <T> getCollection(name: CollectionName): T
 
     /**
      * Create a user with the provided username and password.
