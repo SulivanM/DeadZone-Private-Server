@@ -21,7 +21,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         if (idx == -1) {
             Logger.error(LogConfigSocketError) { "Building bldId=$bldId not found for playerId=$playerId" }
         }
-        return -1
+        return idx
     }
 
     fun getBuilding(bldId: String): BuildingLike? {
