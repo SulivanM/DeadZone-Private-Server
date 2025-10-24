@@ -16,11 +16,11 @@ class QuestSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.QUEST_TRACK -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'QUEST_TRACK' message [not implemented]" }
+                handleQuestTrack(ctx)
             }
 
             SaveDataMethod.QUEST_UNTRACK -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'QUEST_UNTRACK' message [not implemented]" }
+                handleQuestUntrack(ctx)
             }
 
             SaveDataMethod.QUEST_DAILY_DECLINE -> {
@@ -38,6 +38,92 @@ class QuestSaveHandler : SaveSubHandler {
             SaveDataMethod.GLOBAL_QUEST_COLLECT -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'GLOBAL_QUEST_COLLECT' message [not implemented]" }
             }
+        }
+    }
+
+    private suspend fun handleQuestTrack(ctx: SaveHandlerContext) = with(ctx) {
+        val playerId = connection.playerId ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_TRACK: No playerId in connection" }
+            return
+        }
+
+        val questId = data["id"] as? String ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_TRACK: Missing quest id 'id'" }
+            return
+        }
+
+        val playerObjects = serverContext.db.loadPlayerObjects(playerId) ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_TRACK: PlayerObjects not found for playerId=$playerId" }
+            return
+        }
+
+        val currentTracked = playerObjects.questsTracked?.split(",")?.filter { it.isNotBlank() }?.toMutableList() ?: mutableListOf()
+
+        if (!currentTracked.contains(questId)) {
+            currentTracked.add(questId)
+
+            val updatedPlayerObjects = playerObjects.copy(
+                questsTracked = currentTracked.joinToString(",")
+            )
+
+            serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+
+            Logger.info(LogConfigSocketToClient) { "QUEST_TRACK: Tracked quest $questId for player $playerId" }
+
+            sendMessage(
+                "saveOK",
+                "saveID", saveId,
+                "success", true
+            )
+        } else {
+            Logger.info(LogConfigSocketToClient) { "QUEST_TRACK: Quest $questId already tracked for player $playerId" }
+            sendMessage(
+                "saveOK",
+                "saveID", saveId,
+                "success", true
+            )
+        }
+    }
+
+    private suspend fun handleQuestUntrack(ctx: SaveHandlerContext) = with(ctx) {
+        val playerId = connection.playerId ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_UNTRACK: No playerId in connection" }
+            return
+        }
+
+        val questId = data["id"] as? String ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_UNTRACK: Missing quest id 'id'" }
+            return
+        }
+
+        val playerObjects = serverContext.db.loadPlayerObjects(playerId) ?: run {
+            Logger.error(LogConfigSocketToClient) { "QUEST_UNTRACK: PlayerObjects not found for playerId=$playerId" }
+            return
+        }
+
+        val currentTracked = playerObjects.questsTracked?.split(",")?.filter { it.isNotBlank() }?.toMutableList() ?: mutableListOf()
+
+        if (currentTracked.remove(questId)) {
+            val updatedPlayerObjects = playerObjects.copy(
+                questsTracked = if (currentTracked.isEmpty()) null else currentTracked.joinToString(",")
+            )
+
+            serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+
+            Logger.info(LogConfigSocketToClient) { "QUEST_UNTRACK: Untracked quest $questId for player $playerId" }
+
+            sendMessage(
+                "saveOK",
+                "saveID", saveId,
+                "success", true
+            )
+        } else {
+            Logger.info(LogConfigSocketToClient) { "QUEST_UNTRACK: Quest $questId was not tracked for player $playerId" }
+            sendMessage(
+                "saveOK",
+                "saveID", saveId,
+                "success", true
+            )
         }
     }
 }

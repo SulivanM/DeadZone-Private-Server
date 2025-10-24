@@ -29,7 +29,30 @@ class ItemSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.ITEM_DISPOSE -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'ITEM_DISPOSE' message [not implemented]" }
+                val itemId = data["id"] as? String
+                if (itemId == null) {
+                    sendMessage(saveId, """{"success":false}""")
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_DISPOSE: missing 'id' parameter" }
+                    return@with
+                }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val inventory = svc.inventory.getInventory()
+                val itemToDispose = inventory.find { it.id == itemId }
+
+                if (itemToDispose == null) {
+                    sendMessage(saveId, """{"success":false}""")
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_DISPOSE: item not found with id=$itemId" }
+                    return@with
+                }
+
+                svc.inventory.updateInventory { items ->
+                    items.filter { it.id != itemId }
+                }
+
+                sendMessage(saveId, """{"success":true,"qty":0}""")
+
+                Logger.info(LogConfigSocketToClient) { "Item disposed: id=$itemId, type=${itemToDispose.type}, qty=${itemToDispose.qty} for player ${connection.playerId}" }
             }
 
             SaveDataMethod.ITEM_CLEAR_NEW -> {
