@@ -16,14 +16,12 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 
     fun getResources() = resources
 
-    fun getIndexOfBuilding(bldId: String): Result<Int> {
+    fun getIndexOfBuilding(bldId: String): Int {
         val idx = buildings.indexOfFirst { it.id == bldId }
-        return if (idx == -1) {
+        if (idx == -1) {
             Logger.error(LogConfigSocketError) { "Building bldId=$bldId not found for playerId=$playerId" }
-            Result.failure(NoSuchElementException("Building bldId=$bldId not found for playerId=$playerId"))
-        } else {
-            Result.success(idx)
         }
+        return -1
     }
 
     fun getBuilding(bldId: String): BuildingLike? {
@@ -34,125 +32,106 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         bldId: String,
         updateAction: suspend (BuildingLike) -> BuildingLike
     ): Result<Unit> {
-        return try {
-            val idxResult = getIndexOfBuilding(bldId)
-            var idx: Int? = null
-            idxResult.onSuccess { index ->
-                idx = index
-            }
-            idxResult.onFailure { return Result.failure(it) }
-            val update = updateAction(buildings[idx!!])
-            val result = compoundRepository.updateBuilding(playerId, bldId, update)
-            result.onFailure {
-                Logger.error(LogConfigSocketError) { "Error on updateBuilding: ${it.message}" }
-            }
-            result.onSuccess {
-                buildings[idx] = update
-            }
-            result
-        } catch (e: Exception) {
-            Logger.error(LogConfigSocketError) { "Failed to update building bldId=$bldId for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
+        val idx = getIndexOfBuilding(bldId)
+        if (idx == -1) return Result.failure(NoSuchElementException("Building bldId=$bldId not found for playerId=$playerId"))
+
+        val update = updateAction(buildings[idx])
+
+        val result = compoundRepository.updateBuilding(playerId, bldId, update)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on updateBuilding for playerId=$playerId: ${it.message}" }
         }
+        result.onSuccess {
+            buildings[idx] = update
+        }
+        return result
     }
 
     suspend fun updateAllBuildings(buildings: List<BuildingLike>): Result<Unit> {
-        return try {
-            val result = compoundRepository.updateAllBuildings(playerId, buildings)
-            result.onFailure {
-                Logger.error(LogConfigSocketError) { "Error on updateAllBuildings: ${it.message}" }
-            }
-            result.onSuccess {
-                this.buildings.clear()
-                this.buildings.addAll(buildings)
-            }
-            result
-        } catch (e: Exception) {
-            Logger.error(LogConfigSocketError) { "Failed to update all buildings for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
+        val result = compoundRepository.updateAllBuildings(playerId, buildings)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on updateAllBuildings for playerId=$playerId: ${it.message}" }
         }
+        result.onSuccess {
+            this.buildings.clear()
+            this.buildings.addAll(buildings)
+        }
+        return result
     }
 
-    suspend fun createBuilding(createAction: suspend () -> (BuildingLike)) {
+    suspend fun createBuilding(createAction: suspend () -> (BuildingLike)): Result<Unit> {
         val create = createAction()
         val result = compoundRepository.createBuilding(playerId, create)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on createBuilding: ${it.message}" }
+            Logger.error(LogConfigSocketError) { "Error on createBuilding for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.buildings.add(create)
         }
+        return result
     }
 
     suspend fun deleteBuilding(bldId: String): Result<Unit> {
-        return try {
-            val result = compoundRepository.deleteBuilding(playerId, bldId)
-            result.onFailure {
-                Logger.error(LogConfigSocketError) { "Error on deleteBuilding: ${it.message}" }
-            }
-            result.onSuccess {
-                this.buildings.removeIf { it.id == bldId }
-            }
-            result
-        } catch (e: Exception) {
-            Logger.error(LogConfigSocketError) { "Failed to delete building bldId=$bldId for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
-        }
-    }
-
-    suspend fun cancelBuilding(bldId: String) {
         val result = compoundRepository.deleteBuilding(playerId, bldId)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on cancelBuilding: ${it.message}" }
+            Logger.error(LogConfigSocketError) { "Error on deleteBuilding for playerId=$playerId: ${it.message}" }
+        }
+        result.onSuccess {
+            this.buildings.removeIf { it.id == bldId }
+        }
+        return result
+    }
+
+    suspend fun cancelBuilding(bldId: String): Result<Unit> {
+        val result = compoundRepository.deleteBuilding(playerId, bldId)
+        result.onFailure {
+            Logger.error(LogConfigSocketError) { "Error on cancelBuilding for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             buildings.removeIf { it.id == bldId }
         }
+        return result
     }
 
     suspend fun collectBuilding(bldId: String): Result<GameResources> {
-        return try {
-            val lastUpdate = lastResourceValueUpdated[bldId]
-                ?: return Result.failure(NoSuchElementException("Building bldId=$bldId is not categorized as production buildings"))
+        val lastUpdate = lastResourceValueUpdated[bldId]
+            ?: return Result.failure(NoSuchElementException("Building bldId=$bldId is not categorized as production buildings"))
 
-            val collectedAmount = calculateResource(lastUpdate.seconds)
-            lastResourceValueUpdated[bldId] = getTimeMillis()
+        val collectedAmount = calculateResource(lastUpdate.seconds)
+        lastResourceValueUpdated[bldId] = getTimeMillis()
 
-            lateinit var prod: String
-            val updateResult = updateBuilding(bldId) { oldBld ->
-                prod = "wood" // Lookup to GameDefinitions, what does the building produce in 'prod' element
-                oldBld.copy(resourceValue = 0.0)
-            }
-            updateResult.onFailure { return Result.failure(it) }
-
-            val res = when (prod) {
-                "wood" -> GameResources(wood = collectedAmount.toInt())
-                "metal" -> GameResources(metal = collectedAmount.toInt())
-                "cloth" -> GameResources(cloth = collectedAmount.toInt())
-                "food" -> GameResources(food = collectedAmount.toInt())
-                "water" -> GameResources(water = collectedAmount.toInt())
-                "cash" -> GameResources(cash = collectedAmount.toInt())
-                "ammunition" -> GameResources(ammunition = collectedAmount.toInt())
-                else -> {
-                    return Result.failure(IllegalArgumentException("Error during collectBuilding, type $prod doesn't exist"))
-                }
-            }
-            Result.success(res)
-        } catch (e: Exception) {
-            Logger.error(LogConfigSocketError) { "Failed to collect building bldId=$bldId for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
+        lateinit var prod: String
+        val updateResult = updateBuilding(bldId) { oldBld ->
+            prod = "wood" // Lookup to GameDefinitions, what does the building produce in 'prod' element
+            oldBld.copy(resourceValue = 0.0)
         }
+        updateResult.onFailure { return Result.failure(it) }
+
+        val res = when (prod) {
+            "wood" -> GameResources(wood = collectedAmount.toInt())
+            "metal" -> GameResources(metal = collectedAmount.toInt())
+            "cloth" -> GameResources(cloth = collectedAmount.toInt())
+            "food" -> GameResources(food = collectedAmount.toInt())
+            "water" -> GameResources(water = collectedAmount.toInt())
+            "cash" -> GameResources(cash = collectedAmount.toInt())
+            "ammunition" -> GameResources(ammunition = collectedAmount.toInt())
+            else -> {
+                return Result.failure(IllegalArgumentException("Error during collectBuilding, type $prod doesn't exist"))
+            }
+        }
+        return Result.success(res)
     }
 
-    suspend fun updateResource(updateAction: suspend (GameResources) -> (GameResources)) {
+    suspend fun updateResource(updateAction: suspend (GameResources) -> (GameResources)): Result<Unit> {
         val update = updateAction(this.resources)
         val result = compoundRepository.updateGameResources(playerId, update)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on updateResource: ${it.message}" }
+            Logger.error(LogConfigSocketError) { "Error on updateResource for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.resources = update
         }
+        return result
     }
 
     fun calculateResource(durationSec: Duration): Double {
@@ -177,10 +156,6 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
                     lastResourceValueUpdated[bldLike.id] = now
                 }
             }
-            Result.success(Unit)
-        }.getOrElse { e ->
-            Logger.error(LogConfigSocketError) { "Failed to initialize CompoundService for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
         }
     }
 
@@ -199,9 +174,6 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
                 }
             }
             Result.success(Unit)
-        }.getOrElse { e ->
-            Logger.error(LogConfigSocketError) { "Failed to close CompoundService for playerId=$playerId: ${e.message}" }
-            Result.failure(e)
         }
     }
 

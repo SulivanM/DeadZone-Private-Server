@@ -1,10 +1,10 @@
 package core.survivor
+
 import core.PlayerService
 import core.model.game.data.Survivor
 import utils.LogConfigSocketError
 import utils.Logger
 import kotlin.Result.Companion.failure
-import kotlin.math.max
 
 class SurvivorService(
     val survivorLeaderId: String,
@@ -22,7 +22,7 @@ class SurvivorService(
         return survivors
     }
 
-    suspend fun addNewSurvivor(survivor: Survivor) {
+    suspend fun addNewSurvivor(survivor: Survivor): Result<Unit> {
         val result = survivorRepository.addSurvivor(playerId, survivor)
         result.onFailure {
             Logger.error(LogConfigSocketError) { "Error on addNewSurvivor: ${it.message}" }
@@ -30,16 +30,17 @@ class SurvivorService(
         result.onSuccess {
             survivors.add(survivor)
         }
+        return result
     }
 
     suspend fun updateSurvivor(
         srvId: String,
         updateAction: suspend (Survivor) -> Survivor
-    ) {
+    ): Result<Unit> {
         val idx = survivors.indexOfFirst { it.id == srvId }
         if (idx == -1) {
             Logger.error(LogConfigSocketError) { "Survivor with id $srvId not found" }
-            return
+            return failure(NoSuchElementException("Survivor with id $srvId not found"))
         }
         val currentSurvivor = survivors[idx]
         val updatedSurvivor = updateAction(currentSurvivor)
@@ -50,11 +51,12 @@ class SurvivorService(
         result.onSuccess {
             survivors[idx] = updatedSurvivor
         }
+        return result
     }
 
     suspend fun updateSurvivors(
         survivors: List<Survivor>
-    ) {
+    ): Result<Unit> {
         val result = survivorRepository.updateSurvivors(playerId, survivors)
         result.onFailure {
             Logger.error(LogConfigSocketError) { "Error on updateSurvivors: ${it.message}" }
@@ -63,6 +65,7 @@ class SurvivorService(
             this.survivors.clear()
             this.survivors.addAll(survivors)
         }
+        return result
     }
 
     override suspend fun init(playerId: String): Result<Unit> {
