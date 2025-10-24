@@ -57,10 +57,10 @@ class PlayerContextTracker {
             playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database, json)
         )
         
-        survivor.init(playerId)
-        inventory.init(playerId)
-        compound.init(playerId)
-        playerObjectMetadata.init(playerId)
+        survivor.init(playerId).onFailure { "Failure during survivor service init: ${it.message}" }
+        inventory.init(playerId).onFailure { "Failure during inventory service init: ${it.message}" }
+        compound.init(playerId).onFailure { "Failure during compound service init: ${it.message}" }
+        playerObjectMetadata.init(playerId).onFailure { "Failure during playerObjectMetadata service init: ${it.message}" }
         
         return PlayerServices(
             survivor = survivor,
