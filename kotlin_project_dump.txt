@@ -1874,7 +1874,7 @@ class CompoundRepositoryMaria(
 
     private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
@@ -1886,7 +1886,7 @@ class CompoundRepositoryMaria(
 
     private suspend fun updatePlayerObjectsData(playerId: String, updateAction: (PlayerObjects) -> PlayerObjects): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentRow = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull() ?: throw NoSuchElementException("No player found with id=$playerId")
 
@@ -3231,7 +3231,7 @@ import org.jetbrains.exposed.sql.update
 class InventoryRepositoryMaria(private val database: Database, private val json: Json) : InventoryRepository {
     override fun getInventory(playerId: String): Result<Inventory> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }.singleOrNull()?.let { row ->
                     val inventory = json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
                     inventory
@@ -3245,7 +3245,7 @@ class InventoryRepositoryMaria(private val database: Database, private val json:
         updatedInventory: List<Item>
     ): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentData = InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
@@ -3263,7 +3263,7 @@ class InventoryRepositoryMaria(private val database: Database, private val json:
         updatedSchematics: ByteArray
     ): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentData = InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(Inventory.serializer(), row[InventoryTable.dataJson])
@@ -3816,7 +3816,7 @@ class PlayerObjectsMetadataRepositoryMaria(
 
     private fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val playerObjects = json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
@@ -3828,7 +3828,7 @@ class PlayerObjectsMetadataRepositoryMaria(
 
     private fun updatePlayerObjectsData(playerId: String, updateAction: (PlayerObjects) -> PlayerObjects): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentRow = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull() ?: throw NoSuchElementException("No player found with id=$playerId")
 
@@ -6847,7 +6847,7 @@ import org.jetbrains.exposed.sql.update
 class SurvivorRepositoryMaria(private val database: Database, private val json: Json) : SurvivorRepository {
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         val playerObjects =
@@ -6860,7 +6860,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
 
     override suspend fun addSurvivor(playerId: String, survivor: Survivor): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
@@ -6878,7 +6878,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
 
     override suspend fun updateSurvivor(playerId: String, srvId: String, updatedSurvivor: Survivor): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
@@ -6899,7 +6899,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
 
     override suspend fun updateSurvivors(playerId: String, survivors: List<Survivor>): Result<Unit> {
         return runCatching {
-            transaction(database) {
+            database.suspendedTransaction {
                 val currentData = PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                     .singleOrNull()?.let { row ->
                         json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
@@ -8460,20 +8460,20 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
 
     private fun setupDatabase() {
         try {
-            transaction(database) {
+            database.suspendedTransaction {
                 SchemaUtils.create(PlayerAccounts, PlayerObjectsTable, NeighborHistoryTable, InventoryTable)
             }
-            val count = transaction(database) {
+            val count = database.suspendedTransaction {
                 PlayerAccounts.selectAll().count()
             }
             Logger.info { "${Emoji.Database} MariaDB: User table ready, contains $count users." }
             if (adminEnabled) {
-                val adminExists = transaction(database) {
+                val adminExists = database.suspendedTransaction {
                     PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq AdminData.PLAYER_ID }.count() > 0
                 }
                 if (!adminExists) {
                     val start = getTimeMillis()
-                    transaction(database) {
+                    database.suspendedTransaction {
                         val adminAccount = PlayerAccount.admin()
                         val adminObjects = PlayerObjects.admin()
                         val adminNeighbor = NeighborHistory.empty(AdminData.PLAYER_ID)
@@ -8518,7 +8518,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadPlayerAccount(playerId: String): PlayerAccount? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             PlayerAccounts.selectAll().where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     PlayerAccount(
@@ -8537,7 +8537,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadPlayerObjects(playerId: String): PlayerObjects? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
@@ -8546,7 +8546,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadNeighborHistory(playerId: String): NeighborHistory? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             NeighborHistoryTable.selectAll().where { NeighborHistoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString(row[NeighborHistoryTable.dataJson])
@@ -8555,7 +8555,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun loadInventory(playerId: String): Inventory? {
-        return transaction(database) {
+        return database.suspendedTransaction {
             InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
                     json.decodeFromString(row[InventoryTable.dataJson])
@@ -8564,7 +8564,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     }
 
     override suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects) {
-        transaction(database) {
+        database.suspendedTransaction {
             PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
                 it[dataJson] = json.encodeToString(updatedPlayerObjects)
             }
@@ -8585,7 +8585,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         val pid = UUID.new()
         val now = getTimeMillis()
 
-        transaction(database) {
+        database.suspendedTransaction {
             val account = PlayerAccount(
                 playerId = pid,
                 hashedPassword = hashPw(password),
@@ -14298,7 +14298,7 @@ import kotlin.io.encoding.Base64
 class PlayerAccountRepositoryMaria(private val database: Database?, private val json: Json) : PlayerAccountRepository {
     override suspend fun verifyCredentials(username: String, password: String): Result<String?> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 val row = PlayerAccounts.selectAll()
                     .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()
@@ -14323,7 +14323,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun doesUserExist(username: String): Result<Boolean> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.displayName eq username }
                     .count() > 0
@@ -14336,7 +14336,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun getProfileOfPlayerId(playerId: String): Result<UserProfile?> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()?.let { row ->
@@ -14371,7 +14371,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun getUserDocByUsername(username: String): Result<PlayerAccount?> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()?.let { row ->
@@ -14396,7 +14396,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun getUserDocByPlayerId(playerId: String): Result<PlayerAccount?> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.playerId eq playerId }
                     .singleOrNull()?.let { row ->
@@ -14421,7 +14421,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun getPlayerIdOfUsername(username: String): Result<String?> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 PlayerAccounts.selectAll()
                     .where { PlayerAccounts.displayName eq username }
                     .singleOrNull()?.let { row ->
@@ -14436,7 +14436,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun updatePlayerAccount(playerId: String, account: PlayerAccount): Result<Unit> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
                     it[hashedPassword] = account.hashedPassword
                     it[email] = account.email
@@ -14462,7 +14462,7 @@ class PlayerAccountRepositoryMaria(private val database: Database?, private val 
 
     override suspend fun updateLastLogin(playerId: String, lastLogin: Long): Result<Unit> {
         return try {
-            transaction(database) {
+            database.suspendedTransaction {
                 val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
                     it[PlayerAccounts.lastLogin] = lastLogin
                 }

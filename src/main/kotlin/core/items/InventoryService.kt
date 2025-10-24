@@ -22,7 +22,7 @@ class InventoryService(
 
     suspend fun updateInventory(
         updateAction: suspend (List<Item>) -> List<Item>
-    ) {
+    ): Result<Unit> {
         val updatedInventory = updateAction(this.inventory)
         val result = inventoryRepository.updateInventory(playerId, updatedInventory)
         result.onFailure {
@@ -31,11 +31,12 @@ class InventoryService(
         result.onSuccess {
             inventory = updatedInventory
         }
+        return result
     }
 
     suspend fun updateSchematics(
         updateAction: suspend (ByteArray) -> ByteArray
-    ) {
+    ): Result<Unit> {
         val updatedSchematics = updateAction(schematics)
         val result = inventoryRepository.updateSchematics(playerId, updatedSchematics)
         result.onFailure {
@@ -44,6 +45,7 @@ class InventoryService(
         result.onSuccess {
             schematics = updatedSchematics
         }
+        return result
     }
 
     override suspend fun init(playerId: String): Result<Unit> {

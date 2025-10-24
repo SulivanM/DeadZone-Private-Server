@@ -44,6 +44,7 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
 
         val svc = serverContext.requirePlayerContext(connection.playerId).services
         svc.survivor.addNewSurvivor(newSrv)
+        Unit
     }
 
     private fun generateSurvivor(): Survivor {

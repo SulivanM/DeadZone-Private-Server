@@ -12,7 +12,7 @@ class PlayerObjectsMetadataService(
     private var nickname: String? = null // nickname null will prompt leader creation
     private lateinit var playerId: String
 
-    suspend fun updatePlayerFlags(flags: ByteArray) {
+    suspend fun updatePlayerFlags(flags: ByteArray): Result<Unit> {
         val result = playerObjectsMetadataRepository.updatePlayerFlags(playerId, flags)
         result.onFailure {
             Logger.error(LogConfigSocketToClient) { "Error updatePlayerFlags: ${it.message}" }
@@ -20,9 +20,10 @@ class PlayerObjectsMetadataService(
         result.onSuccess {
             this.flags = flags
         }
+        return result
     }
 
-    suspend fun updatePlayerNickname(nickname: String) {
+    suspend fun updatePlayerNickname(nickname: String): Result<Unit> {
         val result = playerObjectsMetadataRepository.updatePlayerNickname(playerId, nickname)
         result.onFailure {
             Logger.error(LogConfigSocketToClient) { "Error updatePlayerNickname: ${it.message}" }
@@ -30,6 +31,7 @@ class PlayerObjectsMetadataService(
         result.onSuccess {
             this.nickname = nickname
         }
+        return result
     }
 
     fun getPlayerFlags() = flags
