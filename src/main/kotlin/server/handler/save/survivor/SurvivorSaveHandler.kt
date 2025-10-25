@@ -4,11 +4,14 @@ import context.GlobalContext
 import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import core.model.game.data.HumanAppearance
+import core.model.game.data.SurvivorClassConstants_Constants
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.survivor.response.PlayerCustomResponse
 import server.handler.save.survivor.response.SurvivorEditResponse
+import server.handler.save.survivor.response.SurvivorRenameResponse
+import server.handler.save.survivor.response.SurvivorClassResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
@@ -22,7 +25,49 @@ class SurvivorSaveHandler : SaveSubHandler {
 
         when (type) {
             SaveDataMethod.SURVIVOR_CLASS -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_CLASS' message [not implemented]" }
+                val survivorId = data["survivorId"] as? String
+                val classId = data["classId"] as? String
+
+                if (survivorId == null || classId == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorClassResponse(success = false, error = "invalid_params")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val validClasses = listOf(
+                    SurvivorClassConstants_Constants.FIGHTER.value,
+                    SurvivorClassConstants_Constants.MEDIC.value,
+                    SurvivorClassConstants_Constants.SCAVENGER.value,
+                    SurvivorClassConstants_Constants.ENGINEER.value,
+                    SurvivorClassConstants_Constants.RECON.value,
+                    SurvivorClassConstants_Constants.UNASSIGNED.value
+                )
+
+                if (classId !in validClasses) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorClassResponse(success = false, error = "invalid_class")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val svc = serverContext.requirePlayerContext(playerId).services
+
+                val updateResult = svc.survivor.updateSurvivor(srvId = survivorId) { currentSurvivor ->
+                    currentSurvivor.copy(classId = classId)
+                }
+
+                val responseJson = if (updateResult.isSuccess) {
+                    GlobalContext.json.encodeToString(SurvivorClassResponse(success = true))
+                } else {
+                    Logger.error(LogConfigSocketToClient) { "Failed to update survivor class: ${updateResult.exceptionOrNull()?.message}" }
+                    GlobalContext.json.encodeToString(
+                        SurvivorClassResponse(success = false, error = "update_failed")
+                    )
+                }
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_OFFENCE_LOADOUT -> {
@@ -42,7 +87,64 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_RENAME -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_RENAME' message [not implemented]" }
+                val survivorId = data["id"] as? String
+                val name = data["name"] as? String
+
+                if (survivorId == null || name == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = false, error = "name_invalid")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val trimmedName = name.trim()
+
+                if (trimmedName.length < 3) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = false, error = "name_short")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                if (trimmedName.length > 30) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = false, error = "name_long")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                if (!trimmedName.matches(Regex("^[a-zA-Z0-9 ]+$"))) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = false, error = "name_invalid")
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val svc = serverContext.requirePlayerContext(playerId).services
+
+                val updateResult = svc.survivor.updateSurvivor(srvId = survivorId) { currentSurvivor ->
+                    currentSurvivor.copy(
+                        title = trimmedName,
+                        firstName = trimmedName.split(" ").firstOrNull() ?: trimmedName,
+                        lastName = trimmedName.split(" ").getOrNull(1) ?: ""
+                    )
+                }
+
+                val responseJson = if (updateResult.isSuccess) {
+                    GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = true, name = trimmedName, id = survivorId)
+                    )
+                } else {
+                    Logger.error(LogConfigSocketToClient) { "Failed to update survivor: ${updateResult.exceptionOrNull()?.message}" }
+                    GlobalContext.json.encodeToString(
+                        SurvivorRenameResponse(success = false, error = "name_invalid")
+                    )
+                }
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_REASSIGN -> {
