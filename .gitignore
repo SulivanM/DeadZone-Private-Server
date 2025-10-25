@@ -48,3 +48,4 @@ deploy/
 src/main/dump.py
 src/main/dump.txt
 src/main/server.txt
+src/main/resources/application.yaml
