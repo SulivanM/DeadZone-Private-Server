@@ -7,11 +7,16 @@ ktor:
     port: 8080
 game:
   enableAdmin: "$ADMIN:true"
+  host: "127.0.0.1"
+  port: 7777
 broadcast:
   enabled: true
   host: "0.0.0.0"
   ports: "2121,2122,2123"
   enablePolicyServer: true
+policy:
+  host: "0.0.0.0"
+  port: 843
 maria:
   url: jdbc:mariadb://localhost:3306/prod_deadzone_game
   user: root

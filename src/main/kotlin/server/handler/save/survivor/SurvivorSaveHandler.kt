@@ -177,7 +177,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val loadoutDataMap = data as? Map<*, *>
 
                 if (loadoutDataMap == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -210,12 +210,12 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val updateResult = svc.survivor.updateSurvivors(updatedSurvivors)
 
                 val responseJson = if (updateResult.isSuccess) {
-                    GlobalContext.json.encodeToString(
+                    JSON.encode(
                         SurvivorLoadoutResponse(success = true, bind = bindItemIds)
                     )
                 } else {
                     Logger.error(LogConfigSocketToClient) { "Failed to update survivor clothing: ${updateResult.exceptionOrNull()?.message}" }
-                    GlobalContext.json.encodeToString(
+                    JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                 }
@@ -346,7 +346,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 )
                 if (flagsResult.isFailure) {
                     Logger.error(LogConfigSocketToClient) { "Failed to update player flags: ${flagsResult.exceptionOrNull()?.message}" }
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         PlayerCustomResponse(error = "db_error")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -356,7 +356,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val nicknameResult = svc.playerObjectMetadata.updatePlayerNickname(nickname = title)
                 if (nicknameResult.isFailure) {
                     Logger.error(LogConfigSocketToClient) { "Failed to update nickname: ${nicknameResult.exceptionOrNull()?.message}" }
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         PlayerCustomResponse(error = "db_error")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -375,7 +375,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
                 if (survivorResult.isFailure) {
                     Logger.error(LogConfigSocketToClient) { "Failed to update survivor: ${survivorResult.exceptionOrNull()?.message}" }
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         PlayerCustomResponse(error = "db_error")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -422,10 +422,10 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
 
                 val responseJson = if (updateResult.isSuccess) {
-                    GlobalContext.json.encodeToString(SurvivorEditResponse(success = true))
+                    JSON.encode(SurvivorEditResponse(success = true))
                 } else {
                     Logger.error(LogConfigSocketToClient) { "Failed to update survivor: ${updateResult.exceptionOrNull()?.message}" }
-                    GlobalContext.json.encodeToString(SurvivorEditResponse(success = false))
+                    JSON.encode(SurvivorEditResponse(success = false))
                 }
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }

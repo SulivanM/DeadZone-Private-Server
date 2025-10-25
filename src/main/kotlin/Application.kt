@@ -69,10 +69,6 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
-const val SERVER_HOST = "127.0.0.1"
-const val API_SERVER_PORT = 8080
-const val SOCKET_SERVER_PORT = 7777
-
 @Suppress("unused")
 fun Application.module() {
     install(WebSockets) {
@@ -111,6 +107,11 @@ fun Application.module() {
     JSON.initialize(json)
     GameDefinition.initialize()
 
+    AppConfig.initialize(
+        host = environment.config.propertyOrNull("game.host")?.getString() ?: "127.0.0.1",
+        port = environment.config.propertyOrNull("game.port")?.getString()?.toIntOrNull() ?: 7777
+    )
+
     val config = ServerConfig(
         adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull()
             ?: false,
@@ -120,6 +121,8 @@ fun Application.module() {
         mariaUser = environment.config.propertyOrNull("maria.user")?.getString() ?: "root",
         mariaPassword = environment.config.propertyOrNull("maria.password")?.getString() ?: "",
         isProd = !developmentMode,
+        gameHost = environment.config.propertyOrNull("game.host")?.getString() ?: "127.0.0.1",
+        gamePort = environment.config.propertyOrNull("game.port")?.getString()?.toIntOrNull() ?: 7777,
         broadcastEnabled = environment.config.propertyOrNull("broadcast.enabled")?.getString()?.toBooleanStrictOrNull()
             ?: true,
         broadcastHost = environment.config.propertyOrNull("broadcast.host")?.getString() ?: "0.0.0.0",
@@ -129,6 +132,8 @@ fun Application.module() {
         broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()
             ?.toBooleanStrictOrNull()
             ?: true,
+        policyHost = environment.config.propertyOrNull("policy.host")?.getString() ?: "0.0.0.0",
+        policyPort = environment.config.propertyOrNull("policy.port")?.getString()?.toIntOrNull() ?: 843,
     )
     Logger.info("${Emoji.Database} Connecting to MariaDB...")
     val database = try {
@@ -195,7 +200,7 @@ fun Application.module() {
     lateinit var broadcastServer: BroadcastServer
 
     val servers = buildList {
-        add(GameServer(GameServerConfig(host = "127.0.0.1", port = 7777)))
+        add(GameServer(GameServerConfig(host = config.gameHost, port = config.gamePort)))
 
         if (config.broadcastEnabled) {
             broadcastServer = BroadcastServer(
@@ -211,8 +216,8 @@ fun Application.module() {
             add(
                 PolicyFileServer(
                     PolicyFileServerConfig(
-                        host = "0.0.0.0",
-                        port = 843,
+                        host = config.policyHost,
+                        port = config.policyPort,
                         allowedPorts = config.broadcastPorts
                     )
                 )
@@ -228,8 +233,8 @@ fun Application.module() {
     BroadcastService.initialize(broadcastServer)
 
     Logger.info("${Emoji.Party} Server started successfully")
-    Logger.info("${Emoji.Satellite} Socket server listening on $SERVER_HOST:$SOCKET_SERVER_PORT")
-    Logger.info("${Emoji.Internet} API server available at $SERVER_HOST:$API_SERVER_PORT")
+    Logger.info("${Emoji.Satellite} Socket server listening on ${config.gameHost}:${config.gamePort}")
+    Logger.info("${Emoji.Internet} API server available at ${config.gameHost}:${environment.config.property("ktor.deployment.port").getString()}")
 
     Runtime.getRuntime().addShutdownHook(Thread {
         runBlocking {

@@ -5,7 +5,7 @@ import api.message.auth.AuthenticateOutput
 import api.utils.pioFraming
 import context.ServerContext
 import core.data.AdminData
-import dev.deadzone.SERVER_HOST
+import dev.deadzone.AppConfig
 import utils.Logger
 import utils.logInput
 import utils.logOutput
@@ -45,7 +45,7 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
             AuthenticateOutput(
                 token = userToken,
                 userId = serverContext.sessionManager.getPlayerId(userToken)!!,
-                apiServerHosts = listOf(SERVER_HOST)
+                apiServerHosts = listOf(AppConfig.gameHost)
             )
         } else {
             call.respond(HttpStatusCode.Unauthorized, "token is invalid, try re-login")

@@ -1,7 +1,6 @@
 package api.message.server
 
-import dev.deadzone.SERVER_HOST
-import dev.deadzone.SOCKET_SERVER_PORT
+import dev.deadzone.AppConfig
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,8 +11,8 @@ data class ServerEndpoint(
     companion object {
         fun socketServer(): ServerEndpoint {
             return ServerEndpoint(
-                address = SERVER_HOST,
-                port = SOCKET_SERVER_PORT
+                address = AppConfig.gameHost,
+                port = AppConfig.gamePort
             )
         }
     }
