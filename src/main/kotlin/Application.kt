@@ -8,11 +8,10 @@ import api.routes.fileRoutes
 import server.broadcast.BroadcastService
 import server.PolicyFileServer
 import server.PolicyFileServerConfig
-import context.GlobalContext
 import context.PlayerContextTracker
 import context.ServerConfig
 import context.ServerContext
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.metadata.model.ByteArrayAsBase64Serializer
 import core.model.game.data.Building
 import core.model.game.data.BuildingLike
@@ -63,6 +62,7 @@ import server.tasks.ServerTaskDispatcher
 import user.PlayerAccountRepositoryMaria
 import user.auth.SessionManager
 import user.auth.WebsiteAuthProvider
+import utils.JSON
 import utils.Logger
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
@@ -107,12 +107,9 @@ fun Application.module() {
         json(json)
         protobuf(ProtoBuf)
     }
-    GlobalContext.init(
-        json = json,
-        gameDefinitions = GameDefinitions(onResourceLoadComplete = {
-            Logger.info("${Emoji.Gaming} Game resources loaded")
-        })
-    )
+
+    JSON.initialize(json)
+    GameDefinition.initialize()
 
     val config = ServerConfig(
         adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull()
