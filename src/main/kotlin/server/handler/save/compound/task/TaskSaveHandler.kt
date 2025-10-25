@@ -6,6 +6,7 @@ import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -46,7 +47,7 @@ class TaskSaveHandler : SaveSubHandler {
                     else -> emptyList()
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     TaskStartedResponse(items = items)
                 )
 

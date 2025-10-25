@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import user.model.UserProfile
+import utils.JSON
 import utils.Logger
 import kotlin.io.encoding.Base64
 
@@ -75,7 +76,7 @@ class PlayerAccountRepositoryMaria(private val database: Database, private val j
                         createdAt = row[PlayerAccounts.createdAt],
                         lastLogin = row[PlayerAccounts.lastLogin],
                         countryCode = row[PlayerAccounts.countryCode],
-                        serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
+                        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
                     )
                 }
         }
@@ -95,7 +96,7 @@ class PlayerAccountRepositoryMaria(private val database: Database, private val j
                         createdAt = row[PlayerAccounts.createdAt],
                         lastLogin = row[PlayerAccounts.lastLogin],
                         countryCode = row[PlayerAccounts.countryCode],
-                        serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
+                        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
                     )
                 }
         }
@@ -121,7 +122,7 @@ class PlayerAccountRepositoryMaria(private val database: Database, private val j
                 it[createdAt] = account.createdAt
                 it[lastLogin] = account.lastLogin
                 it[countryCode] = account.countryCode
-                it[serverMetadataJson] = json.encodeToString(account.serverMetadata)
+                it[serverMetadataJson] = JSON.encode(account.serverMetadata)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update player account for playerId=$playerId")

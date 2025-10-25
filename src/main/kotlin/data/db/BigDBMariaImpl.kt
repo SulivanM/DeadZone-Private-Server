@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import utils.Emoji
+import utils.JSON
 import utils.Logger
 import utils.UUID
 import kotlin.io.encoding.Base64
@@ -47,8 +48,6 @@ object InventoryTable : Table("inventory") {
 }
 
 class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) : BigDB {
-    private val json = GlobalContext.json
-
     init {
         CoroutineScope(Dispatchers.IO).launch {
             setupDatabase()
@@ -85,22 +84,22 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                             it[createdAt] = adminAccount.createdAt
                             it[lastLogin] = adminAccount.lastLogin
                             it[countryCode] = adminAccount.countryCode
-                            it[serverMetadataJson] = json.encodeToString(adminAccount.serverMetadata)
+                            it[serverMetadataJson] = JSON.encode(adminAccount.serverMetadata)
                         }
 
                         PlayerObjectsTable.insert {
                             it[playerId] = adminObjects.playerId
-                            it[dataJson] = json.encodeToString(adminObjects)
+                            it[dataJson] = JSON.encode(adminObjects)
                         }
 
                         NeighborHistoryTable.insert {
                             it[playerId] = adminNeighbor.playerId
-                            it[dataJson] = json.encodeToString(adminNeighbor)
+                            it[dataJson] = JSON.encode(adminNeighbor)
                         }
 
                         InventoryTable.insert {
                             it[playerId] = adminInventory.playerId
-                            it[dataJson] = json.encodeToString(adminInventory)
+                            it[dataJson] = JSON.encode(adminInventory)
                         }
                     }
                     Logger.info { "${Emoji.Database} MariaDB: Admin account inserted in ${getTimeMillis() - start}ms" }
@@ -127,7 +126,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                         createdAt = row[PlayerAccounts.createdAt],
                         lastLogin = row[PlayerAccounts.lastLogin],
                         countryCode = row[PlayerAccounts.countryCode],
-                        serverMetadata = json.decodeFromString(row[PlayerAccounts.serverMetadataJson])
+                        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
                     )
                 }
         }
@@ -137,7 +136,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return database.suspendedTransaction {
             PlayerObjectsTable.selectAll().where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
-                    json.decodeFromString<PlayerObjects>(row[PlayerObjectsTable.dataJson])
+                    JSON.decode<PlayerObjects>(row[PlayerObjectsTable.dataJson])
                 }
         }
     }
@@ -146,7 +145,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return database.suspendedTransaction {
             NeighborHistoryTable.selectAll().where { NeighborHistoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
-                    json.decodeFromString(row[NeighborHistoryTable.dataJson])
+                    JSON.decode(row[NeighborHistoryTable.dataJson])
                 }
         }
     }
@@ -155,7 +154,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
         return database.suspendedTransaction {
             InventoryTable.selectAll().where { InventoryTable.playerId eq playerId }
                 .singleOrNull()?.let { row ->
-                    json.decodeFromString(row[InventoryTable.dataJson])
+                    JSON.decode(row[InventoryTable.dataJson])
                 }
         }
     }
@@ -163,7 +162,7 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
     override suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects) {
         database.suspendedTransaction {
             PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(updatedPlayerObjects)
+                it[dataJson] = JSON.encode(updatedPlayerObjects)
             }
         }
     }
@@ -209,22 +208,22 @@ class BigDBMariaImpl(val database: Database, private val adminEnabled: Boolean) 
                 it[createdAt] = account.createdAt
                 it[lastLogin] = account.lastLogin
                 it[countryCode] = account.countryCode
-                it[serverMetadataJson] = json.encodeToString(account.serverMetadata)
+                it[serverMetadataJson] = JSON.encode(account.serverMetadata)
             }
 
             PlayerObjectsTable.insert {
                 it[playerId] = objects.playerId
-                it[dataJson] = json.encodeToString(objects)
+                it[dataJson] = JSON.encode(objects)
             }
 
             NeighborHistoryTable.insert {
                 it[playerId] = neighbor.playerId
-                it[dataJson] = json.encodeToString(neighbor)
+                it[dataJson] = JSON.encode(neighbor)
             }
 
             InventoryTable.insert {
                 it[playerId] = inventory.playerId
-                it[dataJson] = json.encodeToString(inventory)
+                it[dataJson] = JSON.encode(inventory)
             }
         }
         return pid

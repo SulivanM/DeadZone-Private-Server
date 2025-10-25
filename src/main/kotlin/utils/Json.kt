@@ -52,7 +52,7 @@ object JSON {
 
 fun parseJsonToMap(json: String): Map<String, Any?> {
     return try {
-        val parsed = Json.decodeFromString<JsonObject>(json)
+        val parsed = JSON.decode<JsonObject>(json)
         parsed.mapValues { (_, v) -> parseJsonElement(v) }
     } catch (_: Exception) {
         emptyMap()

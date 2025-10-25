@@ -8,6 +8,7 @@ import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.messaging.CommandMessage
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -27,7 +28,7 @@ class CommandSaveHandler : SaveSubHandler {
                         // not tested
                         val schem = data["schem"] as? String ?: return
                         val item = SchematicItem(type = type, schem = schem, new = true)
-                        val response = GlobalContext.json.encodeToString(item)
+                        val response = JSON.encode(item)
                         send(PIOSerializer.serialize(buildMsg(saveId, response)))
                     }
 
@@ -37,7 +38,7 @@ class CommandSaveHandler : SaveSubHandler {
                         val repeat = (data["repeat"] as? Int) ?: 1
                         repeat(repeat) {
                             val item = CrateItem(type = type, series = series, new = true)
-                            val response = GlobalContext.json.encodeToString(item)
+                            val response = JSON.encode(item)
                             send(PIOSerializer.serialize(buildMsg(saveId, response)))
                         }
                     }
@@ -61,7 +62,7 @@ class CommandSaveHandler : SaveSubHandler {
                             mod2 = mod2,
                             new = true,
                         )
-                        val response = GlobalContext.json.encodeToString(item)
+                        val response = JSON.encode(item)
                         send(PIOSerializer.serialize(buildMsg(saveId, response)))
                     }
                 }
@@ -82,7 +83,7 @@ class CommandSaveHandler : SaveSubHandler {
 
                 Logger.info(LogConfigSocketToClient) { "Received 'giveRare' command with type=$type | level=$level" }
 
-                val response = GlobalContext.json.encodeToString(item)
+                val response = JSON.encode(item)
                 send(PIOSerializer.serialize(buildMsg(saveId, response)))
             }
 
@@ -100,7 +101,7 @@ class CommandSaveHandler : SaveSubHandler {
 
                 Logger.info(LogConfigSocketToClient) { "Received 'giveUnique' command with type=$type | level=$level" }
 
-                val response = GlobalContext.json.encodeToString(item)
+                val response = JSON.encode(item)
                 send(PIOSerializer.serialize(buildMsg(saveId, response)))
             }
 

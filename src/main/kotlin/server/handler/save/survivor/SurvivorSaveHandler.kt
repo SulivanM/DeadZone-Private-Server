@@ -16,6 +16,7 @@ import server.handler.save.survivor.response.SurvivorClassResponse
 import server.handler.save.survivor.response.SurvivorLoadoutResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -31,7 +32,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val classId = data["classId"] as? String
 
                 if (survivorId == null || classId == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorClassResponse(success = false, error = "invalid_params")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -48,7 +49,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 )
 
                 if (classId !in validClasses) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorClassResponse(success = false, error = "invalid_class")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -62,10 +63,10 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
 
                 val responseJson = if (updateResult.isSuccess) {
-                    GlobalContext.json.encodeToString(SurvivorClassResponse(success = true))
+                    JSON.encode(SurvivorClassResponse(success = true))
                 } else {
                     Logger.error(LogConfigSocketToClient) { "Failed to update survivor class: ${updateResult.exceptionOrNull()?.message}" }
-                    GlobalContext.json.encodeToString(
+                    JSON.encode(
                         SurvivorClassResponse(success = false, error = "update_failed")
                     )
                 }
@@ -76,7 +77,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val loadoutDataList = (data as? List<*>) ?: (data["data"] as? List<*>)
 
                 if (loadoutDataList == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -85,7 +86,7 @@ class SurvivorSaveHandler : SaveSubHandler {
 
                 val playerObjects = serverContext.db.loadPlayerObjects(playerId)
                 if (playerObjects == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -116,7 +117,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val updatedPlayerObjects = playerObjects.copy(offenceLoadout = updatedLoadouts)
                 serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     SurvivorLoadoutResponse(success = true, bind = bindItemIds)
                 )
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -126,7 +127,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val loadoutDataList = (data as? List<*>) ?: (data["data"] as? List<*>)
 
                 if (loadoutDataList == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -135,7 +136,7 @@ class SurvivorSaveHandler : SaveSubHandler {
 
                 val playerObjects = serverContext.db.loadPlayerObjects(playerId)
                 if (playerObjects == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorLoadoutResponse(success = false)
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -166,7 +167,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val updatedPlayerObjects = playerObjects.copy(defenceLoadout = updatedLoadouts)
                 serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     SurvivorLoadoutResponse(success = true, bind = bindItemIds)
                 )
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -185,7 +186,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val name = data["name"] as? String
 
                 if (survivorId == null || name == null) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorRenameResponse(success = false, error = "name_invalid")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -195,7 +196,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 val trimmedName = name.trim()
 
                 if (trimmedName.length < 3) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorRenameResponse(success = false, error = "name_short")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -203,7 +204,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
 
                 if (trimmedName.length > 30) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorRenameResponse(success = false, error = "name_long")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -211,7 +212,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
 
                 if (!trimmedName.matches(Regex("^[a-zA-Z0-9 ]+$"))) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         SurvivorRenameResponse(success = false, error = "name_invalid")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -229,12 +230,12 @@ class SurvivorSaveHandler : SaveSubHandler {
                 }
 
                 val responseJson = if (updateResult.isSuccess) {
-                    GlobalContext.json.encodeToString(
+                    JSON.encode(
                         SurvivorRenameResponse(success = true, name = trimmedName, id = survivorId)
                     )
                 } else {
                     Logger.error(LogConfigSocketToClient) { "Failed to update survivor: ${updateResult.exceptionOrNull()?.message}" }
-                    GlobalContext.json.encodeToString(
+                    JSON.encode(
                         SurvivorRenameResponse(success = false, error = "name_invalid")
                     )
                 }
@@ -286,7 +287,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                     title.contains(bannedWord)
                 }
                 if (nicknameNotAllowed) {
-                    val responseJson = GlobalContext.json.encodeToString(
+                    val responseJson = JSON.encode(
                         PlayerCustomResponse(error = "Nickname not allowed")
                     )
                     send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
@@ -315,7 +316,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                     )
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(PlayerCustomResponse())
+                val responseJson = JSON.encode(PlayerCustomResponse())
 
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
@@ -355,7 +356,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                     updatedSurvivor
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(SurvivorEditResponse(success = true))
+                val responseJson = JSON.encode(SurvivorEditResponse(success = true))
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 

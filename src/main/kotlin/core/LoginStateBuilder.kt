@@ -2,6 +2,7 @@ package core
 
 import context.ServerContext
 import core.data.PlayerLoginState
+import utils.JSON
 
 /**
  * Per-player dynamic updates.
@@ -26,7 +27,7 @@ object LoginStateBuilder {
         val context = serverContext.playerContextTracker.getContext(playerId = pid)!!
 
         // TODO: create service and repository methods
-        return GlobalContext.json.encodeToString(
+        return JSON.encode(
             PlayerLoginState(
                 // global game services
                 settings = emptyMap(),

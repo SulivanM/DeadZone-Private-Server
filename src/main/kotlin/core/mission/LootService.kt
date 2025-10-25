@@ -28,7 +28,6 @@ val ALL_LOCS = listOf(
 )
 
 class LootService(
-    private val gameDefinition: GameDefinition = GlobalContext.gameDefinition,
     private val sceneXML: String,
     private val parameter: LootParameter
 ) {
@@ -42,7 +41,7 @@ class LootService(
 
     private fun buildIndexOfLootableItems() {
         ALL_LOCS.forEach { loc ->
-            val lootableInLoc = gameDefinition.itemsByLootable[loc] ?: emptyList()
+            val lootableInLoc = GameDefinition.itemsByLootable[loc] ?: emptyList()
             // create a binary search tree whose key is cumulative weight and value is the loot
             // this will allow us to quickly search for an item based on a rolled double value just by seeing the cumulative weight
             val treeMap = TreeMap<Double, LootContent>()

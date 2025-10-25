@@ -4,12 +4,12 @@ import core.model.game.data.Survivor
 import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
 import data.db.suspendedTransactionResult
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import utils.JSON
 
-class SurvivorRepositoryMaria(private val database: Database, private val json: Json) : SurvivorRepository {
+class SurvivorRepositoryMaria(private val database: Database) : SurvivorRepository {
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {
         return database.suspendedTransactionResult {
             PlayerObjectsTable
@@ -18,7 +18,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
                 .singleOrNull()
                 ?.let { row ->
                     val playerObjects =
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                        JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                     playerObjects.survivors
                 } ?: throw NoSuchElementException("getSurvivors: No PlayerObjects found with id=$playerId")
         }
@@ -31,14 +31,14 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
                 .where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                 } ?: throw NoSuchElementException("addSurvivor: No PlayerObjects found with id=$playerId")
 
             val survivors = currentData.survivors.toMutableList()
             val updatedData = currentData.copy(survivors = survivors + survivor)
 
             val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in addSurvivor for playerId=$playerId")
@@ -53,7 +53,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
                 .where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                 } ?: throw NoSuchElementException("updateSurvivor: No PlayerObjects found with id=$playerId")
 
             val survivors = currentData.survivors.toMutableList()
@@ -66,7 +66,7 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
             val updatedData = currentData.copy(survivors = survivors)
 
             val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in updateSurvivor for playerId=$playerId")
@@ -81,13 +81,13 @@ class SurvivorRepositoryMaria(private val database: Database, private val json: 
                 .where { PlayerObjectsTable.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                 } ?: throw NoSuchElementException("updateSurvivors: No PlayerObjects with id=$playerId")
 
             val updatedData = currentData.copy(survivors = survivors)
 
             val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in updateSurvivors for playerId=$playerId")

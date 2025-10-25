@@ -8,6 +8,7 @@ import server.handler.save.SaveSubHandler
 import server.handler.save.crate.response.CrateUnlockResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 
@@ -22,7 +23,7 @@ class CrateSaveHandler : SaveSubHandler {
 
                 val item = ItemFactory.getRandomItem()
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     CrateUnlockResponse(
                         success = true,
                         item = item,

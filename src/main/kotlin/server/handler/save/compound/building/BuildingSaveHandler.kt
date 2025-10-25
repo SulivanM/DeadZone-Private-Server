@@ -17,6 +17,7 @@ import server.tasks.impl.BuildingCreateStopParameter
 import server.tasks.impl.BuildingCreateTask
 import server.tasks.impl.BuildingRepairStopParameter
 import server.tasks.impl.BuildingRepairTask
+import utils.JSON
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
@@ -81,7 +82,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     )
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
@@ -117,7 +118,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingMoveResponse(success = false, x = x, y = y, r = r)
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
@@ -143,7 +144,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
@@ -176,7 +177,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingRecycleResponse(success = false, items = emptyMap())
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
@@ -223,7 +224,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     )
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
@@ -241,7 +242,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingCancelResponse(success = false, items = emptyMap())
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
@@ -350,8 +351,8 @@ class BuildingSaveHandler : SaveSubHandler {
                     }
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
-                val resourceResponseJson = GlobalContext.json.encodeToString(resourceResponse)
+                val responseJson = JSON.encode(response)
+                val resourceResponseJson = JSON.encode(resourceResponse)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
@@ -375,7 +376,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingRepairResponse(success = false, items = emptyMap(), timer = null)
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
@@ -499,8 +500,8 @@ class BuildingSaveHandler : SaveSubHandler {
                     }
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
-                val resourceResponseJson = GlobalContext.json.encodeToString(resourceResponse)
+                val responseJson = JSON.encode(response)
+                val resourceResponseJson = JSON.encode(resourceResponse)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
@@ -550,7 +551,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     )
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
@@ -591,7 +592,7 @@ class BuildingSaveHandler : SaveSubHandler {
                     response = BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
                 }
 
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 if (result.isSuccess) {
