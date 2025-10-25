@@ -9,4 +9,6 @@ interface PlayerObjectsMetadataRepository {
 
     suspend fun getPlayerNickname(playerId: String): Result<String?>
     suspend fun updatePlayerNickname(playerId: String, nickname: String): Result<Unit>
+
+    suspend fun clearNotifications(playerId: String): Result<Unit>
 }

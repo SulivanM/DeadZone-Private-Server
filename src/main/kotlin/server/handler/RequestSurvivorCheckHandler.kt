@@ -62,7 +62,7 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
             title = "",
             morale = emptyMap(),
             injuries = emptyList(),
-            level = 0,
+            level = 1,
             xp = 0,
             missionId = null,
             assignmentId = null,

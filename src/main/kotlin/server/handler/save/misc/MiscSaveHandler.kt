@@ -37,7 +37,10 @@ class MiscSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.CLEAR_NOTIFICATIONS -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'CLEAR_NOTIFICATIONS' message [not implemented]" }
+                val playerId = connection.playerId
+                val services = serverContext.requirePlayerContext(playerId).services
+                services.playerObjectMetadata.clearNotifications()
+                Logger.info(LogConfigSocketToClient) { "Notifications cleared for playerId=$playerId" }
             }
 
             SaveDataMethod.FLUSH_PLAYER -> {

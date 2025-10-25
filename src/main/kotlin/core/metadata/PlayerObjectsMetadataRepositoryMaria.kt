@@ -62,4 +62,8 @@ class PlayerObjectsMetadataRepositoryMaria(private val database: Database) : Pla
     override suspend fun updatePlayerNickname(playerId: String, nickname: String): Result<Unit> {
         return updatePlayerObjectsData(playerId) { it.copy(nickname = nickname) }
     }
+
+    override suspend fun clearNotifications(playerId: String): Result<Unit> {
+        return updatePlayerObjectsData(playerId) { it.copy(notifications = emptyList()) }
+    }
 }

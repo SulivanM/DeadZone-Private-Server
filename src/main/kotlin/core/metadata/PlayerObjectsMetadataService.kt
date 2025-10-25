@@ -34,6 +34,14 @@ class PlayerObjectsMetadataService(
         return result
     }
 
+    suspend fun clearNotifications(): Result<Unit> {
+        val result = playerObjectsMetadataRepository.clearNotifications(playerId)
+        result.onFailure {
+            Logger.error(LogConfigSocketToClient) { "Error clearNotifications: ${it.message}" }
+        }
+        return result
+    }
+
     fun getPlayerFlags() = flags
 
     override suspend fun init(playerId: String): Result<Unit> {
