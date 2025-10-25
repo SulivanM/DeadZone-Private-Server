@@ -21,6 +21,25 @@ import kotlinx.serialization.json.longOrNull
 import kotlin.collections.map
 import kotlin.collections.mapValues
 
+/**
+ * Preset JSON serialization and deserialization.
+ */
+object JSON {
+    lateinit var json: Json
+
+    fun initialize(json: Json) {
+        this.json = json
+    }
+
+    inline fun <reified T> encode(value: T): String {
+        return json.encodeToString<T>(value)
+    }
+
+    inline fun <reified T> decode(value: String): T {
+        return json.decodeFromString<T>(value)
+    }
+}
+
 fun parseJsonToMap(json: String): Map<String, Any?> {
     return try {
         val parsed = Json.decodeFromString<JsonObject>(json)
