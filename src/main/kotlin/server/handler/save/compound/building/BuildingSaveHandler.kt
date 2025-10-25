@@ -21,6 +21,7 @@ import utils.JSON
 import utils.LogConfigSocketError
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.SpeedUpCostCalculator
 import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -265,31 +266,32 @@ class BuildingSaveHandler : SaveSubHandler {
                     val upgradeTimer =
                         requireNotNull(building.upgrade) { "Building upgrade timer for bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }
 
-                    // TO-DO ensure that the selected option is enabled in the cost table.
-                    // this prevent player from manipulating packet to unknown speed up option
-                    // TO-DO: calculate the cost in cost table
+                    val secondsRemaining = upgradeTimer.secondsLeftToEnd()
                     val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
-                            building.copy(upgrade = upgradeTimer.reduceBy(1.hours)) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(upgrade = upgradeTimer.reduceBy(1.hours)) to calculatedCost
                         }
 
                         "SpeedUpTwoHour" -> {
-                            building.copy(upgrade = upgradeTimer.reduceBy(2.hours)) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(upgrade = upgradeTimer.reduceBy(2.hours)) to calculatedCost
                         }
 
                         "SpeedUpHalf" -> {
-                            building.copy(upgrade = upgradeTimer.reduceByHalf()) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(upgrade = upgradeTimer.reduceByHalf()) to calculatedCost
                         }
 
                         "SpeedUpComplete" -> {
-                            building.copy(upgrade = null) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(upgrade = null) to calculatedCost
                         }
 
                         "SpeedUpFree" -> {
-                            // TO-DO lookup cost table and see the minimum time to speed up for free
-                            // in this case, only if building duration is less than 5 minutes it will be allowed
                             if (building.upgrade.secondsLeftToEnd() <= 300) {
-                                building.copy(upgrade = null) to 1
+                                val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                                building.copy(upgrade = null) to calculatedCost
                             } else {
                                 Logger.warn { "Received unexpected BuildingSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
                                 null to null
@@ -414,31 +416,32 @@ class BuildingSaveHandler : SaveSubHandler {
                     val repairTimer =
                         requireNotNull(building.repair) { "Building repair timer for bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }
 
-                    // TO-DO ensure that the selected option is enabled in the cost table.
-                    // this prevent player from manipulating packet to unknown speed up option
-                    // TO-DO: calculate the cost in cost table
+                    val secondsRemaining = repairTimer.secondsLeftToEnd()
                     val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
-                            building.copy(repair = repairTimer.reduceBy(1.hours)) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(repair = repairTimer.reduceBy(1.hours)) to calculatedCost
                         }
 
                         "SpeedUpTwoHour" -> {
-                            building.copy(repair = repairTimer.reduceBy(2.hours)) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(repair = repairTimer.reduceBy(2.hours)) to calculatedCost
                         }
 
                         "SpeedUpHalf" -> {
-                            building.copy(repair = repairTimer.reduceByHalf()) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(repair = repairTimer.reduceByHalf()) to calculatedCost
                         }
 
                         "SpeedUpComplete" -> {
-                            building.copy(repair = null) to 1
+                            val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                            building.copy(repair = null) to calculatedCost
                         }
 
                         "SpeedUpFree" -> {
-                            // TO-DO lookup cost table and see the minimum time to speed up for free
-                            // in this case, only if building duration is less than 5 minutes it will be allowed
                             if (building.repair.secondsLeftToEnd() <= 300) {
-                                building.copy(repair = null) to 1
+                                val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                                building.copy(repair = null) to calculatedCost
                             } else {
                                 Logger.warn { "Received unexpected BuildingSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
                                 null to null

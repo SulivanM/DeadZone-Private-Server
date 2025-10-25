@@ -69,7 +69,7 @@ class TestLootService {
         )
 
         val service = LootService(sceneWithItems, parameter)
-        val (updatedXML, loots) = service.insertLoots()
+        val (_, loots) = service.insertLoots()
 
         assertTrue(loots.isEmpty())
     }
@@ -129,7 +129,7 @@ class TestLootService {
         )
 
         val service = LootService(emptyScene, parameter)
-        val (updatedXML, loots) = service.insertLoots()
+        val (_, loots) = service.insertLoots()
 
         assertTrue(loots.isEmpty())
     }
