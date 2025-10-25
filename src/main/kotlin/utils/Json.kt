@@ -2,6 +2,8 @@
 
 package utils
 
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -35,8 +37,16 @@ object JSON {
         return json.encodeToString<T>(value)
     }
 
+    inline fun <reified T> encode(serializer: SerializationStrategy<T>, value: T): String {
+        return json.encodeToString(serializer, value)
+    }
+
     inline fun <reified T> decode(value: String): T {
         return json.decodeFromString<T>(value)
+    }
+
+    inline fun <reified T> decode(deserializer: DeserializationStrategy<T>, value: String): T {
+        return json.decodeFromString(deserializer, value)
     }
 }
 
