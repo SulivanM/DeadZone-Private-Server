@@ -13,7 +13,7 @@ import kotlinx.coroutines.cancelAndJoin
  * Provides a single entry point to initialize, start, and shut down all sub-servers.
  * Serves as the root coroutine context, shared by sub-servers and client connections.
  */
-class MainServer(private val servers: List<Server>, private val context: ServerContext) {
+class ServerContainer(private val servers: List<Server>, private val context: ServerContext) {
     private val job = SupervisorJob()
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default + job)
 

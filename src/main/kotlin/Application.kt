@@ -19,7 +19,7 @@ import core.model.game.data.JunkBuilding
 import data.db.BigDBMariaImpl
 import dev.deadzone.socket.core.BroadcastServer
 import dev.deadzone.socket.core.BroadcastServerConfig
-import server.MainServer
+import server.ServerContainer
 import utils.Emoji
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -220,10 +220,10 @@ fun Application.module() {
         }
     }
 
-    val server = MainServer(servers, serverContext)
+    val container = ServerContainer(servers, serverContext)
     runBlocking {
-        server.initializeAll()
-        server.startAll()
+        container.initializeAll()
+        container.startAll()
     }
     BroadcastService.initialize(broadcastServer)
 
@@ -233,7 +233,7 @@ fun Application.module() {
 
     Runtime.getRuntime().addShutdownHook(Thread {
         runBlocking {
-            server.shutdownAll()
+            container.shutdownAll()
         }
         Logger.info("${Emoji.Red} Server shutdown complete")
     })
