@@ -25,6 +25,7 @@ import server.handler.ZombieAttackHandler
 import server.tasks.TaskCategory
 import server.tasks.impl.BuildingCreateStopParameter
 import server.tasks.impl.BuildingRepairStopParameter
+import server.tasks.impl.JunkRemovalStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
 
@@ -85,6 +86,14 @@ class GameServer(private val config: GameServerConfig) : Server {
                 deriveId = { playerId, category, stopInput ->
                     // "MIS-RETURN-missionId123-playerId123"
                     "${category.code}-${stopInput.missionId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId(
+                category = TaskCategory.Task.JunkRemoval,
+                stopInputFactory = { JunkRemovalStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "TASK-JUNK-taskId123-playerId123"
+                    "${category.code}-${stopInput.taskId}-$playerId"
                 }
             )
         }

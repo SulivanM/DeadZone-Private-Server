@@ -35,4 +35,10 @@ sealed interface TaskCategory {
             override val code: String = "MIS-RETURN"
         }
     }
+
+    sealed interface Task : TaskCategory {
+        object JunkRemoval : Task {
+            override val code: String = "TASK-JUNK"
+        }
+    }
 }
