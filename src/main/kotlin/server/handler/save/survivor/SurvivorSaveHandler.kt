@@ -5,6 +5,8 @@ import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import core.model.game.data.HumanAppearance
 import core.model.game.data.SurvivorClassConstants_Constants
+import core.model.game.data.SurvivorLoadoutEntry
+import data.collection.PlayerObjects
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
@@ -12,6 +14,7 @@ import server.handler.save.survivor.response.PlayerCustomResponse
 import server.handler.save.survivor.response.SurvivorEditResponse
 import server.handler.save.survivor.response.SurvivorRenameResponse
 import server.handler.save.survivor.response.SurvivorClassResponse
+import server.handler.save.survivor.response.SurvivorLoadoutResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
 import utils.LogConfigSocketToClient
@@ -71,11 +74,103 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_OFFENCE_LOADOUT -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_OFFENCE_LOADOUT' message [not implemented]" }
+                val loadoutDataList = (data as? List<*>) ?: (data["data"] as? List<*>)
+
+                if (loadoutDataList == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorLoadoutResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val playerObjects = serverContext.db.loadPlayerObjects(playerId)
+                if (playerObjects == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorLoadoutResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val updatedLoadouts = mutableMapOf<String, SurvivorLoadoutEntry>()
+                val bindItemIds = mutableListOf<String>()
+
+                for (loadoutData in loadoutDataList) {
+                    val loadoutMap = loadoutData as? Map<*, *> ?: continue
+                    val survivorId = loadoutMap["id"] as? String ?: continue
+                    val weaponId = (loadoutMap["weapon"] ?: loadoutMap["w"] ?: "") as? String ?: ""
+                    val gear1Id = (loadoutMap["gearPassive"] ?: loadoutMap["g1"] ?: "") as? String ?: ""
+                    val gear2Id = (loadoutMap["gearActive"] ?: loadoutMap["g2"] ?: "") as? String ?: ""
+
+                    updatedLoadouts[survivorId] = SurvivorLoadoutEntry(
+                        weapon = weaponId,
+                        gear1 = gear1Id,
+                        gear2 = gear2Id
+                    )
+
+                    if (weaponId.isNotEmpty()) bindItemIds.add(weaponId)
+                    if (gear1Id.isNotEmpty()) bindItemIds.add(gear1Id)
+                    if (gear2Id.isNotEmpty()) bindItemIds.add(gear2Id)
+                }
+
+                val updatedPlayerObjects = playerObjects.copy(offenceLoadout = updatedLoadouts)
+                serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+
+                val responseJson = GlobalContext.json.encodeToString(
+                    SurvivorLoadoutResponse(success = true, bind = bindItemIds)
+                )
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_DEFENCE_LOADOUT -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_DEFENCE_LOADOUT' message [not implemented]" }
+                val loadoutDataList = (data as? List<*>) ?: (data["data"] as? List<*>)
+
+                if (loadoutDataList == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorLoadoutResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val playerObjects = serverContext.db.loadPlayerObjects(playerId)
+                if (playerObjects == null) {
+                    val responseJson = GlobalContext.json.encodeToString(
+                        SurvivorLoadoutResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+
+                val updatedLoadouts = mutableMapOf<String, SurvivorLoadoutEntry>()
+                val bindItemIds = mutableListOf<String>()
+
+                for (loadoutData in loadoutDataList) {
+                    val loadoutMap = loadoutData as? Map<*, *> ?: continue
+                    val survivorId = loadoutMap["id"] as? String ?: continue
+                    val weaponId = (loadoutMap["weapon"] ?: loadoutMap["w"] ?: "") as? String ?: ""
+                    val gear1Id = (loadoutMap["gearPassive"] ?: loadoutMap["g1"] ?: "") as? String ?: ""
+                    val gear2Id = (loadoutMap["gearActive"] ?: loadoutMap["g2"] ?: "") as? String ?: ""
+
+                    updatedLoadouts[survivorId] = SurvivorLoadoutEntry(
+                        weapon = weaponId,
+                        gear1 = gear1Id,
+                        gear2 = gear2Id
+                    )
+
+                    if (weaponId.isNotEmpty()) bindItemIds.add(weaponId)
+                    if (gear1Id.isNotEmpty()) bindItemIds.add(gear1Id)
+                    if (gear2Id.isNotEmpty()) bindItemIds.add(gear2Id)
+                }
+
+                val updatedPlayerObjects = playerObjects.copy(defenceLoadout = updatedLoadouts)
+                serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+
+                val responseJson = GlobalContext.json.encodeToString(
+                    SurvivorLoadoutResponse(success = true, bind = bindItemIds)
+                )
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_CLOTHING_LOADOUT -> {
