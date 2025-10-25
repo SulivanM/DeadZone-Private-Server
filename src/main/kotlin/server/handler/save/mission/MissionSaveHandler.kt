@@ -1,8 +1,8 @@
 package server.handler.save.mission
 
 import server.broadcast.BroadcastService
-import context.GlobalContext
 import context.requirePlayerContext
+import core.data.GameDefinition
 import core.items.model.Item
 import core.items.model.combineItems
 import core.items.model.compactString
@@ -24,6 +24,7 @@ import server.handler.save.mission.response.*
 import server.messaging.NetworkMessage
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -81,7 +82,7 @@ class MissionSaveHandler : SaveSubHandler {
                     baseWeight = 1.0,
                     fuelLimit = 50
                 )
-                val lootService = LootService(GlobalContext.gameDefinitions, sceneXML, lootParameter)
+                val lootService = LootService(sceneXML, lootParameter)
                 val (sceneXMLWithLoot, insertedLoots) = lootService.insertLoots()
 
                 val zombies = listOf(
@@ -99,7 +100,7 @@ class MissionSaveHandler : SaveSubHandler {
                 val missionId = connection.playerId
                 activeMissions[connection.playerId] = missionId to insertedLoots
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     MissionStartResponse(
                         id = missionId,
                         time = timeSeconds,
@@ -181,8 +182,8 @@ class MissionSaveHandler : SaveSubHandler {
                 // TODO respond to DB failure
                 svc.inventory.updateInventory { items ->
                     items.combineItems(
-                        combinedLootedItems.filter { !GlobalContext.gameDefinitions.isResourceItem(it.type) },
-                        GlobalContext.gameDefinitions
+                        combinedLootedItems.filter { !GameDefinition.isResourceItem(it.type) },
+                        GameDefinition
                     )
                 }
 
@@ -204,7 +205,7 @@ class MissionSaveHandler : SaveSubHandler {
 
                 val returnTime = 20.seconds
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     MissionEndResponse(
                         automated = false,
                         xpEarned = earnedXp,
@@ -230,7 +231,7 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 )
 
-                val resourceResponseJson = GlobalContext.json.encodeToString(svc.compound.getResources())
+                val resourceResponseJson = JSON.encode(svc.compound.getResources())
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
                 // TO-DO update player's task collection to include the mission return task
@@ -260,7 +261,7 @@ class MissionSaveHandler : SaveSubHandler {
                     ZombieData.standardZombieWeakAttack(Random.nextInt()),
                 ).flatMap { it.toFlatList() }
 
-                val responseJson = GlobalContext.json.encodeToString(
+                val responseJson = JSON.encode(
                     GetZombieResponse(
                         max = false,
                         z = zombies
@@ -285,7 +286,7 @@ class MissionSaveHandler : SaveSubHandler {
 
                 // temporarily always make speed up always success so player don't stuck
                 val response: MissionSpeedUpResponse = MissionSpeedUpResponse("", true, 0)
-                val responseJson = GlobalContext.json.encodeToString(response)
+                val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
                 connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, connection.playerId)
@@ -472,8 +473,8 @@ class MissionSaveHandler : SaveSubHandler {
         var totalRes = GameResources()
 
         for (item in items) {
-            if (GlobalContext.gameDefinitions.isResourceItem(item.type)) {
-                val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
+            if (GameDefinition.isResourceItem(item.type)) {
+                val resAmount = GameDefinition.getResourceAmount(item.type)
                 if (resAmount != null) {
                     totalRes += resAmount
                 } else {
@@ -482,7 +483,7 @@ class MissionSaveHandler : SaveSubHandler {
             }
         }
 
-        return items.stackOwnItems(GlobalContext.gameDefinitions) to totalRes
+        return items.stackOwnItems(GameDefinition) to totalRes
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {

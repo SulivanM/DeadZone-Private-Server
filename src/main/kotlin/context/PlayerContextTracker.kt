@@ -44,17 +44,15 @@ class PlayerContextTracker {
             "Weird, PlayerObjects for playerId=$playerId is null" 
         }
 
-        val json = GlobalContext.json
-
         val survivor = SurvivorService(
             survivorLeaderId = playerObjects.playerSurvivor!!,
-            survivorRepository = SurvivorRepositoryMaria(database, json)
+            survivorRepository = SurvivorRepositoryMaria(database)
         )
         
-        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria(database, json))
-        val compound = CompoundService(compoundRepository = CompoundRepositoryMaria(database, json))
+        val inventory = InventoryService(inventoryRepository = InventoryRepositoryMaria(database))
+        val compound = CompoundService(compoundRepository = CompoundRepositoryMaria(database))
         val playerObjectMetadata = PlayerObjectsMetadataService(
-            playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database, json)
+            playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database)
         )
         
         survivor.init(playerId).onFailure { "Failure during survivor service init: ${it.message}" }

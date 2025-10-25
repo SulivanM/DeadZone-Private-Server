@@ -4,6 +4,7 @@ import core.data.assets.*
 import core.model.game.data.GameResources
 import io.ktor.util.date.*
 import org.w3c.dom.Element
+import utils.Emoji
 import utils.Logger
 import java.io.File
 import java.util.zip.GZIPInputStream
@@ -31,13 +32,13 @@ import kotlin.time.Duration.Companion.milliseconds
  * - in the game, lookup to XML is done in syntax like @id == type. This means that the id (at) XML must be equal to type sent from server.
  * - For type in XML lookup, you can make similar server index like itemsByType
  */
-class GameDefinitions(onResourceLoadComplete: () -> Unit = {}) {
+object GameDefinition {
     val itemsById = mutableMapOf<String, ItemResource>()
     val itemsByIdUppercased = mutableMapOf<String, ItemResource>()
     val itemsByType = mutableMapOf<String, MutableList<ItemResource>>()
     val itemsByLootable = mutableMapOf<String, MutableList<ItemResource>>()
 
-    init {
+    fun initialize() {
         val resourcesToLoad = mapOf(
             "static/game/data/xml/alliances.xml.gz" to AlliancesParser(),
             "static/game/data/xml/arenas.xml.gz" to ArenasParser(),
@@ -76,7 +77,7 @@ class GameDefinitions(onResourceLoadComplete: () -> Unit = {}) {
 
             Logger.info { "📦 Finished parsing $resName in ${(end - start).milliseconds}" }
         }
-        onResourceLoadComplete()
+        Logger.info("${Emoji.Gaming} Game resources loaded")
     }
 
     /**

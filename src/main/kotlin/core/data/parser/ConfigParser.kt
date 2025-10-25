@@ -1,10 +1,10 @@
 package core.data.assets
 
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import org.w3c.dom.Document
 
 class ConfigParser() : GameResourcesParser {
-    override fun parse(doc: Document, gameDefinitions: GameDefinitions) {
+    override fun parse(doc: Document, gameDefinition: GameDefinition) {
 
     }
 }

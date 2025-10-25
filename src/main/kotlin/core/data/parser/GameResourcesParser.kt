@@ -1,6 +1,6 @@
 package core.data.assets
 
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import org.w3c.dom.Document
 
 /**
@@ -13,5 +13,5 @@ import org.w3c.dom.Document
  * and creates the corresponding [core.items.model.Item] object.
  */
 interface GameResourcesParser {
-    fun parse(doc: Document, gameDefinitions: GameDefinitions)
+    fun parse(doc: Document, gameDefinition: GameDefinition)
 }

@@ -3,16 +3,12 @@ package core.metadata
 import data.collection.PlayerObjects
 import data.db.PlayerObjectsTable
 import data.db.suspendedTransactionResult
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import utils.JSON
 
-class PlayerObjectsMetadataRepositoryMaria(
-    private val database: Database,
-    private val json: Json
-) : PlayerObjectsMetadataRepository {
-
+class PlayerObjectsMetadataRepositoryMaria(private val database: Database) : PlayerObjectsMetadataRepository {
     private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return database.suspendedTransactionResult {
             PlayerObjectsTable
@@ -21,7 +17,7 @@ class PlayerObjectsMetadataRepositoryMaria(
                 .singleOrNull()
                 ?.let { row ->
                     val playerObjects =
-                        json.decodeFromString(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                        JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
                     transform(playerObjects)
                 } ?: throw NoSuchElementException("getPlayerObjectsData: No PlayerObjects found with id=$playerId")
         }
@@ -39,11 +35,11 @@ class PlayerObjectsMetadataRepositoryMaria(
                 ?: throw NoSuchElementException("updatePlayerObjectsData: No PlayerObjects found with id=$playerId")
 
             val currentData =
-                json.decodeFromString(PlayerObjects.serializer(), currentRow[PlayerObjectsTable.dataJson])
+                JSON.decode(PlayerObjects.serializer(), currentRow[PlayerObjectsTable.dataJson])
             val updatedData = updateAction(currentData)
 
             val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = json.encodeToString(PlayerObjects.serializer(), updatedData)
+                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update player objects data for playerId=$playerId")

@@ -2,6 +2,8 @@
 
 package utils
 
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -21,9 +23,36 @@ import kotlinx.serialization.json.longOrNull
 import kotlin.collections.map
 import kotlin.collections.mapValues
 
+/**
+ * Preset JSON serialization and deserialization.
+ */
+object JSON {
+    lateinit var json: Json
+
+    fun initialize(json: Json) {
+        this.json = json
+    }
+
+    inline fun <reified T> encode(value: T): String {
+        return json.encodeToString<T>(value)
+    }
+
+    inline fun <reified T> encode(serializer: SerializationStrategy<T>, value: T): String {
+        return json.encodeToString(serializer, value)
+    }
+
+    inline fun <reified T> decode(value: String): T {
+        return json.decodeFromString<T>(value)
+    }
+
+    inline fun <reified T> decode(deserializer: DeserializationStrategy<T>, value: String): T {
+        return json.decodeFromString(deserializer, value)
+    }
+}
+
 fun parseJsonToMap(json: String): Map<String, Any?> {
     return try {
-        val parsed = Json.decodeFromString<JsonObject>(json)
+        val parsed = JSON.decode<JsonObject>(json)
         parsed.mapValues { (_, v) -> parseJsonElement(v) }
     } catch (_: Exception) {
         emptyMap()

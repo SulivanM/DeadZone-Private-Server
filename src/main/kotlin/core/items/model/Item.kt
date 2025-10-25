@@ -2,7 +2,7 @@
 
 package core.items.model
 
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.model.game.data.CraftingInfo
 import utils.UUID
 import kotlinx.serialization.EncodeDefault
@@ -51,12 +51,12 @@ fun Item.quantityString(): String {
  *
  * It assumes that the [other] list of items are already semantically correct.
  */
-fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions): List<Item> {
+fun List<Item>.combineItems(other: List<Item>, gameDefinition: GameDefinition): List<Item> {
     val result = mutableListOf<Item>()
     val alreadyCombined = mutableSetOf<String>()
 
     for (item in other) {
-        val maxStack = gameDefinitions.getMaxStackOfItem(item.type)
+        val maxStack = gameDefinition.getMaxStackOfItem(item.type)
 
         // item already hit the max stack, add to result directly
         if (item.qty >= maxStack.toUInt()) {
@@ -99,7 +99,7 @@ fun List<Item>.combineItems(other: List<Item>, gameDefinitions: GameDefinitions)
     return result
 }
 
-fun List<Item>.stackOwnItems(def: GameDefinitions): List<Item> {
+fun List<Item>.stackOwnItems(def: GameDefinition): List<Item> {
     if (isEmpty()) return emptyList()
 
     val stacked = mutableListOf<Item>()

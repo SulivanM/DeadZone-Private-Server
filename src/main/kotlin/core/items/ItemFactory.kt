@@ -1,21 +1,19 @@
 package core.items
 
+import core.data.GameDefinition
 import core.data.assets.ItemResource
 import core.items.model.Item
 import core.items.model.ItemQualityType
-import context.GlobalContext
 import utils.UUID
 import org.w3c.dom.Element
 
 object ItemFactory {
-    private val gameResourceRegistry get() = GlobalContext.gameDefinitions
-
     fun getRandomItem(): Item {
-        return createItemFromResource(res = gameResourceRegistry.itemsById.values.random())
+        return createItemFromResource(res = GameDefinition.itemsById.values.random())
     }
 
     fun createItemFromId(itemId: String = UUID.new(), idInXML: String): Item {
-        val res = gameResourceRegistry.findItem(idInXML)
+        val res = GameDefinition.findItem(idInXML)
             ?: throw IllegalArgumentException("Failed creating Item id=$itemId from xml id=$idInXML (xml id not found)")
         return createItemFromResource(itemId, res)
     }

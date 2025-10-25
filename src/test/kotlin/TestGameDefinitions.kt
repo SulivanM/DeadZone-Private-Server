@@ -1,4 +1,4 @@
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.model.game.data.GameResources
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -6,7 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TestGameDefinitions {
-    private val def = GameDefinitions()
+    private val def = GameDefinition()
 
     @Test
     fun `isResourceItem non-resource should return false`() {
