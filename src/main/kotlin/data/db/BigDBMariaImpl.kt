@@ -1,7 +1,6 @@
 package data.db
 
 import com.toxicbakery.bcrypt.Bcrypt
-import context.GlobalContext
 import core.data.AdminData
 import data.collection.*
 import io.ktor.util.date.*

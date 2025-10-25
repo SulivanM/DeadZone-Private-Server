@@ -1,6 +1,6 @@
 package core.data.assets
 
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 
@@ -15,7 +15,7 @@ data class ItemResource(
 }
 
 class ItemsParser() : GameResourcesParser {
-    override fun parse(doc: Document, gameDefinitions: GameDefinitions) {
+    override fun parse(doc: Document, gameDefinition: GameDefinition) {
         val items = doc.getElementsByTagName("item")
 
         for (i in 0 until items.length) {
@@ -26,13 +26,13 @@ class ItemsParser() : GameResourcesParser {
 
             val res = ItemResource(itemId, itemType, itemNode)
 
-            gameDefinitions.itemsById.putIfAbsent(itemId, res)
-            gameDefinitions.itemsByIdUppercased.putIfAbsent(itemId.uppercase(), res)
-            gameDefinitions.itemsByType.computeIfAbsent(itemId) { mutableListOf() }.add(res)
+            gameDefinition.itemsById.putIfAbsent(itemId, res)
+            gameDefinition.itemsByIdUppercased.putIfAbsent(itemId.uppercase(), res)
+            gameDefinition.itemsByType.computeIfAbsent(itemId) { mutableListOf() }.add(res)
             if (itemLocs?.isNotEmpty() ?: false) {
                 val locList = itemLocs.split(',').map { it.trim() }
                 for (loc in locList) {
-                    gameDefinitions.itemsByLootable.computeIfAbsent(loc) { mutableListOf() }.add(res)
+                    gameDefinition.itemsByLootable.computeIfAbsent(loc) { mutableListOf() }.add(res)
                 }
             }
         }

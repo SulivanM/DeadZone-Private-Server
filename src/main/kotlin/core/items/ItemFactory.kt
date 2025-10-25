@@ -3,12 +3,11 @@ package core.items
 import core.data.assets.ItemResource
 import core.items.model.Item
 import core.items.model.ItemQualityType
-import context.GlobalContext
 import utils.UUID
 import org.w3c.dom.Element
 
 object ItemFactory {
-    private val gameResourceRegistry get() = GlobalContext.gameDefinitions
+    private val gameResourceRegistry get() = GlobalContext.gameDefinition
 
     fun getRandomItem(): Item {
         return createItemFromResource(res = gameResourceRegistry.itemsById.values.random())

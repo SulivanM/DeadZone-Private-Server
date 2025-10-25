@@ -1,6 +1,5 @@
 package server.handler.save.command
 
-import context.GlobalContext
 import core.items.model.CrateItem
 import core.items.model.Item
 import core.items.model.SchematicItem

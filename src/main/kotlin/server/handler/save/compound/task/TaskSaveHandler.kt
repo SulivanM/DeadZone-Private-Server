@@ -1,6 +1,5 @@
 package server.handler.save.compound.task
 
-import context.GlobalContext
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import kotlinx.serialization.Serializable
 import server.handler.buildMsg

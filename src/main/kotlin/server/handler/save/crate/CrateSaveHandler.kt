@@ -1,7 +1,6 @@
 package server.handler.save.crate
 
 import server.broadcast.BroadcastService
-import context.GlobalContext
 import core.items.ItemFactory
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg

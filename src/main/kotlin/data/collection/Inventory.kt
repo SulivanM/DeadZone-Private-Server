@@ -1,7 +1,7 @@
 package data.collection
 
 import core.data.AdminData
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.items.ItemFactory
 import core.items.model.Item
 import core.items.model.combineItems
@@ -100,6 +100,6 @@ data class Inventory(
 /**
  * Combine two inventory semantically (according to the game definition).
  */
-fun Inventory.combineItems(other: Inventory, gameDefinitions: GameDefinitions): Inventory {
-    return this.copy(inventory = this.inventory.combineItems(other.inventory, gameDefinitions))
+fun Inventory.combineItems(other: Inventory, gameDefinition: GameDefinition): Inventory {
+    return this.copy(inventory = this.inventory.combineItems(other.inventory, gameDefinition))
 }

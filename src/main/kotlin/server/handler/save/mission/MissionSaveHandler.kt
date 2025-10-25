@@ -1,7 +1,6 @@
 package server.handler.save.mission
 
 import server.broadcast.BroadcastService
-import context.GlobalContext
 import context.requirePlayerContext
 import core.items.model.Item
 import core.items.model.combineItems
@@ -81,7 +80,7 @@ class MissionSaveHandler : SaveSubHandler {
                     baseWeight = 1.0,
                     fuelLimit = 50
                 )
-                val lootService = LootService(GlobalContext.gameDefinitions, sceneXML, lootParameter)
+                val lootService = LootService(GlobalContext.gameDefinition, sceneXML, lootParameter)
                 val (sceneXMLWithLoot, insertedLoots) = lootService.insertLoots()
 
                 val zombies = listOf(
@@ -181,8 +180,8 @@ class MissionSaveHandler : SaveSubHandler {
                 // TODO respond to DB failure
                 svc.inventory.updateInventory { items ->
                     items.combineItems(
-                        combinedLootedItems.filter { !GlobalContext.gameDefinitions.isResourceItem(it.type) },
-                        GlobalContext.gameDefinitions
+                        combinedLootedItems.filter { !GlobalContext.gameDefinition.isResourceItem(it.type) },
+                        GlobalContext.gameDefinition
                     )
                 }
 
@@ -472,8 +471,8 @@ class MissionSaveHandler : SaveSubHandler {
         var totalRes = GameResources()
 
         for (item in items) {
-            if (GlobalContext.gameDefinitions.isResourceItem(item.type)) {
-                val resAmount = GlobalContext.gameDefinitions.getResourceAmount(item.type)
+            if (GlobalContext.gameDefinition.isResourceItem(item.type)) {
+                val resAmount = GlobalContext.gameDefinition.getResourceAmount(item.type)
                 if (resAmount != null) {
                     totalRes += resAmount
                 } else {
@@ -482,7 +481,7 @@ class MissionSaveHandler : SaveSubHandler {
             }
         }
 
-        return items.stackOwnItems(GlobalContext.gameDefinitions) to totalRes
+        return items.stackOwnItems(GlobalContext.gameDefinition) to totalRes
     }
 
     private fun calculateNewLevelAndPoints(currentLevel: Int, currentXp: Int, newXp: Int): Pair<Int, Int> {

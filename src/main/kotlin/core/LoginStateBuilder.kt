@@ -1,6 +1,5 @@
 package core
 
-import context.GlobalContext
 import context.ServerContext
 import core.data.PlayerLoginState
 

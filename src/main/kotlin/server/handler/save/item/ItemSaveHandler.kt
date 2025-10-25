@@ -1,6 +1,5 @@
 package server.handler.save.item
 
-import context.GlobalContext
 import context.requirePlayerContext
 import core.items.model.Item
 import dev.deadzone.socket.handler.save.SaveHandlerContext

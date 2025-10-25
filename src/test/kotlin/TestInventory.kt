@@ -1,4 +1,4 @@
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.items.model.Item
 import core.items.model.combineItems
 import core.items.model.quantityString
@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class TestInventory {
-    private val def = GameDefinitions()
+    private val def = GameDefinition()
 
     @Test
     fun testStackItems() {

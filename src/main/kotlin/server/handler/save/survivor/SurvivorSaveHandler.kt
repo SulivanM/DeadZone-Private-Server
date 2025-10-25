@@ -1,6 +1,5 @@
 package server.handler.save.survivor
 
-import context.GlobalContext
 import context.requirePlayerContext
 import core.metadata.model.PlayerFlags
 import core.model.game.data.HumanAppearance

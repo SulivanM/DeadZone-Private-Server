@@ -1,4 +1,4 @@
-import core.data.GameDefinitions
+import core.data.GameDefinition
 import core.mission.LootService
 import core.mission.model.LootParameter
 import server.handler.save.mission.response.loadSceneXML
@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.test.Test
 
 object TestDependency {
-    val gameDefinitions: GameDefinitions = GameDefinitions({})
+    val gameDefinition: GameDefinition = GameDefinition({})
 }
 
 class TestLootManager {
@@ -45,7 +45,7 @@ class TestLootManager {
                 repeat(GENERATION_PER_SCENE) { i ->
                     val sceneXML = loadSceneXML(filename)
                     val manager = LootService(
-                        gameDefinitions = TestDependency.gameDefinitions,
+                        gameDefinition = TestDependency.gameDefinition,
                         sceneXML = sceneXML,
                         parameter = PARAMETER1
                     )
