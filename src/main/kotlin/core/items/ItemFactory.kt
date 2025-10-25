@@ -1,11 +1,10 @@
 package core.items
 
 import core.data.GameDefinition
-import core.data.assets.ItemResource
+import core.data.resources.ItemResource
 import core.items.model.Item
 import core.items.model.ItemQualityType
 import utils.UUID
-import org.w3c.dom.Element
 
 object ItemFactory {
     fun getRandomItem(): Item {
@@ -21,23 +20,20 @@ object ItemFactory {
     fun createItemFromResource(itemId: String = UUID.new(), res: ItemResource): Item {
         val baseItem = Item(
             id = itemId,
-            type = res.idInXML,
-            quality = ItemQualityType.fromString(res.element.getAttribute("quality"))
+            type = res.id,
+            quality = ItemQualityType.fromString(res.quality ?: "")
         )
 
         when (res.type) {
-            "gear" -> parseGear(res.element, baseItem)
-            "weapon" -> parseWeapon(res.element, baseItem)
-            "clothing" -> parseClothing(res.element, baseItem)
-            // and many more...
+            "gear" -> parseGear(res, baseItem)
+            "weapon" -> parseWeapon(res, baseItem)
+            "clothing" -> parseClothing(res, baseItem)
         }
 
         return baseItem
     }
 
-    // these should modify the base item as needed
-    // currently does nothing as we are not sure the detailed traits of each item types
-    private fun parseGear(element: Element, baseItem: Item) {}
-    private fun parseWeapon(element: Element, baseItem: Item) {}
-    private fun parseClothing(element: Element, baseItem: Item) {}
+    private fun parseGear(res: ItemResource, baseItem: Item) {}
+    private fun parseWeapon(res: ItemResource, baseItem: Item) {}
+    private fun parseClothing(res: ItemResource, baseItem: Item) {}
 }

@@ -1,6 +1,6 @@
 package core.mission
 
-import core.data.assets.ItemResource
+import core.data.resources.ItemResource
 import core.data.GameDefinition
 import core.mission.model.LootContent
 import core.mission.model.LootParameter
@@ -49,7 +49,6 @@ class LootService(
 
             loop@ for (item in lootableInLoc) {
                 val specialItemsKeyword = listOf(
-                    // Seasonal & Holidays
                     "halloween", "spooky", "pumpkin", "ghost", "witch",
                     "christmas", "winter", "snow", "xmas", "santa", "holiday",
                     "easter", "bunny", "egg",
@@ -57,42 +56,32 @@ class LootService(
                     "summer", "beach", "sun", "vacation",
                     "autumn", "fall", "harvest",
                     "spring", "blossom",
-
-                    // National Days & Special Events
                     "4july", "july", "independence", "firework",
                     "birthday", "anniversary", "celebration", "cake",
                     "newyear", "ny", "countdown",
                     "thanksgiving", "turkey", "feast",
-
-                    // Game-specific Events
                     "event", "limited", "special", "exclusive", "festive",
-
-                    // Crate related
                     "cache", "box", "gacha", "crate"
                 )
 
-                // discard special items
                 val isEventItem = specialItemsKeyword.any { keyword ->
-                    item.idInXML.contains(keyword, ignoreCase = true)
+                    item.id.contains(keyword, ignoreCase = true)
                 }
 
                 if (isEventItem) continue
 
-                // only pick items which level range contain areaLevel
-                val lvlMin = item.element.getElementsByTagName("lvl_min").item(0)?.textContent?.toIntOrNull() ?: 0
-                val lvlMax = item.element.getElementsByTagName("lvl_max").item(0)?.textContent?.toIntOrNull()
-                    ?: Int.MAX_VALUE
+                val lvlMin = item.levelMin ?: 0
+                val lvlMax = item.levelMax ?: Int.MAX_VALUE
                 if (parameter.areaLevel !in (lvlMin..lvlMax)) continue
 
-                val rarity = item.element.getAttribute("rarity").toIntOrNull() ?: 1
-                val type = item.element.getAttribute("type")
-                val quality = item.element.getAttribute("quality")
+                val rarity = item.rarity?.toInt() ?: 1
+                val type = item.type
+                val quality = item.quality ?: ""
 
-                val baseWeight = parameter.itemWeightOverrides[item.idInXML]
+                val baseWeight = parameter.itemWeightOverrides[item.id]
                     ?: (parameter.baseWeight / rarity.toDouble())
 
-                // e.g., +0.2 means +20%
-                val itemBoost = parameter.specificItemBoost[item.idInXML] ?: 0.0
+                val itemBoost = parameter.specificItemBoost[item.id] ?: 0.0
                 val typeBoost = parameter.itemTypeBoost[type] ?: 0.0
                 val qualityBoost = parameter.itemQualityBoost[quality] ?: 0.0
 
@@ -201,18 +190,15 @@ class LootService(
     }
 
     private fun createLootContent(res: ItemResource): LootContent {
-        val element = res.element
-        val qntMin = element.getElementsByTagName("qnt_min").item(0)?.textContent?.toIntOrNull() ?: 1
-        val qntMax = element.getElementsByTagName("qnt_max").item(0)?.textContent?.toIntOrNull() ?: 1
+        val qntMin = res.quantityMin ?: 1
+        val qntMax = res.quantityMax ?: 1
         val min = minOf(qntMin, qntMax)
         val max = maxOf(qntMin, qntMax)
         val qty = (min..max).random()
-        // may want to set quantity depending on item type
-        // i.e., weapon, schematics, is limited to 1 but junk items can be 5
 
         return LootContent(
             lootId = UUID.new(),
-            itemIdInXML = res.idInXML,
+            itemIdInXML = res.id,
             quantity = qty,
         )
     }
