@@ -16,6 +16,10 @@ import kotlinx.serialization.json.*
 @JsonClassDiscriminator("_t")
 sealed class BuildingLike
 
+private object Unspecified {
+    override fun toString() = "Unspecified"
+}
+
 fun BuildingLike.toBuilding(): Building {
     return this as Building
 }
@@ -60,8 +64,8 @@ fun BuildingLike.copy(
     ty: Int? = null,
     destroyed: Boolean? = null,
     resourceValue: Double? = null,
-    upgrade: TimerData? = null,
-    repair: TimerData? = null,
+    upgrade: Any? = Unspecified,
+    repair: Any? = Unspecified,
     items: List<Item>? = null,
     pos: String? = null,
     rot: String? = null
@@ -76,8 +80,8 @@ fun BuildingLike.copy(
         ty = ty ?: this.ty,
         destroyed = destroyed ?: this.destroyed,
         resourceValue = resourceValue ?: this.resourceValue,
-        upgrade = upgrade ?: this.upgrade,
-        repair = repair ?: this.repair
+        upgrade = if (upgrade === Unspecified) this.upgrade else upgrade as TimerData?,
+        repair = if (repair === Unspecified) this.repair else repair as TimerData?
     )
 
     is JunkBuilding -> this.copy(
@@ -90,8 +94,8 @@ fun BuildingLike.copy(
         ty = ty ?: this.ty,
         destroyed = destroyed ?: this.destroyed,
         resourceValue = resourceValue ?: this.resourceValue,
-        upgrade = upgrade ?: this.upgrade,
-        repair = repair ?: this.repair,
+        upgrade = if (upgrade === Unspecified) this.upgrade else upgrade as TimerData?,
+        repair = if (repair === Unspecified) this.repair else repair as TimerData?,
         items = items ?: this.items,
         pos = pos ?: this.pos,
         rot = rot ?: this.rot

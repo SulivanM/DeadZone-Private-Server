@@ -93,6 +93,7 @@ class BuildingSaveHandler : SaveSubHandler {
                             taskInputBlock = {
                                 this.buildingId = bldId
                                 this.buildDuration = buildDuration
+                                this.serverContext = serverContext
                             },
                             stopInputBlock = {
                                 this.buildingId = bldId
@@ -155,6 +156,7 @@ class BuildingSaveHandler : SaveSubHandler {
                             taskInputBlock = {
                                 this.buildingId = bldId
                                 this.buildDuration = buildDuration
+                                this.serverContext = serverContext
                             },
                             stopInputBlock = {
                                 this.buildingId = bldId
@@ -285,13 +287,15 @@ class BuildingSaveHandler : SaveSubHandler {
 
                         "SpeedUpComplete" -> {
                             val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
-                            building.copy(upgrade = null) to calculatedCost
+                            val newLevel = (upgradeTimer.data?.get("level") as? Int) ?: (building.level + 1)
+                            building.copy(upgrade = null, level = newLevel) to calculatedCost
                         }
 
                         "SpeedUpFree" -> {
                             if (building.upgrade.secondsLeftToEnd() <= 300) {
                                 val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
-                                building.copy(upgrade = null) to calculatedCost
+                                val newLevel = (upgradeTimer.data?.get("level") as? Int) ?: (building.level + 1)
+                                building.copy(upgrade = null, level = newLevel) to calculatedCost
                             } else {
                                 Logger.warn { "Received unexpected BuildingSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
                                 null to null
@@ -340,6 +344,7 @@ class BuildingSaveHandler : SaveSubHandler {
                                             ?.secondsLeftToEnd()
                                             ?.toDuration(DurationUnit.SECONDS)
                                             ?: Duration.ZERO
+                                    this.serverContext = serverContext
                                 },
                                 stopInputBlock = {
                                     this.buildingId = bldId
@@ -388,6 +393,7 @@ class BuildingSaveHandler : SaveSubHandler {
                             taskInputBlock = {
                                 this.buildingId = bldId
                                 this.repairDuration = buildDuration
+                                this.serverContext = serverContext
                             },
                             stopInputBlock = {
                                 this.buildingId = bldId
@@ -435,13 +441,13 @@ class BuildingSaveHandler : SaveSubHandler {
 
                         "SpeedUpComplete" -> {
                             val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
-                            building.copy(repair = null) to calculatedCost
+                            building.copy(repair = null, destroyed = false) to calculatedCost
                         }
 
                         "SpeedUpFree" -> {
                             if (building.repair.secondsLeftToEnd() <= 300) {
                                 val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
-                                building.copy(repair = null) to calculatedCost
+                                building.copy(repair = null, destroyed = false) to calculatedCost
                             } else {
                                 Logger.warn { "Received unexpected BuildingSpeedUp FREE option: $option from playerId=${connection.playerId} (speed up requested when timer is off or build time more than 5 minutes)" }
                                 null to null
@@ -490,6 +496,7 @@ class BuildingSaveHandler : SaveSubHandler {
                                             ?.secondsLeftToEnd()
                                             ?.toDuration(DurationUnit.SECONDS)
                                             ?: Duration.ZERO
+                                    this.serverContext = serverContext
                                 },
                                 stopInputBlock = {
                                     this.buildingId = bldId
@@ -564,6 +571,7 @@ class BuildingSaveHandler : SaveSubHandler {
                             taskInputBlock = {
                                 this.buildingId = bldId
                                 this.buildDuration = buildDuration
+                                this.serverContext = serverContext
                             },
                             stopInputBlock = {
                                 this.buildingId = bldId
@@ -577,19 +585,20 @@ class BuildingSaveHandler : SaveSubHandler {
                 val bldId = data["id"] as? String ?: return
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_UPGRADE_BUY' message for $saveId and $bldId" }
 
-                val buildDuration = 0.seconds
-                lateinit var timer: TimerData
+                var newLevel = 0
                 val result = svc.updateBuilding(bldId) { bld ->
-                    timer = TimerData.runForDuration(
-                        duration = buildDuration,
-                        data = mapOf("level" to (bld.level + 1), "type" to "upgrade", "xp" to 50)
-                    )
-                    bld.copy(upgrade = timer)
+                    newLevel = bld.level + 1
+                    bld.copy(level = newLevel, upgrade = null)
                 }
 
                 val response: BuildingUpgradeResponse
                 if (result.isSuccess) {
-                    response = BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
+                    response = BuildingUpgradeResponse(
+                        success = true,
+                        items = emptyMap(),
+                        timer = null,
+                        level = newLevel
+                    )
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to upgrade (buy) building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
                     response = BuildingUpgradeResponse(success = false, items = emptyMap(), timer = null)
@@ -597,21 +606,6 @@ class BuildingSaveHandler : SaveSubHandler {
 
                 val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
-
-                if (result.isSuccess) {
-                    serverContext.taskDispatcher.runTaskFor(
-                        connection = connection,
-                        taskToRun = BuildingCreateTask(
-                            taskInputBlock = {
-                                this.buildingId = bldId
-                                this.buildDuration = buildDuration
-                            },
-                            stopInputBlock = {
-                                this.buildingId = bldId
-                            }
-                        )
-                    )
-                }
             }
 
             SaveDataMethod.BUILDING_REPAIR_BUY -> {

@@ -10,4 +10,6 @@ data class BuildingUpgradeResponse(
     val items: Map<String, Int>? = emptyMap(),
     val timer: TimerData?,
     val xp: Int = 0,
+    val level: Int? = null,
+    val levelPts: Int? = null,
 ): BaseResponse()

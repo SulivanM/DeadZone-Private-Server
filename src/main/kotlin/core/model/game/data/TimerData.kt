@@ -62,7 +62,6 @@ fun TimerData.reduceByHalf(): TimerData? {
     val reducedLength = remainingSeconds / 2
     if (reducedLength <= 1.seconds) return null
 
-    this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
     return this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
 }
 
