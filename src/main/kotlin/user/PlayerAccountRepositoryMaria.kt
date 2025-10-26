@@ -66,19 +66,7 @@ class PlayerAccountRepositoryMaria(private val database: Database, private val j
         return database.suspendedTransactionResult {
             PlayerAccounts.selectAll()
                 .where { PlayerAccounts.displayName eq username }
-                .singleOrNull()?.let { row ->
-                    PlayerAccount(
-                        playerId = row[PlayerAccounts.playerId],
-                        hashedPassword = row[PlayerAccounts.hashedPassword],
-                        email = row[PlayerAccounts.email],
-                        displayName = row[PlayerAccounts.displayName],
-                        avatarUrl = row[PlayerAccounts.avatarUrl],
-                        createdAt = row[PlayerAccounts.createdAt],
-                        lastLogin = row[PlayerAccounts.lastLogin],
-                        countryCode = row[PlayerAccounts.countryCode],
-                        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
-                    )
-                }
+                .singleOrNull()?.let { mapToPlayerAccount(it) }
         }
     }
 
@@ -86,21 +74,21 @@ class PlayerAccountRepositoryMaria(private val database: Database, private val j
         return database.suspendedTransactionResult {
             PlayerAccounts.selectAll()
                 .where { PlayerAccounts.playerId eq playerId }
-                .singleOrNull()?.let { row ->
-                    PlayerAccount(
-                        playerId = row[PlayerAccounts.playerId],
-                        hashedPassword = row[PlayerAccounts.hashedPassword],
-                        email = row[PlayerAccounts.email],
-                        displayName = row[PlayerAccounts.displayName],
-                        avatarUrl = row[PlayerAccounts.avatarUrl],
-                        createdAt = row[PlayerAccounts.createdAt],
-                        lastLogin = row[PlayerAccounts.lastLogin],
-                        countryCode = row[PlayerAccounts.countryCode],
-                        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
-                    )
-                }
+                .singleOrNull()?.let { mapToPlayerAccount(it) }
         }
     }
+
+    private fun mapToPlayerAccount(row: org.jetbrains.exposed.sql.ResultRow) = PlayerAccount(
+        playerId = row[PlayerAccounts.playerId],
+        hashedPassword = row[PlayerAccounts.hashedPassword],
+        email = row[PlayerAccounts.email],
+        displayName = row[PlayerAccounts.displayName],
+        avatarUrl = row[PlayerAccounts.avatarUrl],
+        createdAt = row[PlayerAccounts.createdAt],
+        lastLogin = row[PlayerAccounts.lastLogin],
+        countryCode = row[PlayerAccounts.countryCode],
+        serverMetadata = JSON.decode(row[PlayerAccounts.serverMetadataJson])
+    )
 
     override suspend fun getPlayerIdOfUsername(username: String): Result<String?> {
         return database.suspendedTransactionResult {

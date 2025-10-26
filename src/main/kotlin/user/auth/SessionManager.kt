@@ -83,7 +83,7 @@ class SessionManager {
             return false
         }
 
-        session.expiresAt = now + 1 * 60 * 60 * 1000
+        session.expiresAt = now + SESSION_DURATION_MS
         return true
     }
 

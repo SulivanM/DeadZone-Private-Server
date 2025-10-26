@@ -68,11 +68,7 @@ object BigDBConverter {
             .mapNotNull { prop ->
                 val name = prop.name
                 if (name in reserved) return@mapNotNull null
-                val value = try {
-                    prop.get(obj)
-                } catch (_: Exception) {
-                    null
-                }
+                val value = runCatching { prop.get(obj) }.getOrNull()
 
                 if (value == null) return@mapNotNull null
 

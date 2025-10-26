@@ -23,14 +23,10 @@ suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: St
 
     logInput(socialRefreshArgs.decodeToString(), disableLogging = true)
 
-    val pid = serverContext.sessionManager.getPlayerId(token)!!
-    val result = serverContext.playerAccountRepository.getProfileOfPlayerId(pid)
-    result.onFailure {
-        Logger.error(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$pid: ${it.message}" }
-    }
-
-    val userProfile = requireNotNull(result.getOrThrow()) {
-        "getProfileOfPlayerId succeed but returned profile is null"
+    val pid = serverContext.sessionManager.getPlayerId(token) ?: return
+    val userProfile = serverContext.playerAccountRepository.getProfileOfPlayerId(pid).getOrNull() ?: run {
+        Logger.error(LogConfigAPIError) { "Failed to get profile for playerId=$pid" }
+        return
     }
     val socialRefreshOutput = if (pid == AdminData.PLAYER_ID) {
         SocialRefreshOutput.admin()

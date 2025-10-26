@@ -8,6 +8,7 @@ import server.messaging.SocketMessageDispatcher
 import server.protocol.PIODeserializer
 import utils.Logger
 import utils.UUID
+import utils.sanitizedString
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.util.date.*
@@ -144,23 +145,6 @@ class GameServer(private val config: GameServerConfig) : Server {
                     val elapsed = measureTimeMillis {
                         val data = buffer.copyOfRange(0, bytesRead)
 
-                        fun ByteArray.decode(max: Int = 512, placeholder: Char = '.'): String {
-                            val decoded = String(this, Charsets.UTF_8)
-                            val sanitized = decoded.map { ch ->
-                                if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
-                                else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(
-                                        ' ', '.', ',', ':', ';', '-', '_',
-                                        '{', '}', '[', ']', '(', ')', '"',
-                                        '\'', '/', '\\', '?', '=', '+', '*',
-                                        '%', '&', '|', '<', '>', '!', '@',
-                                        '#', '$', '^', '~'
-                                    )
-                                ) placeholder
-                                else ch
-                            }.joinToString("")
-                            return sanitized.take(max) + if (sanitized.length > max) "..." else ""
-                        }
-
                         if (data.startsWithBytes(POLICY_FILE_REQUEST)) {
                             Logger.debug { "=====> [SOCKET START]: POLICY_FILE_REQUEST from connection=$connection" }
                             connection.sendRaw(POLICY_FILE_RESPONSE)
@@ -187,7 +171,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                         msgType = msg.msgTypeToString()
 
                         Logger.debug {
-                            "=====> [SOCKET START]: of type $msgType, raw: ${data.decode()} for playerId=${connection.playerId}, bytes=$bytesRead"
+                            "=====> [SOCKET START]: of type $msgType, raw: ${data.sanitizedString()} for playerId=${connection.playerId}, bytes=$bytesRead"
                         }
 
                         socketDispatcher.findHandlerFor(msg).handle(HandlerContext(connection, msg))

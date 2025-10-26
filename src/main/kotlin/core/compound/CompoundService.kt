@@ -82,16 +82,6 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         return result
     }
 
-    suspend fun cancelBuilding(bldId: String): Result<Unit> {
-        val result = compoundRepository.deleteBuilding(playerId, bldId)
-        result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on cancelBuilding for playerId=$playerId: ${it.message}" }
-        }
-        result.onSuccess {
-            buildings.removeIf { it.id == bldId }
-        }
-        return result
-    }
 
     suspend fun collectBuilding(bldId: String): Result<GameResources> {
         val lastUpdate = lastResourceValueUpdated[bldId]
@@ -100,26 +90,12 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         val collectedAmount = calculateResource(lastUpdate.seconds)
         lastResourceValueUpdated[bldId] = getTimeMillis()
 
-        lateinit var prod: String
         val updateResult = updateBuilding(bldId) { oldBld ->
-            prod = "wood" // Lookup to GameDefinitions, what does the building produce in 'prod' element
             oldBld.copy(resourceValue = 0.0)
         }
         updateResult.onFailure { return Result.failure(it) }
 
-        val res = when (prod) {
-            "wood" -> GameResources(wood = collectedAmount.toInt())
-            "metal" -> GameResources(metal = collectedAmount.toInt())
-            "cloth" -> GameResources(cloth = collectedAmount.toInt())
-            "food" -> GameResources(food = collectedAmount.toInt())
-            "water" -> GameResources(water = collectedAmount.toInt())
-            "cash" -> GameResources(cash = collectedAmount.toInt())
-            "ammunition" -> GameResources(ammunition = collectedAmount.toInt())
-            else -> {
-                return Result.failure(IllegalArgumentException("Error during collectBuilding, type $prod doesn't exist"))
-            }
-        }
-        return Result.success(res)
+        return Result.success(GameResources(wood = collectedAmount.toInt()))
     }
 
     suspend fun updateResource(updateAction: suspend (GameResources) -> (GameResources)): Result<Unit> {
@@ -173,7 +149,6 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
                     Logger.error(LogConfigSocketError) { "Failed to update building ${bldLike.id} during close for playerId=$playerId: ${it.message}" }
                 }
             }
-            Result.success(Unit)
         }
     }
 

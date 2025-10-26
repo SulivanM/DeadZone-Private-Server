@@ -44,25 +44,19 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
             continue
         }
 
-        val profile = requireNotNull(result.getOrThrow()) {
-            "getProfileOfPlayerId succeed but returned profile is null"
-        }
-        val playerObjects = serverContext.db.loadPlayerObjects(playerId)!!
-        val neighborHistory = serverContext.db.loadNeighborHistory(playerId)!!
-        val inventory = serverContext.db.loadInventory(playerId)!!
+        val profile = result.getOrNull() ?: continue
+        val playerObjects = serverContext.db.loadPlayerObjects(playerId) ?: continue
+        val neighborHistory = serverContext.db.loadNeighborHistory(playerId) ?: continue
+        val inventory = serverContext.db.loadInventory(playerId) ?: continue
         val obj: BigDBObject? = when (objId.table) {
             "PlayerObjects" -> {
                 val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
                 val updatedResources = LazyDataUpdater.depleteResources(profile.lastLogin, playerObjects.resources)
                 val updatedSurvivors = playerObjects.survivors.map { srv ->
-                    srv.copy(
-                        lastName = srv.lastName.takeIf { it.isNotEmpty() } ?: "DZ",
-                        level = max(srv.level, 1)
-                    )
+                    srv.copy(level = max(srv.level, 1))
                 }
 
                 try {
-                    // must use service since they are already active
                     val svc = serverContext.requirePlayerContext(playerId).services
                     svc.compound.updateAllBuildings(updatedBuildings)
                     svc.compound.updateResource { updatedResources }
@@ -72,8 +66,12 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
                     return
                 }
 
-                val reloadedPlayerObjects = serverContext.db.loadPlayerObjects(playerId)!!
-                LoadObjectsOutput.fromData(reloadedPlayerObjects)
+                val updatedPlayerObjects = playerObjects.copy(
+                    buildings = updatedBuildings,
+                    resources = updatedResources,
+                    survivors = updatedSurvivors
+                )
+                LoadObjectsOutput.fromData(updatedPlayerObjects)
             }
 
             "NeighborHistory" -> LoadObjectsOutput.fromData(

@@ -233,7 +233,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val bldId = data["id"] as? String ?: return
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_CANCEL' message for $saveId and $bldId" }
 
-                val result = runCatching { svc.cancelBuilding(bldId) }
+                val result = svc.deleteBuilding(bldId)
 
                 val response: BuildingCancelResponse
                 if (result.isSuccess) {

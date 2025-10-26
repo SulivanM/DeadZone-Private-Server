@@ -197,7 +197,7 @@ fun Application.module() {
         broadcastRoutes(serverContext)
     }
 
-    lateinit var broadcastServer: BroadcastServer
+    var broadcastServer: BroadcastServer? = null
 
     val servers = buildList {
         add(GameServer(GameServerConfig(host = config.gameHost, port = config.gamePort)))
@@ -208,8 +208,7 @@ fun Application.module() {
                     host = config.broadcastHost,
                     ports = config.broadcastPorts
                 )
-            )
-            add(broadcastServer)
+            ).also { add(it) }
         }
 
         if (config.broadcastPolicyServerEnabled) {
@@ -230,7 +229,7 @@ fun Application.module() {
         container.initializeAll()
         container.startAll()
     }
-    BroadcastService.initialize(broadcastServer)
+    broadcastServer?.let { BroadcastService.initialize(it) }
 
     Logger.info("${Emoji.Party} Server started successfully")
     Logger.info("${Emoji.Satellite} Socket server listening on ${config.gameHost}:${config.gamePort}")
