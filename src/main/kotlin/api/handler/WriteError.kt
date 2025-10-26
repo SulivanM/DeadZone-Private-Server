@@ -3,6 +3,7 @@ package api.handler
 import api.message.utils.WriteErrorArgs
 import api.message.utils.WriteErrorError
 import api.utils.pioFraming
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -18,11 +19,21 @@ import utils.logInput
 
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.writeError() {
-    val writeErrorArgs = ProtoBuf.decodeFromByteArray<WriteErrorArgs>(
+    val body = try {
         call.receiveChannel().toByteArray()
-    )
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.BadRequest, "invalid_body")
+        return
+    }
 
-    logInput("\n" + writeErrorArgs, disableLogging = true)
+    val writeErrorArgs = try {
+        ProtoBuf.decodeFromByteArray<WriteErrorArgs>(body)
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.BadRequest, "invalid_payload")
+        return
+    }
+
+    logInput("\n$writeErrorArgs", disableLogging = true)
 
     Logger.error(LogConfigWriteError) { writeErrorArgs.toString() }
 
@@ -35,7 +46,12 @@ suspend fun RoutingContext.writeError() {
         Logger.error(LogConfigAssetsError) { writeErrorArgs.details }
     }
 
-    val loadObjectsOutput = ProtoBuf.encodeToByteArray(WriteErrorError.dummy())
+    val loadObjectsOutput = try {
+        ProtoBuf.encodeToByteArray(WriteErrorError.dummy())
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.InternalServerError, "encode_error")
+        return
+    }
 
     call.respondBytes(loadObjectsOutput.pioFraming())
 }

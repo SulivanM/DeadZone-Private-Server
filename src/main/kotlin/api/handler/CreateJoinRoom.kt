@@ -3,6 +3,7 @@ package api.handler
 import api.message.server.CreateJoinRoomArgs
 import api.message.server.CreateJoinRoomOutput
 import api.utils.pioFraming
+import io.ktor.http.HttpStatusCode
 import utils.logInput
 import utils.logOutput
 import io.ktor.server.request.*
@@ -16,17 +17,31 @@ import kotlinx.serialization.protobuf.ProtoBuf
 
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.createJoinRoom() {
-    val createJoinRoomArgs = ProtoBuf.decodeFromByteArray<CreateJoinRoomArgs>(
+    val body = try {
         call.receiveChannel().toByteArray()
-    )
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.BadRequest, "invalid_body")
+        return
+    }
 
-    logInput(createJoinRoomArgs, disableLogging = true)
+    val args = try {
+        ProtoBuf.decodeFromByteArray<CreateJoinRoomArgs>(body)
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.BadRequest, "invalid_payload")
+        return
+    }
 
-    val createJoinRoomOutput = ProtoBuf.encodeToByteArray<CreateJoinRoomOutput>(
-        CreateJoinRoomOutput.defaultRoom()
-    )
+    logInput(args, disableLogging = true)
 
-    logOutput(createJoinRoomOutput, disableLogging = true)
+    val output = CreateJoinRoomOutput.defaultRoom()
+    val outputBytes = try {
+        ProtoBuf.encodeToByteArray(output)
+    } catch (e: Exception) {
+        call.respond(HttpStatusCode.InternalServerError, "encode_error")
+        return
+    }
 
-    call.respondBytes(createJoinRoomOutput.pioFraming())
+    logOutput(outputBytes, disableLogging = true)
+
+    call.respondBytes(outputBytes.pioFraming())
 }
