@@ -2,6 +2,8 @@ package context
 
 import core.compound.CompoundRepositoryMaria
 import core.compound.CompoundService
+import core.items.BatchRecycleJobRepositoryMaria
+import core.items.BatchRecycleJobService
 import core.items.InventoryRepositoryMaria
 import core.items.InventoryService
 import core.metadata.PlayerObjectsMetadataRepositoryMaria
@@ -54,17 +56,22 @@ class PlayerContextTracker {
         val playerObjectMetadata = PlayerObjectsMetadataService(
             playerObjectsMetadataRepository = PlayerObjectsMetadataRepositoryMaria(database)
         )
+        val batchRecycleJob = BatchRecycleJobService(
+            batchRecycleJobRepository = BatchRecycleJobRepositoryMaria(database)
+        )
         
         survivor.init(playerId).onFailure { "Failure during survivor service init: ${it.message}" }
         inventory.init(playerId).onFailure { "Failure during inventory service init: ${it.message}" }
         compound.init(playerId).onFailure { "Failure during compound service init: ${it.message}" }
         playerObjectMetadata.init(playerId).onFailure { "Failure during playerObjectMetadata service init: ${it.message}" }
+        batchRecycleJob.init(playerId).onFailure { "Failure during batchRecycleJob service init: ${it.message}" }
         
         return PlayerServices(
             survivor = survivor,
             compound = compound,
             inventory = inventory,
-            playerObjectMetadata = playerObjectMetadata
+            playerObjectMetadata = playerObjectMetadata,
+            batchRecycleJob = batchRecycleJob
         )
     }
     

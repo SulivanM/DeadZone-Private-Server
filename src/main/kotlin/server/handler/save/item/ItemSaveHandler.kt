@@ -2,6 +2,10 @@ package server.handler.save.item
 
 import context.requirePlayerContext
 import core.items.model.Item
+import dev.deadzone.core.model.game.data.hasEnded
+import dev.deadzone.core.model.game.data.reduceBy
+import dev.deadzone.core.model.game.data.reduceByHalf
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
@@ -11,6 +15,8 @@ import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 class ItemSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.ITEM_SAVES
@@ -138,11 +144,250 @@ class ItemSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.ITEM_BATCH_RECYCLE -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'ITEM_BATCH_RECYCLE' message [not implemented]" }
+                val itemsMap = data["items"] as? Map<*, *>
+                val buy = data["buy"] as? Boolean ?: false
+
+                if (itemsMap == null) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: missing 'items' parameter" }
+                    return@with
+                }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val inventory = svc.inventory.getInventory()
+
+                val itemsToRecycle = mutableListOf<core.items.model.Item>()
+                val recycledOutputItems = mutableListOf<core.items.model.Item>()
+
+                for ((itemIdStr, qtyObj) in itemsMap) {
+                    val itemId = itemIdStr.toString()
+                    val qty = (qtyObj as? Number)?.toInt() ?: 1
+
+                    val itemInInventory = inventory.find { it.id.equals(itemId, ignoreCase = true) }
+                    if (itemInInventory != null) {
+                        val itemToAdd = itemInInventory.copy(qty = minOf(qty.toUInt(), itemInInventory.qty))
+                        itemsToRecycle.add(itemToAdd)
+
+                        val rewards = generateRecycleRewards(itemInInventory.type)
+                        for (reward in rewards) {
+                            val existingReward = recycledOutputItems.find { it.type == reward.type }
+                            if (existingReward != null) {
+                                val idx = recycledOutputItems.indexOf(existingReward)
+                                recycledOutputItems[idx] = existingReward.copy(qty = existingReward.qty + (reward.qty * itemToAdd.qty))
+                            } else {
+                                recycledOutputItems.add(reward.copy(qty = reward.qty * itemToAdd.qty))
+                            }
+                        }
+                    }
+                }
+
+                if (itemsToRecycle.isEmpty()) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: no valid items to recycle" }
+                    return@with
+                }
+
+                val timePerItem = 10
+                val timePerQty = 5
+                val totalQty = recycledOutputItems.sumOf { it.qty.toInt() }
+                val totalTime = itemsToRecycle.size * timePerItem + totalQty * timePerQty
+
+                val minCost = 50
+                val costPerMin = 0.5
+                val cost = maxOf(minCost, (costPerMin * (totalTime / 60.0)).toInt())
+
+                if (buy) {
+                    val currentCash = svc.compound.getResources().cash
+                    if (currentCash < cost) {
+                        send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false,"error":"55"}""")))
+                        Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: not enough cash for player ${connection.playerId}" }
+                        return@with
+                    }
+
+                    for (item in itemsToRecycle) {
+                        svc.inventory.updateInventory { items ->
+                            items.map { 
+                                if (it.id.equals(item.id, ignoreCase = true)) {
+                                    if (it.qty > item.qty) {
+                                        it.copy(qty = it.qty - item.qty)
+                                    } else {
+                                        null
+                                    }
+                                } else {
+                                    it
+                                }
+                            }.filterNotNull()
+                        }
+                    }
+
+                    svc.compound.updateResource { resources ->
+                        resources.copy(cash = currentCash - cost)
+                    }
+
+                    if (recycledOutputItems.isNotEmpty()) {
+                        svc.inventory.updateInventory { items ->
+                            items + recycledOutputItems
+                        }
+                    }
+
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":true,"buy":true}""")))
+                    Logger.info(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: instant recycle completed for player ${connection.playerId}" }
+                } else {
+                    val jobId = utils.UUID.new()
+                    val startTime = io.ktor.util.date.getTimeMillis()
+                    val timer = dev.deadzone.core.model.game.data.TimerData(
+                        start = startTime,
+                        length = totalTime.toLong(),
+                        data = null
+                    )
+
+                    for (item in itemsToRecycle) {
+                        svc.inventory.updateInventory { items ->
+                            items.map { 
+                                if (it.id.equals(item.id, ignoreCase = true)) {
+                                    if (it.qty > item.qty) {
+                                        it.copy(qty = it.qty - item.qty)
+                                    } else {
+                                        null
+                                    }
+                                } else {
+                                    it
+                                }
+                            }.filterNotNull()
+                        }
+                    }
+
+                    val job = core.model.game.data.BatchRecycleJob(
+                        id = jobId,
+                        items = recycledOutputItems,
+                        start = startTime,
+                        end = totalTime
+                    )
+                    svc.batchRecycleJob.addBatchRecycleJob(job)
+
+                    serverContext.taskDispatcher.runTaskFor(
+                        connection = connection,
+                        taskToRun = server.tasks.impl.BatchRecycleCompleteTask(
+                            taskInputBlock = {
+                                this.jobId = jobId
+                                this.duration = totalTime.seconds
+                                this.serverContext = serverContext
+                            },
+                            stopInputBlock = {
+                                this.jobId = jobId
+                            }
+                        )
+                    )
+
+                    val itemsJsonArray = recycledOutputItems.joinToString(",") { item ->
+                        """{"id":"${item.id}","type":"${item.type}","qty":${item.qty},"new":true}"""
+                    }
+                    val timerJson = """{"start":${timer.start},"length":${timer.length}}"""
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":true,"id":"$jobId","items":[$itemsJsonArray],"timer":$timerJson}""")))
+
+                    Logger.info(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: job $jobId created for player ${connection.playerId}" }
+                }
             }
 
             SaveDataMethod.ITEM_BATCH_RECYCLE_SPEED_UP -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'ITEM_BATCH_RECYCLE_SPEED_UP' message [not implemented]" }
+                val jobId = data["id"] as? String
+                val option = data["option"] as? String
+
+                if (jobId == null || option == null) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: missing 'id' or 'option' parameter" }
+                    return@with
+                }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val job = svc.batchRecycleJob.getBatchRecycleJob(jobId)
+
+                if (job == null) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job not found with id=$jobId" }
+                    return@with
+                }
+
+                val timer = dev.deadzone.core.model.game.data.TimerData(
+                    start = job.start,
+                    length = job.end.toLong(),
+                    data = null
+                )
+
+                if (timer.hasEnded()) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job $jobId has already ended" }
+                    return@with
+                }
+
+                val secondsRemaining = timer.secondsLeftToEnd()
+                val cost = utils.SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                val currentCash = svc.compound.getResources().cash
+
+                if (currentCash < cost) {
+                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false,"error":"55"}""")))
+                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: not enough cash for player ${connection.playerId}" }
+                    return@with
+                }
+
+                val newTimer = when (option) {
+                    "SpeedUpOneHour" -> timer.reduceBy(1.hours)
+                    "SpeedUpTwoHour" -> timer.reduceBy(2.hours)
+                    "SpeedUpHalf" -> timer.reduceByHalf()
+                    "SpeedUpComplete" -> null
+                    "SpeedUpFree" -> if (secondsRemaining <= 300) null else timer
+                    else -> timer
+                }
+
+                if (newTimer == null) {
+                    svc.inventory.updateInventory { items ->
+                        items + job.items
+                    }
+                    svc.batchRecycleJob.removeBatchRecycleJob(jobId)
+
+                    serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
+                        connection = connection,
+                        category = server.tasks.TaskCategory.BatchRecycle.Complete,
+                        stopInputBlock = {
+                            this.jobId = jobId
+                        }
+                    )
+                } else {
+                    val updatedJob = job.copy(
+                        start = newTimer.start,
+                        end = newTimer.length.toInt()
+                    )
+                    svc.batchRecycleJob.updateBatchRecycleJob(jobId) { updatedJob }
+
+                    serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
+                        connection = connection,
+                        category = server.tasks.TaskCategory.BatchRecycle.Complete,
+                        stopInputBlock = {
+                            this.jobId = jobId
+                        }
+                    )
+
+                    serverContext.taskDispatcher.runTaskFor(
+                        connection = connection,
+                        taskToRun = server.tasks.impl.BatchRecycleCompleteTask(
+                            taskInputBlock = {
+                                this.jobId = jobId
+                                this.duration = newTimer.secondsLeftToEnd().seconds
+                                this.serverContext = serverContext
+                            },
+                            stopInputBlock = {
+                                this.jobId = jobId
+                            }
+                        )
+                    )
+                }
+
+                svc.compound.updateResource { resources ->
+                    resources.copy(cash = currentCash - cost)
+                }
+
+                send(PIOSerializer.serialize(buildMsg(saveId, """{"success":true,"cost":$cost}""")))
+                Logger.info(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job $jobId sped up with option $option for player ${connection.playerId}" }
             }
 
             SaveDataMethod.ITEM_BATCH_DISPOSE -> {

@@ -14,6 +14,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Handle `join` message by:
@@ -46,6 +47,33 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
             connection = connection,
             db = serverContext.db
         )
+
+        val playerContext = serverContext.playerContextTracker.getContext(connection.playerId)
+        if (playerContext != null) {
+            val batchRecycleJobs = playerContext.services.batchRecycleJob.getBatchRecycleJobs()
+            val currentTime = io.ktor.util.date.getTimeMillis()
+            
+            for (job in batchRecycleJobs) {
+                val endTime = job.start + (job.end.toLong() * 1000)
+                
+                if (currentTime < endTime) {
+                    val secondsRemaining = ((endTime - currentTime) / 1000).toInt()
+                    serverContext.taskDispatcher.runTaskFor(
+                        connection = connection,
+                        taskToRun = server.tasks.impl.BatchRecycleCompleteTask(
+                            taskInputBlock = {
+                                this.jobId = job.id
+                                this.duration = secondsRemaining.seconds
+                                this.serverContext = serverContext
+                            },
+                            stopInputBlock = {
+                                this.jobId = job.id
+                            }
+                        )
+                    )
+                }
+            }
+        }
 
         // Second message: game ready message
         val gameReadyMsg = listOf(

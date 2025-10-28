@@ -1,6 +1,7 @@
 package context
 
 import core.compound.CompoundService
+import core.items.BatchRecycleJobService
 import core.items.InventoryService
 import core.metadata.PlayerObjectsMetadataService
 import core.survivor.SurvivorService
@@ -25,5 +26,6 @@ data class PlayerServices(
     val survivor: SurvivorService,
     val compound: CompoundService,
     val inventory: InventoryService,
-    val playerObjectMetadata: PlayerObjectsMetadataService
+    val playerObjectMetadata: PlayerObjectsMetadataService,
+    val batchRecycleJob: BatchRecycleJobService
 )

@@ -24,6 +24,7 @@ import server.handler.RequestSurvivorCheckHandler
 import server.handler.SaveHandler
 import server.handler.ZombieAttackHandler
 import server.tasks.TaskCategory
+import server.tasks.impl.BatchRecycleCompleteStopParameter
 import server.tasks.impl.BuildingCreateStopParameter
 import server.tasks.impl.BuildingRepairStopParameter
 import server.tasks.impl.JunkRemovalStopParameter
@@ -95,6 +96,14 @@ class GameServer(private val config: GameServerConfig) : Server {
                 deriveId = { playerId, category, stopInput ->
                     // "TASK-JUNK-taskId123-playerId123"
                     "${category.code}-${stopInput.taskId}-$playerId"
+                }
+            )
+            context.taskDispatcher.registerStopId(
+                category = TaskCategory.BatchRecycle.Complete,
+                stopInputFactory = { BatchRecycleCompleteStopParameter() },
+                deriveId = { playerId, category, stopInput ->
+                    // "BATCH-RECYCLE-jobId123-playerId123"
+                    "${category.code}-${stopInput.jobId}-$playerId"
                 }
             )
         }

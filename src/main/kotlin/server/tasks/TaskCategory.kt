@@ -41,4 +41,10 @@ sealed interface TaskCategory {
             override val code: String = "TASK-JUNK"
         }
     }
+
+    sealed interface BatchRecycle : TaskCategory {
+        object Complete : BatchRecycle {
+            override val code: String = "BATCH-RECYCLE"
+        }
+    }
 }
