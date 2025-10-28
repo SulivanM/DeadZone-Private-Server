@@ -1,7 +1,9 @@
 package server.handler.save.compound.task
 
 import context.requirePlayerContext
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
+import io.ktor.util.date.*
 import kotlinx.serialization.Serializable
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
@@ -13,6 +15,7 @@ import server.tasks.impl.JunkRemovalTask
 import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.SpeedUpCostCalculator
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
@@ -27,7 +30,28 @@ data class TaskItem(
     val quality: String? = null
 )
 
+data class JunkRemovalTaskInfo(
+    val taskId: String,
+    val playerId: String,
+    val startTime: Long,
+    val durationSeconds: Int
+)
+
+@Serializable
+data class TaskSpeedUpResponse(
+    val error: String = "",
+    val success: Boolean,
+    val cost: Int = 0
+)
+
 class TaskSaveHandler : SaveSubHandler {
+    companion object {
+        private val junkRemovalTasks = mutableMapOf<String, JunkRemovalTaskInfo>()
+        
+        fun cleanupJunkRemovalTask(taskId: String) {
+            junkRemovalTasks.remove(taskId)
+        }
+    }
     override val supportedTypes: Set<String> = setOf(
         SaveDataMethod.TASK_STARTED,
         SaveDataMethod.TASK_CANCELLED,
@@ -75,6 +99,13 @@ class TaskSaveHandler : SaveSubHandler {
                     val playerContext = serverContext.requirePlayerContext(connection.playerId)
                     val compoundService = playerContext.services.compound
 
+                    junkRemovalTasks[taskId] = JunkRemovalTaskInfo(
+                        taskId = taskId,
+                        playerId = connection.playerId,
+                        startTime = getTimeMillis(),
+                        durationSeconds = actualDuration.inWholeSeconds.toInt()
+                    )
+
                     serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
                         taskToRun = JunkRemovalTask(
@@ -98,6 +129,8 @@ class TaskSaveHandler : SaveSubHandler {
                 Logger.info(LogConfigSocketToClient) { "Task cancelled: taskId=$taskId, type=$taskType" }
 
                 if (taskType == "junk_removal" && taskId != null) {
+                    junkRemovalTasks.remove(taskId)
+                    
                     serverContext.taskDispatcher.stopTaskFor<JunkRemovalStopParameter>(
                         connection = connection,
                         category = TaskCategory.Task.JunkRemoval,
@@ -128,9 +161,59 @@ class TaskSaveHandler : SaveSubHandler {
 
             SaveDataMethod.TASK_SPEED_UP -> {
                 val taskId = data["id"] as? String
-                Logger.info(LogConfigSocketToClient) { "Task speed up: taskId=$taskId" }
+                val option = data["option"] as? String
+                Logger.info(LogConfigSocketToClient) { "Task speed up: taskId=$taskId, option=$option" }
 
-                send(PIOSerializer.serialize(buildMsg(saveId, "{}")))
+                if (taskId == null || option == null) {
+                    val errorResponse = TaskSpeedUpResponse(error = "Missing taskId or option", success = false)
+                    send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
+                    return@with
+                }
+
+                val taskInfo = junkRemovalTasks[taskId]
+                if (taskInfo == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Task speed up: task not found with taskId=$taskId" }
+                    val errorResponse = TaskSpeedUpResponse(error = "Task not found", success = false)
+                    send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
+                    return@with
+                }
+
+                val elapsedTimeMs = getTimeMillis() - taskInfo.startTime
+                val elapsedSeconds = (elapsedTimeMs / 1000).toInt()
+                val secondsRemaining = maxOf(0, taskInfo.durationSeconds - elapsedSeconds)
+
+                Logger.info(LogConfigSocketToClient) { 
+                    "Task speed up: elapsed=$elapsedSeconds, remaining=$secondsRemaining, total=${taskInfo.durationSeconds}" 
+                }
+
+                val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val currentCash = svc.compound.getResources().cash
+
+                if (currentCash < cost) {
+                    Logger.warn(LogConfigSocketToClient) { "Task speed up: not enough cash for playerId=${connection.playerId}" }
+                    val errorResponse = TaskSpeedUpResponse(error = "55", success = false, cost = cost)
+                    send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
+                    return@with
+                }
+
+                svc.compound.updateResource { resources ->
+                    resources.copy(cash = currentCash - cost)
+                }
+
+                junkRemovalTasks.remove(taskId)
+
+                serverContext.taskDispatcher.stopTaskFor<JunkRemovalStopParameter>(
+                    connection = connection,
+                    category = TaskCategory.Task.JunkRemoval,
+                    forceComplete = true,
+                    stopInputBlock = {
+                        this.taskId = taskId
+                    }
+                )
+
+                val successResponse = TaskSpeedUpResponse(error = "", success = true, cost = cost)
+                send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(successResponse))))
             }
         }
     }

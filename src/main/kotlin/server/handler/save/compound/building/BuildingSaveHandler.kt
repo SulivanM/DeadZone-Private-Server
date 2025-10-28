@@ -258,18 +258,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
+                val building =
+                    requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }.toBuilding()
+                val upgradeTimer =
+                    requireNotNull(building.upgrade) { "Building upgrade timer for bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }
+
+                val secondsRemaining = upgradeTimer.secondsLeftToEnd()
+
                 val response: BuildingSpeedUpResponse
                 var resourceResponse: GameResources? = null
-                if (playerFuel < 0) {
-                    response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
-                } else {
-                    val building =
-                        requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }.toBuilding()
-                    val upgradeTimer =
-                        requireNotNull(building.upgrade) { "Building upgrade timer for bldId=$bldId was somehow null in BUILDING_SPEED_UP request for playerId=$playerId" }
-
-                    val secondsRemaining = upgradeTimer.secondsLeftToEnd()
-                    val (newBuilding, cost) = when (option) {
+                
+                val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
                             val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                             building.copy(upgrade = upgradeTimer.reduceBy(1.hours)) to calculatedCost
@@ -302,13 +301,16 @@ class BuildingSaveHandler : SaveSubHandler {
                             }
                         }
 
-                        else -> {
-                            Logger.warn { "Received unknown BuildingSpeedUp option: $option from playerId=${connection.playerId}" }
-                            null to null
-                        }
+                    else -> {
+                        Logger.warn { "Received unknown BuildingSpeedUp option: $option from playerId=${connection.playerId}" }
+                        null to null
                     }
+                }
 
-                    if (newBuilding != null && cost != null) {
+                if (newBuilding != null && cost != null) {
+                    if (playerFuel < cost) {
+                        response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
+                    } else {
                         // successful response
                         val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         val updateResourceResult = svc.compound.updateResource { resource ->
@@ -351,11 +353,11 @@ class BuildingSaveHandler : SaveSubHandler {
                                 }
                             )
                         )
-                    } else {
-                        // unexpected DB error response
-                        Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        response = BuildingSpeedUpResponse(error = "", success = false, cost = 0)
                     }
+                } else {
+                    // unexpected DB error response
+                    Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
+                    response = BuildingSpeedUpResponse(error = "", success = false, cost = 0)
                 }
 
                 val responseJson = JSON.encode(response)
@@ -412,18 +414,17 @@ class BuildingSaveHandler : SaveSubHandler {
                 val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
+                val building =
+                    requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }.toBuilding()
+                val repairTimer =
+                    requireNotNull(building.repair) { "Building repair timer for bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }
+
+                val secondsRemaining = repairTimer.secondsLeftToEnd()
+
                 var resourceResponse: GameResources? = null
                 val response: BuildingRepairSpeedUpResponse
-                if (playerFuel < 0) {
-                    response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = 0)
-                } else {
-                    val building =
-                        requireNotNull(svc.compound.getBuilding(bldId)) { "Building bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }.toBuilding()
-                    val repairTimer =
-                        requireNotNull(building.repair) { "Building repair timer for bldId=$bldId was somehow null in BUILDING_REPAIR_SPEED_UP request for playerId=$playerId" }
-
-                    val secondsRemaining = repairTimer.secondsLeftToEnd()
-                    val (newBuilding, cost) = when (option) {
+                
+                val (newBuilding, cost) = when (option) {
                         "SpeedUpOneHour" -> {
                             val calculatedCost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                             building.copy(repair = repairTimer.reduceBy(1.hours)) to calculatedCost
@@ -454,13 +455,16 @@ class BuildingSaveHandler : SaveSubHandler {
                             }
                         }
 
-                        else -> {
-                            Logger.warn { "Received unknown BuildingRepairSpeedUp option: $option from playerId=${connection.playerId}" }
-                            null to null
-                        }
+                    else -> {
+                        Logger.warn { "Received unknown BuildingRepairSpeedUp option: $option from playerId=${connection.playerId}" }
+                        null to null
                     }
+                }
 
-                    if (newBuilding != null && cost != null) {
+                if (newBuilding != null && cost != null) {
+                    if (playerFuel < cost) {
+                        response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
+                    } else {
                         // successful response
                         val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         val updateResourceResult = svc.compound.updateResource { resource ->
@@ -503,11 +507,11 @@ class BuildingSaveHandler : SaveSubHandler {
                                 }
                             )
                         )
-                    } else {
-                        // unexpected DB error response
-                        Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
-                        response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
                     }
+                } else {
+                    // unexpected DB error response
+                    Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
+                    response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
                 }
 
                 val responseJson = JSON.encode(response)

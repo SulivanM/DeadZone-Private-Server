@@ -29,6 +29,18 @@ class JunkRemovalTask(
         compoundService.deleteBuilding(taskInput.buildingId)
         connection.sendMessage(NetworkMessage.TASK_COMPLETE, taskInput.taskId)
     }
+
+    @InternalTaskAPI
+    override suspend fun onTaskComplete(connection: Connection) {
+        server.handler.save.compound.task.TaskSaveHandler.cleanupJunkRemovalTask(taskInput.taskId)
+    }
+
+    @InternalTaskAPI
+    override suspend fun onForceComplete(connection: Connection) {
+        compoundService.deleteBuilding(taskInput.buildingId)
+        connection.sendMessage(NetworkMessage.TASK_COMPLETE, taskInput.taskId)
+        server.handler.save.compound.task.TaskSaveHandler.cleanupJunkRemovalTask(taskInput.taskId)
+    }
 }
 
 data class JunkRemovalParameter(

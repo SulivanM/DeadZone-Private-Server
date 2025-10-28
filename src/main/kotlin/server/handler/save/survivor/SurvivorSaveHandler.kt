@@ -6,6 +6,8 @@ import core.model.game.data.HumanAppearance
 import core.model.game.data.Survivor
 import core.model.game.data.SurvivorClassConstants_Constants
 import core.model.game.data.SurvivorLoadoutEntry
+import core.survivor.model.injury.Injury
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
@@ -14,11 +16,14 @@ import server.handler.save.survivor.response.SurvivorEditResponse
 import server.handler.save.survivor.response.SurvivorRenameResponse
 import server.handler.save.survivor.response.SurvivorClassResponse
 import server.handler.save.survivor.response.SurvivorLoadoutResponse
+import server.handler.save.survivor.response.SurvivorInjurySpeedUpResponse
+import server.handler.save.survivor.response.SurvivorReassignSpeedUpResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
 import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.SpeedUpCostCalculator
 
 class SurvivorSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.SURVIVOR_SAVES
@@ -223,7 +228,75 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_INJURY_SPEED_UP -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_INJURY_SPEED_UP' message [not implemented]" }
+                val survivorId = data["id"] as? String
+                val injuryId = data["injuryId"] as? String
+                val option = data["option"] as? String
+
+                if (survivorId == null || injuryId == null || option == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjurySpeedUpResponse(error = "Missing parameters", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                Logger.info(LogConfigSocketToClient) { "'SURVIVOR_INJURY_SPEED_UP' message for survivorId=$survivorId, injuryId=$injuryId with option=$option" }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val playerFuel = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
+
+                val survivor = svc.survivor.getAllSurvivors().find { it.id == survivorId }
+                if (survivor == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Survivor not found for survivorId=$survivorId" }
+                    val responseJson = JSON.encode(
+                        SurvivorInjurySpeedUpResponse(error = "Survivor not found", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val injury = survivor.injuries.find { it.id == injuryId }
+                if (injury == null || injury.timer == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Injury not found or has no timer for injuryId=$injuryId" }
+                    val responseJson = JSON.encode(
+                        SurvivorInjurySpeedUpResponse(error = "Injury not found", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val secondsRemaining = injury.timer.secondsLeftToEnd()
+                val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+
+                val response: SurvivorInjurySpeedUpResponse
+                var resourceResponse: core.model.game.data.GameResources? = null
+
+                if (playerFuel < cost) {
+                    response = SurvivorInjurySpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
+                } else {
+                    // For injuries, we simply remove the injury on speedup (instant heal)
+                    val updateResult = svc.survivor.updateSurvivor(survivorId) { currentSurvivor ->
+                        currentSurvivor.copy(
+                            injuries = currentSurvivor.injuries.filter { it.id != injuryId }
+                        )
+                    }
+
+                    if (updateResult.isSuccess) {
+                        svc.compound.updateResource { resource ->
+                            resourceResponse = resource.copy(cash = playerFuel - cost)
+                            resourceResponse
+                        }
+                        response = SurvivorInjurySpeedUpResponse(error = "", success = true, cost = cost)
+                    } else {
+                        Logger.error(LogConfigSocketToClient) { "Failed to update survivor injuries: ${updateResult.exceptionOrNull()?.message}" }
+                        response = SurvivorInjurySpeedUpResponse(error = "", success = false, cost = 0)
+                    }
+                }
+
+                val responseJson = JSON.encode(response)
+                val resourceResponseJson = JSON.encode(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
             SaveDataMethod.SURVIVOR_RENAME -> {
@@ -292,7 +365,71 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_REASSIGN_SPEED_UP -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_REASSIGN_SPEED_UP' message [not implemented]" }
+                val survivorId = data["id"] as? String
+                val option = data["option"] as? String
+
+                if (survivorId == null || option == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorReassignSpeedUpResponse(error = "Missing parameters", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                Logger.info(LogConfigSocketToClient) { "'SURVIVOR_REASSIGN_SPEED_UP' message for survivorId=$survivorId with option=$option" }
+
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val playerFuel = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
+
+                val survivor = svc.survivor.getAllSurvivors().find { it.id == survivorId }
+                if (survivor == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Survivor not found for survivorId=$survivorId" }
+                    val responseJson = JSON.encode(
+                        SurvivorReassignSpeedUpResponse(error = "Survivor not found", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                if (survivor.reassignTimer == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Survivor has no reassign timer for survivorId=$survivorId" }
+                    val responseJson = JSON.encode(
+                        SurvivorReassignSpeedUpResponse(error = "No reassign timer", success = false, cost = 0)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val secondsRemaining = survivor.reassignTimer.secondsLeftToEnd()
+                val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+
+                val response: SurvivorReassignSpeedUpResponse
+                var resourceResponse: core.model.game.data.GameResources? = null
+
+                if (playerFuel < cost) {
+                    response = SurvivorReassignSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
+                } else {
+                    // Remove the reassign timer
+                    val updateResult = svc.survivor.updateSurvivor(survivorId) { currentSurvivor ->
+                        currentSurvivor.copy(reassignTimer = null)
+                    }
+
+                    if (updateResult.isSuccess) {
+                        svc.compound.updateResource { resource ->
+                            resourceResponse = resource.copy(cash = playerFuel - cost)
+                            resourceResponse
+                        }
+                        response = SurvivorReassignSpeedUpResponse(error = "", success = true, cost = cost)
+                    } else {
+                        Logger.error(LogConfigSocketToClient) { "Failed to update survivor reassign timer: ${updateResult.exceptionOrNull()?.message}" }
+                        response = SurvivorReassignSpeedUpResponse(error = "", success = false, cost = 0)
+                    }
+                }
+
+                val responseJson = JSON.encode(response)
+                val resourceResponseJson = JSON.encode(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
             SaveDataMethod.SURVIVOR_BUY -> {

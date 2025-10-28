@@ -15,21 +15,29 @@ import core.model.game.data.MissionStats
 import core.model.game.data.ZombieData
 import core.model.game.data.toFlatList
 import dev.deadzone.core.model.game.data.TimerData
+import dev.deadzone.core.model.game.data.reduceBy
+import dev.deadzone.core.model.game.data.reduceByHalf
+import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
-import dev.deadzone.socket.handler.save.mission.response.MissionSpeedUpResponse
 import dev.deadzone.socket.tasks.impl.MissionReturnTask
+import dev.deadzone.socket.tasks.impl.MissionReturnStopParameter
+import io.ktor.util.date.*
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.mission.response.*
 import server.messaging.NetworkMessage
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import server.tasks.TaskCategory
 import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
+import utils.SpeedUpCostCalculator
 import utils.UUID
 import kotlin.math.pow
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -43,6 +51,10 @@ class MissionSaveHandler : SaveSubHandler {
     // when player start a mission, generate missionId
     // this map from playerId to (missionId, insertedLoots)
     private val activeMissions = mutableMapOf<String, Pair<String, List<LootContent>>>()
+    
+    // track active mission return tasks for speedup
+    // maps missionId to (playerId, startTime, returnDuration)
+    private val missionReturnTasks = mutableMapOf<String, Triple<String, Long, Int>>()
 
     override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
@@ -234,7 +246,13 @@ class MissionSaveHandler : SaveSubHandler {
                 val resourceResponseJson = JSON.encode(svc.compound.getResources())
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
-                // TO-DO update player's task collection to include the mission return task
+                // Track mission return task for speedup
+                missionReturnTasks[missionId] = Triple(
+                    connection.playerId,
+                    getTimeMillis(),
+                    returnTime.inWholeSeconds.toInt()
+                )
+
                 serverContext.taskDispatcher.runTaskFor(
                     connection = connection,
                     taskToRun = MissionReturnTask(
@@ -278,18 +296,109 @@ class MissionSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.MISSION_SPEED_UP -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'MISSION_SPEED_UP' message [not implemented]" }
+                val option = data["option"] as? String ?: return
+                Logger.info(LogConfigSocketToClient) { "'MISSION_SPEED_UP' message with option=$option" }
 
-                // TO-DO implement mission speed up similar to building speed up
-                // TO-DO don't forget to save mission as a task to DB (TaskCollection),
-                // just like how building construction modify upgrade/repair timer in DB
+                val svc = serverContext.requirePlayerContext(connection.playerId).services
+                val playerFuel = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
 
-                // temporarily always make speed up always success so player don't stuck
-                val response: MissionSpeedUpResponse = MissionSpeedUpResponse("", true, 0)
+                // Find the active mission return task for this player
+                val missionEntry = missionReturnTasks.entries.find { it.value.first == connection.playerId }
+                
+                if (missionEntry == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Mission return task not found for playerId=${connection.playerId}" }
+                    val response = MissionSpeedUpResponse(error = "Task not found", success = false, cost = 0)
+                    val responseJson = JSON.encode(response)
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val (missionId, taskInfo) = missionEntry
+                val (_, startTime, durationSeconds) = taskInfo
+
+                val elapsedTimeMs = getTimeMillis() - startTime
+                val elapsedSeconds = (elapsedTimeMs / 1000).toInt()
+                val secondsRemaining = maxOf(0, durationSeconds - elapsedSeconds)
+
+                val response: MissionSpeedUpResponse
+                var resourceResponse: GameResources? = null
+
+                val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                
+                if (playerFuel < cost) {
+                    response = MissionSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
+                } else {
+                    val newRemainingSeconds = when (option) {
+                        "SpeedUpOneHour" -> maxOf(0, secondsRemaining - 3600)
+                        "SpeedUpTwoHour" -> maxOf(0, secondsRemaining - 7200)
+                        "SpeedUpHalf" -> secondsRemaining / 2
+                        "SpeedUpComplete" -> 0
+                        "SpeedUpFree" -> {
+                            if (secondsRemaining <= 300) {
+                                0
+                            } else {
+                                Logger.warn { "Received unexpected MissionSpeedUp FREE option from playerId=${connection.playerId} (speed up requested when return time more than 5 minutes)" }
+                                -1 // Invalid
+                            }
+                        }
+                        else -> {
+                            Logger.warn { "Received unknown MissionSpeedUp option: $option from playerId=${connection.playerId}" }
+                            -1 // Invalid
+                        }
+                    }
+
+                    if (newRemainingSeconds >= 0) {
+                        // Update resources
+                        svc.compound.updateResource { resource ->
+                            resourceResponse = resource.copy(cash = playerFuel - cost)
+                            resourceResponse
+                        }
+
+                        // Stop the current mission return task
+                        serverContext.taskDispatcher.stopTaskFor<MissionReturnStopParameter>(
+                            connection = connection,
+                            category = TaskCategory.Mission.Return,
+                            stopInputBlock = {
+                                this.missionId = missionId
+                            }
+                        )
+
+                        if (newRemainingSeconds == 0) {
+                            // Complete immediately - remove from tracking and force complete
+                            missionReturnTasks.remove(missionId)
+                            
+                            // Send mission return complete message
+                            connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, missionId)
+                        } else {
+                            // Partial speedup - update tracking and restart with new duration
+                            val newStartTime = getTimeMillis()
+                            missionReturnTasks[missionId] = Triple(connection.playerId, newStartTime, newRemainingSeconds)
+                            
+                            // Restart mission return task with reduced time
+                            serverContext.taskDispatcher.runTaskFor(
+                                connection = connection,
+                                taskToRun = MissionReturnTask(
+                                    taskInputBlock = {
+                                        this.missionId = missionId
+                                        this.returnTime = newRemainingSeconds.seconds
+                                    },
+                                    stopInputBlock = {
+                                        this.missionId = missionId
+                                    }
+                                )
+                            )
+                        }
+
+                        response = MissionSpeedUpResponse(error = "", success = true, cost = cost)
+                    } else {
+                        response = MissionSpeedUpResponse(error = "", success = false, cost = 0)
+                    }
+                }
+
                 val responseJson = JSON.encode(response)
-                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
-
-                connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, connection.playerId)
+                val resourceResponseJson = JSON.encode(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
             SaveDataMethod.MISSION_SCOUTED -> {
