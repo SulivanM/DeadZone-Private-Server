@@ -9,8 +9,10 @@ import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
+import server.handler.save.item.response.ItemBatchRecycleSpeedUpResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
+import utils.JSON
 import utils.LogConfigSocketToClient
 import utils.Logger
 import utils.UUID
@@ -294,7 +296,9 @@ class ItemSaveHandler : SaveSubHandler {
                 val option = data["option"] as? String
 
                 if (jobId == null || option == null) {
-                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    val response = ItemBatchRecycleSpeedUpResponse(error = "", success = false, cost = 0)
+                    val responseJson = JSON.encode(response)
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
                     Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: missing 'id' or 'option' parameter" }
                     return@with
                 }
@@ -303,7 +307,9 @@ class ItemSaveHandler : SaveSubHandler {
                 val job = svc.batchRecycleJob.getBatchRecycleJob(jobId)
 
                 if (job == null) {
-                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    val response = ItemBatchRecycleSpeedUpResponse(error = "", success = false, cost = 0)
+                    val responseJson = JSON.encode(response)
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
                     Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job not found with id=$jobId" }
                     return@with
                 }
@@ -315,7 +321,9 @@ class ItemSaveHandler : SaveSubHandler {
                 )
 
                 if (timer.hasEnded()) {
-                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false}""")))
+                    val response = ItemBatchRecycleSpeedUpResponse(error = "", success = false, cost = 0)
+                    val responseJson = JSON.encode(response)
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
                     Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job $jobId has already ended" }
                     return@with
                 }
@@ -323,70 +331,77 @@ class ItemSaveHandler : SaveSubHandler {
                 val secondsRemaining = timer.secondsLeftToEnd()
                 val cost = utils.SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                 val currentCash = svc.compound.getResources().cash
+                val notEnoughCoinsErrorId = "55"
+
+                val response: ItemBatchRecycleSpeedUpResponse
+                var resourceResponse: core.model.game.data.GameResources? = null
 
                 if (currentCash < cost) {
-                    send(PIOSerializer.serialize(buildMsg(saveId, """{"success":false,"error":"55"}""")))
-                    Logger.warn(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: not enough cash for player ${connection.playerId}" }
-                    return@with
-                }
-
-                val newTimer = when (option) {
-                    "SpeedUpOneHour" -> timer.reduceBy(1.hours)
-                    "SpeedUpTwoHour" -> timer.reduceBy(2.hours)
-                    "SpeedUpHalf" -> timer.reduceByHalf()
-                    "SpeedUpComplete" -> null
-                    "SpeedUpFree" -> if (secondsRemaining <= 300) null else timer
-                    else -> timer
-                }
-
-                if (newTimer == null) {
-                    svc.inventory.updateInventory { items ->
-                        items + job.items
-                    }
-                    svc.batchRecycleJob.removeBatchRecycleJob(jobId)
-
-                    serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
-                        connection = connection,
-                        category = server.tasks.TaskCategory.BatchRecycle.Complete,
-                        stopInputBlock = {
-                            this.jobId = jobId
-                        }
-                    )
+                    response = ItemBatchRecycleSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                 } else {
-                    val updatedJob = job.copy(
-                        start = newTimer.start,
-                        end = newTimer.length.toInt()
-                    )
-                    svc.batchRecycleJob.updateBatchRecycleJob(jobId) { updatedJob }
+                    val newTimer = when (option) {
+                        "SpeedUpOneHour" -> timer.reduceBy(1.hours)
+                        "SpeedUpTwoHour" -> timer.reduceBy(2.hours)
+                        "SpeedUpHalf" -> timer.reduceByHalf()
+                        "SpeedUpComplete" -> null
+                        "SpeedUpFree" -> if (secondsRemaining <= 300) null else timer
+                        else -> timer
+                    }
 
-                    serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
-                        connection = connection,
-                        category = server.tasks.TaskCategory.BatchRecycle.Complete,
-                        stopInputBlock = {
-                            this.jobId = jobId
+                    if (newTimer == null) {
+                        svc.inventory.updateInventory { items ->
+                            items + job.items
                         }
-                    )
+                        svc.batchRecycleJob.removeBatchRecycleJob(jobId)
 
-                    serverContext.taskDispatcher.runTaskFor(
-                        connection = connection,
-                        taskToRun = server.tasks.impl.BatchRecycleCompleteTask(
-                            taskInputBlock = {
-                                this.jobId = jobId
-                                this.duration = newTimer.secondsLeftToEnd().seconds
-                                this.serverContext = serverContext
-                            },
+                        serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
+                            connection = connection,
+                            category = server.tasks.TaskCategory.BatchRecycle.Complete,
                             stopInputBlock = {
                                 this.jobId = jobId
                             }
                         )
-                    )
+                    } else {
+                        val updatedJob = job.copy(
+                            start = newTimer.start,
+                            end = newTimer.length.toInt()
+                        )
+                        svc.batchRecycleJob.updateBatchRecycleJob(jobId) { updatedJob }
+
+                        serverContext.taskDispatcher.stopTaskFor<server.tasks.impl.BatchRecycleCompleteStopParameter>(
+                            connection = connection,
+                            category = server.tasks.TaskCategory.BatchRecycle.Complete,
+                            stopInputBlock = {
+                                this.jobId = jobId
+                            }
+                        )
+
+                        serverContext.taskDispatcher.runTaskFor(
+                            connection = connection,
+                            taskToRun = server.tasks.impl.BatchRecycleCompleteTask(
+                                taskInputBlock = {
+                                    this.jobId = jobId
+                                    this.duration = newTimer.secondsLeftToEnd().seconds
+                                    this.serverContext = serverContext
+                                },
+                                stopInputBlock = {
+                                    this.jobId = jobId
+                                }
+                            )
+                        )
+                    }
+
+                    svc.compound.updateResource { resources ->
+                        resourceResponse = resources.copy(cash = currentCash - cost)
+                        resourceResponse
+                    }
+
+                    response = ItemBatchRecycleSpeedUpResponse(error = "", success = true, cost = cost)
                 }
 
-                svc.compound.updateResource { resources ->
-                    resources.copy(cash = currentCash - cost)
-                }
-
-                send(PIOSerializer.serialize(buildMsg(saveId, """{"success":true,"cost":$cost}""")))
+                val responseJson = JSON.encode(response)
+                val resourceResponseJson = JSON.encode(resourceResponse)
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
                 Logger.info(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE_SPEED_UP: job $jobId sped up with option $option for player ${connection.playerId}" }
             }
 
