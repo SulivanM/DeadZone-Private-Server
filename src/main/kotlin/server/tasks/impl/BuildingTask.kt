@@ -49,6 +49,7 @@ class BuildingCreateTask(
                 }
             }
         }
+        connection.sendMessage(NetworkMessage.TASK_COMPLETE, taskInput.buildingId)
         connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, taskInput.buildingId)
     }
 }
@@ -97,6 +98,7 @@ class BuildingRepairTask(
                 }
             }
         }
+        connection.sendMessage(NetworkMessage.TASK_COMPLETE, taskInput.buildingId)
         connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, taskInput.buildingId)
     }
 }
