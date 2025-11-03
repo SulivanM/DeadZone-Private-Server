@@ -1,0 +1,10 @@
+data QuestAttribute
+
+category: QuestAttributeCategory!
+type: String!
+stat: String?
+survivor: String?
+intValue: Int?
+stringValue: String?
+doubleValue: Double?
+moraleType: MoraleConstants?

@@ -1,0 +1,13 @@
+enum QuestAttributeType
+
+// Goal types
+STAT_INC: String = "statInc"
+XP_INC: String = "xpInc"
+
+// Reward types
+XP: String = "xp"
+ITEM: String = "itm"
+MORALE_REWARD: String = "morale"
+
+// Penalty types
+MORALE_PENALTY: String = "morale"

@@ -7,14 +7,11 @@ import core.items.model.Item
 import core.items.model.combineItems
 import kotlinx.serialization.Serializable
 
-/**
- * Inventory table
- */
 @Serializable
 data class Inventory(
-    val playerId: String, // reference to UserDocument
+    val playerId: String, 
     val inventory: List<Item> = emptyList(),
-    val schematics: ByteArray = byteArrayOf(),  // see line 643 of Inventory.as
+    val schematics: ByteArray = byteArrayOf(),  
 ) {
     companion object {
         fun admin(): Inventory {
@@ -52,23 +49,9 @@ data class Inventory(
         }
 
         fun newgame(pid: String): Inventory {
-            // give good weapon to do tutorial easier
-            val free = setOf(
-                "morningStar-2",
-                "PKP",
-                "an94",
-                "goldAK47-special",
-                "fal-winter-2017-3",
-                "M249",
-                "m107cq-arctic",
-                "shotgun",
-                "axe-halloween-2015-birthday-2017",
-                "polehammer-halloween-2015-birthday-2017",
-            )
             val items = listOf(
                 Item(type = "pocketKnife"),
-                Item(type = "lawson22"),
-                Item(type = free.random())
+                Item(type = "lawson22")
             )
             return Inventory(
                 playerId = pid,
@@ -97,9 +80,6 @@ data class Inventory(
     }
 }
 
-/**
- * Combine two inventory semantically (according to the game definition).
- */
 fun Inventory.combineItems(other: Inventory, gameDefinition: GameDefinition): Inventory {
     return this.copy(inventory = this.inventory.combineItems(other.inventory, gameDefinition))
 }

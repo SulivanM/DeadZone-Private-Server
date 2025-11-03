@@ -6,11 +6,6 @@ import server.tasks.*
 import utils.Time
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Sends a time update ('tu') message to client.
- *
- * The game doesn't maintain its own time; instead, it relies on the server for timekeeping.
- */
 class TimeUpdateTask() : ServerTask<Unit, Unit>() {
     override val category: TaskCategory = TaskCategory.TimeUpdate
     override val config: TaskConfig = TaskConfig(repeatInterval = 1.seconds)

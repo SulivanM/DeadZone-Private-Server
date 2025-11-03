@@ -82,7 +82,7 @@ object PIODeserializer {
 
                             Pattern.BOOLEAN_TRUE_PATTERN -> onValue(true)
                             Pattern.BOOLEAN_FALSE_PATTERN -> onValue(false)
-                            else -> {} // unsupported
+                            else -> {}
                         }
                     }
 
@@ -148,6 +148,7 @@ object PIODeserializer {
 
             return message
         } catch (_: Exception) {
+            // Intentionally empty - fall through to JSON parsing fallback
         }
 
         val offset = data.indexOfFirst { it == '{'.code.toByte() }

@@ -3,9 +3,6 @@ package dev.deadzone.socket.handler.save
 import context.ServerContext
 import server.core.Connection
 
-/**
- * Encapsulate objects and data needed by save handlers to handle message.
- */
 class SaveHandlerContext(
     val connection: Connection,
     val type: String,

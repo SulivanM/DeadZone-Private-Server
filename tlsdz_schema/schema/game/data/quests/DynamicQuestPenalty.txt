@@ -1,5 +1,0 @@
-data DynamicQuestPenalty
-
-type: DynamicQuestPenaltyEnum!
-value: Any!
-moraleType: MoraleConstants? // Only if type == "morale"

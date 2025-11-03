@@ -29,7 +29,8 @@ fun Route.apiRoutes(serverContext: ServerContext) {
         when (path) {
             "13" -> authenticate(serverContext)
             "601" -> socialRefresh(serverContext, playerToken!!)
-            "27" -> createJoinRoom()
+            "27" -> createJoinRoom(serverContext, playerToken!!)
+            "30" -> listRooms()
             "50" -> writeError()
             "85" -> loadObjects(serverContext)
             "97" -> loadIndexRange()

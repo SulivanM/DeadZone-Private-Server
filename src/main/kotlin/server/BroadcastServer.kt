@@ -21,9 +21,9 @@ data class BroadcastServerConfig(
 data class BroadcastClient(
     val clientId: UUID,
     val remoteAddress: String,
-    // coroutine reference, must cancel when client disconnects
+    
     val job: Job,
-    // write reference, used to send broadcast message
+    
     val output: ByteWriteChannel
 )
 
@@ -34,10 +34,8 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
 
     private val selectorManager = SelectorManager(Dispatchers.IO)
 
-    // reference to all server's socket for each pots
     private val serverSockets = mutableListOf<ServerSocket>()
 
-    // reference to all server's coroutine for each ports
     private val serverJobs = mutableListOf<Job>()
 
     private val clients = ConcurrentHashMap<UUID, BroadcastClient>()
@@ -45,18 +43,12 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
     private var running = false
     override fun isRunning(): Boolean = running
 
-    /**
-     * Returns the number of connected clients
-     */
     fun getClientCount(): Int = clients.size
 
     override suspend fun initialize(scope: CoroutineScope, context: ServerContext) {
         broadcastServerScope = CoroutineScope(scope.coroutineContext + SupervisorJob() + Dispatchers.IO)
     }
 
-    /**
-     * Starts the broadcast server on all configured ports
-     */
     override suspend fun start() {
         if (running) {
             Logger.warn("Broadcast server is already running")
@@ -65,7 +57,7 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
         running = true
 
         config.ports.forEach { port ->
-            // launch coroutine for each port
+            
             val job = broadcastServerScope.launch(Dispatchers.IO + SupervisorJob()) {
                 try {
                     val serverSocket = aSocket(selectorManager).tcp().bind(config.host, port)
@@ -97,9 +89,9 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
                 val buffer = ByteArray(1024)
                 while (isActive) {
                     val bytes = input.readAvailable(buffer)
-                    if (bytes <= 0) break // client disconnected
-                    // client does not need to send data to broadcast server
-                    // just ignore it as it is probably just heartbeat
+                    if (bytes <= 0) break 
+                    
+                    
                 }
             } catch (e: Exception) {
                 Logger.warn("Broadcast socket error for $address: ${e.message}")
@@ -125,17 +117,11 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
         }
     }
 
-    /**
-     * Broadcasts a message to all connected clients
-     */
     suspend fun broadcast(message: BroadcastMessage) {
         val wireFormat = message.toWireFormat()
         broadcast(wireFormat)
     }
 
-    /**
-     * Broadcasts a raw string message to all connected clients
-     */
     suspend fun broadcast(message: String) {
         if (clients.isEmpty()) {
             return
@@ -153,7 +139,6 @@ class BroadcastServer(private val config: BroadcastServerConfig) : Server {
             }
         }
 
-        // Remove disconnected clients
         disconnectedClients.forEach { client ->
             removeClient(client)
         }

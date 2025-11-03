@@ -1,5 +1,8 @@
 package server.protocol
 
+import kotlinx.serialization.json.Json
+import utils.toJsonElement
+import utils.toJsonValue
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -29,6 +32,12 @@ object PIOSerializer {
             val offset = if (used > 4) used - 5 else used - 1
             buffer.add((pattern.value or offset).toByte())
             buffer.addAll(encoded.drop(nonZero))
+        }
+
+        fun writeJsonAsString(jsonString: String) {
+            val encoded = jsonString.toByteArray(Charsets.UTF_8)
+            writeTagWithLength(encoded.size, Pattern.STRING_SHORT_PATTERN, Pattern.STRING_PATTERN)
+            buffer.addAll(encoded.toList())
         }
 
         fun serializeValue(value: Any) {
@@ -72,6 +81,20 @@ object PIOSerializer {
                 is ByteArray -> {
                     writeTagWithLength(value.size, Pattern.BYTE_ARRAY_SHORT_PATTERN, Pattern.BYTE_ARRAY_PATTERN)
                     buffer.addAll(value.toList())
+                }
+
+                is Map<*, *> -> {
+                    
+                    
+                    @Suppress("UNCHECKED_CAST")
+                    val stringKeyMap = value as? Map<String, *>
+                        ?: throw IllegalArgumentException("Map keys must be strings for serialization: $value")
+                    writeJsonAsString(Json.encodeToString(stringKeyMap.toJsonElement()))
+                }
+
+                is List<*> -> {
+                    
+                    writeJsonAsString(Json.encodeToString(value.toJsonValue()))
                 }
 
                 else -> throw IllegalArgumentException("Unsupported type: ${value::class}")

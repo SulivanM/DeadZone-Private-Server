@@ -6,7 +6,6 @@ import java.io.File
 import java.io.InputStreamReader
 import java.util.zip.GZIPInputStream
 
-// SaveDataMethod.MISSION_START, MissionData.as line 685
 @Serializable
 data class MissionStartResponse(
     val disabled: Boolean = false,
@@ -45,12 +44,12 @@ fun loadSceneXML(filename: String): String {
 }
 
 val areaTypeToScenes = mapOf(
-    // missing:
-    // Convenience Store (areaType: tutorialStore)
-    // Department Store (areaType: deptStore)
-    // Forest (areaType: forest)
-    // Suburban Street (areaType: substreet)
-    // Street (areaType: street)
+    
+    
+    
+    
+    
+    
 
     "compound" to listOf(
         "compound"
@@ -215,7 +214,7 @@ val areaTypeToScenes = mapOf(
         "interior-store-2",
         "interior-store-3"
     ),
-    // No idea if this is the right one lol
+    
     "tutorialStore" to listOf(
         "interior-store-small-1",
         "interior-store-small-2"
@@ -258,8 +257,6 @@ val areaTypeToScenes = mapOf(
         "street-small-3"
     ),
 
-    // Others
-    // Raid
     "raidBridgeHuman" to listOf(
         "raid-island-bridge-human-01",
         "raid-island-bridge-human-02",
@@ -291,7 +288,6 @@ val areaTypeToScenes = mapOf(
         "raid-island-monument-zombie-03"
     ),
 
-    // Arena
     "stadium" to listOf(
         "exterior-stadium-1-no-spawn",
         "exterior-stadium-3-no-spawn",

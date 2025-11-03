@@ -10,14 +10,6 @@ import utils.LogConfigSocketError
 import utils.Logger
 import utils.Time
 
-/**
- * Handle `save` message by:
- *
- * 1. Receive the `data`, `_type`, and `id` (save id) for the said message.
- * 2. Route the save into the corresponding handler based on `_type`.
- * 3. Handlers determine what to do based on the given `data`.
- * 4. Optionally, response back a message of type 'r' with the expected JSON payload and the given save id.
- */
 class SaveHandler(private val serverContext: ServerContext) : SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
         return message.contains(NetworkMessage.SAVE) or (message.type?.equals(NetworkMessage.SAVE) == true)
@@ -31,16 +23,13 @@ class SaveHandler(private val serverContext: ServerContext) : SocketMessageHandl
         val saveId = body["id"] as String? ?: return
         requireNotNull(connection.playerId) { "Missing playerId on save message for connection=$connection" }
 
-        // Note: the game typically send and expects JSON data for save message
-        // encode JSON response to string before using PIO serialization
-
         var match = false
-        // 15 save handlers
+        
         serverContext.saveHandlers.forEach { saveHandler ->
-            // O(1) hashset check on each handlers
+            
             if (type in saveHandler.supportedTypes) {
                 match = true
-                // further string matching on the type on each handler
+                
                 saveHandler.handle(SaveHandlerContext(connection, type, saveId, data, serverContext))
             }
         }

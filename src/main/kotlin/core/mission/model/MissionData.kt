@@ -21,9 +21,9 @@ data class MissionData(
     val type: String = "",
     val suburb: String = "",
     val automated: Boolean = false,
-    val survivors: List<Map<String, String>> = emptyList(), //survivor ids to mission ids
-    val srvDown: List<Map<String, String>> = emptyList(), //survivor ids
-    val buildingsDestroyed: List<String> = emptyList(), //building ids
+    val survivors: List<Map<String, String>> = emptyList(),
+    val srvDown: List<Map<String, String>> = emptyList(),
+    val buildingsDestroyed: List<String> = emptyList(),
     val returnTimer: TimerData? = null,
     val lockTimer: TimerData? = null,
     val loot: List<Item> = emptyList(),

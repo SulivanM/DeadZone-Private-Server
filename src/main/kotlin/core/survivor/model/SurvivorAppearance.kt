@@ -2,7 +2,6 @@ package core.model.game.data
 
 import kotlinx.serialization.Serializable
 
-// subclass of HumanAppearance though its deserialize don't work
 @Serializable
 data class SurvivorAppearance(
     val skinColor: String?,

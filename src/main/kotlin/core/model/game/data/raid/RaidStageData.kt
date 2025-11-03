@@ -8,6 +8,6 @@ data class RaidStageData(
     val assignmentStageData: AssignmentStageData,
     val objectiveIndex: Int,
     val objectiveState: RaidStageObjectiveState = RaidStageObjectiveState_Constants.INCOMPLETE,
-    val objectiveXML: String?,  // actually an XML type
+    val objectiveXML: String?,
     val imageURI: String
 )

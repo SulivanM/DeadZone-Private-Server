@@ -19,7 +19,7 @@ data class AllianceData(
     val effects: List<Effect>?,
     val tokens: Int?,
     val taskSet: Int?,
-    val tasks: Map<String, Int>?, // string as key, but parsed to int
+    val tasks: Map<String, Int>?,
     val attackedTargets: Map<String, TargetRecord>?,
     val scoutedTargets: Map<String, TargetRecord>?
 )

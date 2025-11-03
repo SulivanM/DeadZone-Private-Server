@@ -25,6 +25,7 @@ import io.ktor.util.date.*
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.mission.response.*
+import server.handler.save.mission.response.loadSceneXML
 import server.messaging.NetworkMessage
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
@@ -44,52 +45,88 @@ import kotlin.time.DurationUnit
 class MissionSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.MISSION_SAVES
 
-    // save stats of playerId: MissionStats
-    // use this to know loots, EXP, kills, etc. after mission ended.
     private val missionStats: MutableMap<String, MissionStats> = mutableMapOf()
 
-    // when player start a mission, generate missionId
-    // this map from playerId to (missionId, insertedLoots)
     private val activeMissions = mutableMapOf<String, Pair<String, List<LootContent>>>()
-    
-    // track active mission return tasks for speedup
-    // maps missionId to (playerId, startTime, returnDuration)
+
     private val missionReturnTasks = mutableMapOf<String, Triple<String, Long, Int>>()
 
     override suspend fun handle(ctx: SaveHandlerContext) = with(ctx) {
         val playerId = connection.playerId
         when (type) {
             SaveDataMethod.MISSION_START -> {
-                // IMPORTANT NOTE: the scene that involves human model is not working now (e.g., raid island human)
-                // the same error is for survivor class if you fill SurvivorAppearance non-null value
-                // The error was 'cyclic object' thing.
-                val isCompoundZombieAttack = data["compound"]?.equals(true)
-                val areaType = if (isCompoundZombieAttack == true) "compound" else data["areaType"] as String
-                Logger.info(LogConfigSocketToClient) { "Going to scene with areaType=$areaType" }
+                val assignmentId = data["assignmentId"] as? String
 
                 val svc = serverContext.requirePlayerContext(playerId).services
                 val leader = svc.survivor.getSurvivorLeader()
 
-                val sceneXML = resolveAndLoadScene(areaType)
-                if (sceneXML == null) {
-                    Logger.error(LogConfigSocketToClient) { "That area=$areaType isn't working yet, typically because the map file is lost" }
-                    return
+                val isCompoundZombieAttack = data["compound"]?.equals(true)
+                val sceneXML: String
+
+                val arenaSession = if (assignmentId != null) {
+                    serverContext.db.getActiveArenaSession(assignmentId)
+                } else {
+                    null
                 }
+
+                if (arenaSession != null) {
+                    val arenaDefinition = GameDefinition.arenasById[arenaSession.arenaName]
+                    if (arenaDefinition == null) {
+                        Logger.error(LogConfigSocketToClient) { "Arena definition '${arenaSession.arenaName}' not found" }
+                        return
+                    }
+
+                    val stageDef = arenaDefinition.stages.getOrNull(arenaSession.currentStageIndex)
+                        ?: arenaDefinition.stages.first()
+                    val mapName = stageDef.maps.randomOrNull() ?: ""
+
+                    if (mapName.isEmpty()) {
+                        Logger.error(LogConfigSocketToClient) { "No map configured for arena '${arenaSession.arenaName}' stage ${arenaSession.currentStageIndex}" }
+                        return
+                    }
+
+                    Logger.info(LogConfigSocketToClient) { "Loading arena map: $mapName for assignmentId=$assignmentId" }
+                    try {
+                        sceneXML = loadSceneXML(mapName)
+                    } catch (e: Exception) {
+                        Logger.error(LogConfigSocketToClient) { "Failed to load arena map '$mapName': ${e.message}" }
+                        return
+                    }
+                } else {
+                    val areaType = if (isCompoundZombieAttack == true) {
+                        "compound"
+                    } else {
+                        val providedAreaType = data["areaType"] as? String
+                        if (providedAreaType == null) {
+                            Logger.warn(LogConfigSocketToClient) { "areaType not provided in MISSION_START data, using default 'residential'" }
+                        }
+                        providedAreaType ?: "residential"
+                    }
+                    Logger.info(LogConfigSocketToClient) { "Going to scene with areaType=$areaType" }
+
+                    val loadedScene = resolveAndLoadScene(areaType)
+                    if (loadedScene == null) {
+                        Logger.error(LogConfigSocketToClient) { "That area=$areaType isn't working yet, typically because the map file is lost" }
+                        return
+                    }
+                    sceneXML = loadedScene
+                }
+                val config = GameDefinition.config
                 val lootParameter = LootParameter(
                     areaLevel = (data["areaLevel"] as? Int ?: 0),
                     playerLevel = leader.level,
                     itemWeightOverrides = mapOf(),
                     specificItemBoost = mapOf(
-                        "fuel-bottle" to 3.0,    // +300% find fuel chance (of the base chance)
-                        "fuel-container" to 3.0,
-                        "fuel" to 3.0,
-                        "fuel-cans" to 3.0,
+                        "fuel-bottle" to config.lootBoostFuelItems,
+                        "fuel-container" to config.lootBoostFuelItems,
+                        "fuel" to config.lootBoostFuelItems,
+                        "fuel-cans" to config.lootBoostFuelItems,
                     ),
                     itemTypeBoost = mapOf(
-                        "junk" to 0.8 // +80% junk find chance
+                        "junk" to config.lootBoostJunkItems
                     ),
                     itemQualityBoost = mapOf(
-                        "blue" to 0.5 // +50% blue quality find chance
+                        "blue" to config.lootBoostBlueQuality
                     ),
                     baseWeight = 1.0,
                     fuelLimit = 50
@@ -104,11 +141,8 @@ class MissionSaveHandler : SaveSubHandler {
                     ZombieData.fatWalkerStrongAttack(Random.nextInt()),
                 ).flatMap { it.toFlatList() }
 
-                val timeSeconds = if (isCompoundZombieAttack == true) 30 else 240
+                val timeSeconds = if (isCompoundZombieAttack == true) GameDefinition.config.compoundAttackTime else 240
 
-                // temporarily use player's ID as missionId itself
-                // this enables deterministic ID therefore can avoid memory leak
-                // later, should save the missionId as task to DB in MISSION_END
                 val missionId = connection.playerId
                 activeMissions[connection.playerId] = missionId to insertedLoots
 
@@ -116,8 +150,8 @@ class MissionSaveHandler : SaveSubHandler {
                     MissionStartResponse(
                         id = missionId,
                         time = timeSeconds,
-                        assignmentType = "None", // 'None' because not a raid or arena. see AssignmentType
-                        areaClass = (data["areaClass"] as String?) ?: "", // supposedly depend on the area
+                        assignmentType = if (arenaSession != null) "Arena" else "None",
+                        areaClass = (data["areaClass"] as String?) ?: "", 
                         automated = false,
                         sceneXML = sceneXMLWithLoot,
                         z = zombies,
@@ -157,17 +191,13 @@ class MissionSaveHandler : SaveSubHandler {
                 val rawLootedItems = summarizeLoots(data, insertedLoots)
                 val (combinedLootedItems, obtainedResources) = buildInventoryAndResource(rawLootedItems)
 
-                // Calculate new XP and level
                 val newXp = leader.xp + earnedXp
                 val (newLevel, newLevelPts) = calculateNewLevelAndPoints(leader.level, leader.xp, newXp)
 
-                // Update the leader's XP and level
-                // TODO respond to DB failure
                 svc.survivor.updateSurvivor(leader.id) { currentLeader ->
                     currentLeader.copy(xp = newXp, level = newLevel)
                 }
 
-                // Broadcast level up if player leveled up
                 if (newLevelPts > 0) {
                     try {
                         BroadcastService.broadcastUserLevel(connection.playerId, newLevel)
@@ -176,7 +206,6 @@ class MissionSaveHandler : SaveSubHandler {
                     }
                 }
 
-                // Broadcast rare items found
                 try {
                     combinedLootedItems.forEach { item ->
                         val quality = item.quality?.toString() ?: ""
@@ -188,10 +217,6 @@ class MissionSaveHandler : SaveSubHandler {
                     Logger.warn("Failed to broadcast items found: ${e.message}")
                 }
 
-                // Update player's inventory
-                // TO-DO move inventory update to MissionReturnTask execute()
-                // items and injuries are sent to player after mission return complete
-                // TODO respond to DB failure
                 svc.inventory.updateInventory { items ->
                     items.combineItems(
                         combinedLootedItems.filter { !GameDefinition.isResourceItem(it.type) },
@@ -199,10 +224,8 @@ class MissionSaveHandler : SaveSubHandler {
                     )
                 }
 
-                // TODO respond to DB failure
                 svc.compound.updateResource { currentRes ->
-                    // Cap resources at storage limit (default 100 per resource type)
-                    val storageLimit = 100_000_000 // TODO: Get actual limit from GameDefinitions based on storage buildings
+                    val storageLimit = GameDefinition.config.storageCapacityDefault
                     val cappedResources = GameResources(
                         wood = minOf(currentRes.wood + obtainedResources.wood, storageLimit),
                         metal = minOf(currentRes.metal + obtainedResources.metal, storageLimit),
@@ -210,12 +233,12 @@ class MissionSaveHandler : SaveSubHandler {
                         water = minOf(currentRes.water + obtainedResources.water, storageLimit),
                         food = minOf(currentRes.food + obtainedResources.food, storageLimit),
                         ammunition = minOf(currentRes.ammunition + obtainedResources.ammunition, storageLimit),
-                        cash = currentRes.cash + obtainedResources.cash // Cash has no limit
+                        cash = currentRes.cash + obtainedResources.cash 
                     )
                     cappedResources
                 }
 
-                val returnTime = 20.seconds
+                val returnTime = GameDefinition.config.baseReturnTime.seconds
 
                 val responseJson = JSON.encode(
                     MissionEndResponse(
@@ -229,8 +252,6 @@ class MissionSaveHandler : SaveSubHandler {
                         lockTimer = null,
                         loot = combinedLootedItems,
 
-                        // itmCounters is not related to item quantity
-                        // it is some kind of internal weapon state (i.e., kill count)
                         itmCounters = emptyMap(),
                         injuries = null,
                         survivors = emptyList(),
@@ -246,7 +267,6 @@ class MissionSaveHandler : SaveSubHandler {
                 val resourceResponseJson = JSON.encode(svc.compound.getResources())
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
 
-                // Track mission return task for speedup
                 missionReturnTasks[missionId] = Triple(
                     connection.playerId,
                     getTimeMillis(),
@@ -271,8 +291,7 @@ class MissionSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.MISSION_ZOMBIES -> {
-                // usually requested during middle of mission
-                // there could be 'rush' flag somewhere, which means we need to send runner zombies
+                
 
                 val zombies = listOf(
                     ZombieData.strongRunner(Random.nextInt()),
@@ -303,9 +322,8 @@ class MissionSaveHandler : SaveSubHandler {
                 val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
-                // Find the active mission return task for this player
                 val missionEntry = missionReturnTasks.entries.find { it.value.first == connection.playerId }
-                
+
                 if (missionEntry == null) {
                     Logger.warn(LogConfigSocketToClient) { "Mission return task not found for playerId=${connection.playerId}" }
                     val response = MissionSpeedUpResponse(error = "Task not found", success = false, cost = 0)
@@ -325,7 +343,7 @@ class MissionSaveHandler : SaveSubHandler {
                 var resourceResponse: GameResources? = null
 
                 val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
-                
+
                 if (playerFuel < cost) {
                     response = MissionSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                 } else {
@@ -339,23 +357,21 @@ class MissionSaveHandler : SaveSubHandler {
                                 0
                             } else {
                                 Logger.warn { "Received unexpected MissionSpeedUp FREE option from playerId=${connection.playerId} (speed up requested when return time more than 5 minutes)" }
-                                -1 // Invalid
+                                -1 
                             }
                         }
                         else -> {
                             Logger.warn { "Received unknown MissionSpeedUp option: $option from playerId=${connection.playerId}" }
-                            -1 // Invalid
+                            -1 
                         }
                     }
 
                     if (newRemainingSeconds >= 0) {
-                        // Update resources
                         svc.compound.updateResource { resource ->
                             resourceResponse = resource.copy(cash = playerFuel - cost)
                             resourceResponse
                         }
 
-                        // Stop the current mission return task
                         serverContext.taskDispatcher.stopTaskFor<MissionReturnStopParameter>(
                             connection = connection,
                             category = TaskCategory.Mission.Return,
@@ -365,17 +381,15 @@ class MissionSaveHandler : SaveSubHandler {
                         )
 
                         if (newRemainingSeconds == 0) {
-                            // Complete immediately - remove from tracking and force complete
-                            missionReturnTasks.remove(missionId)
                             
-                            // Send mission return complete message
+                            missionReturnTasks.remove(missionId)
+
                             connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, missionId)
                         } else {
-                            // Partial speedup - update tracking and restart with new duration
+                            
                             val newStartTime = getTimeMillis()
                             missionReturnTasks[missionId] = Triple(connection.playerId, newStartTime, newRemainingSeconds)
-                            
-                            // Restart mission return task with reduced time
+
                             serverContext.taskDispatcher.runTaskFor(
                                 connection = connection,
                                 taskToRun = MissionReturnTask(
@@ -410,7 +424,102 @@ class MissionSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.MISSION_TRIGGER -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'MISSION_TRIGGER' message [not implemented]" }
+                
+                
+                val triggerId = data["id"] as? String ?: run {
+                    Logger.warn(LogConfigSocketToClient) { "MISSION_TRIGGER: Missing trigger 'id' field" }
+                    val responseJson = JSON.encode(mapOf("success" to false))
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return
+                }
+                
+                Logger.info(LogConfigSocketToClient) { "MISSION_TRIGGER: Trigger '$triggerId' activated" }
+                
+                val assignmentId = data["assignmentId"] as? String
+                
+                if (assignmentId != null) {
+                    
+                    val arenaSession = serverContext.db.getActiveArenaSession(assignmentId)
+                    
+                    if (arenaSession == null) {
+                        Logger.warn(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: Arena session not found for assignmentId=$assignmentId" 
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to false))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                        return
+                    }
+                    
+                    val arenaDefinition = GameDefinition.arenasById[arenaSession.arenaName]
+                    if (arenaDefinition == null) {
+                        Logger.error(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: Arena definition '${arenaSession.arenaName}' not found" 
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to false))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                        return
+                    }
+                    
+                    val stageDef = arenaDefinition.stages.getOrNull(arenaSession.currentStageIndex)
+                    if (stageDef == null) {
+                        Logger.warn(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: Invalid stage index ${arenaSession.currentStageIndex} for arena '${arenaSession.arenaName}'" 
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to false))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                        return
+                    }
+                    
+                    val triggerPoints = stageDef.triggerPoints
+                    
+                    if (triggerPoints <= 0) {
+                        Logger.warn(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: No points configured for trigger in stage ${arenaSession.currentStageIndex}" 
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to false))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                        return
+                    }
+                    
+                    val updatedStages = arenaSession.stages.mapIndexed { index, stage ->
+                        if (index == arenaSession.currentStageIndex) {
+                            stage.copy(objectivePoints = stage.objectivePoints + triggerPoints)
+                        } else {
+                            stage
+                        }
+                    }
+                    
+                    val newTotalPoints = updatedStages.sumOf { it.survivorPoints + it.objectivePoints }
+                    
+                    val updatedSession = arenaSession.copy(
+                        stages = updatedStages,
+                        totalPoints = newTotalPoints,
+                        lastUpdatedAt = System.currentTimeMillis()
+                    )
+                    
+                    try {
+                        serverContext.db.saveActiveArenaSession(updatedSession)
+                        Logger.info(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: Added $triggerPoints objective points to arena session ${arenaSession.id}, " +
+                            "new total: $newTotalPoints"
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to true))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    } catch (e: Exception) {
+                        Logger.error(LogConfigSocketToClient) { 
+                            "MISSION_TRIGGER: Failed to update arena session: ${e.message}" 
+                        }
+                        val responseJson = JSON.encode(mapOf("success" to false))
+                        send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    }
+                } else {
+                    
+                    Logger.info(LogConfigSocketToClient) { 
+                        "MISSION_TRIGGER: Trigger '$triggerId' activated in non-arena mission" 
+                    }
+                    val responseJson = JSON.encode(mapOf("success" to true))
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                }
             }
 
             SaveDataMethod.MISSION_ELITE_SPAWNED -> {
@@ -421,19 +530,16 @@ class MissionSaveHandler : SaveSubHandler {
                 Logger.warn(LogConfigSocketToClient) { "Received 'MISSION_ELITE_KILLED' message [not implemented]" }
             }
 
-            // also handle this
             SaveDataMethod.STAT_DATA -> {
                 val playerStats = parseMissionStats(data["stats"])
                 Logger.debug(logFull = true) { "STAT_DATA parsed: $playerStats" }
                 missionStats[connection.playerId] = playerStats
-                // TODO: attach missionStats to a running mission context or persist if needed
             }
 
             SaveDataMethod.STAT -> {
                 val playerStats = parseMissionStats(data["stats"])
                 Logger.debug(logFull = true) { "STAT parsed: $missionStats" }
                 missionStats[connection.playerId] = playerStats
-                // TODO: attach missionStats to a running mission context or persist if needed
             }
         }
     }
@@ -619,11 +725,12 @@ class MissionSaveHandler : SaveSubHandler {
     }
 
     private fun calculateMissionXp(killData: Map<String, Int>): Int {
-        var totalXp = 50
-        totalXp += (killData["zombie"] ?: 0) * 5
-        totalXp += (killData["runner"] ?: 0) * 10
-        totalXp += (killData["fatty"] ?: 0) * 15
-        totalXp += (killData["boss"] ?: 0) * 100
-        return totalXp.coerceAtMost(1000)
+        val config = GameDefinition.config
+        var totalXp = config.missionBaseXp
+        totalXp += (killData["zombie"] ?: 0) * config.missionZombieKillXp
+        totalXp += (killData["runner"] ?: 0) * config.missionRunnerKillXp
+        totalXp += (killData["fatty"] ?: 0) * config.missionFattyKillXp
+        totalXp += (killData["boss"] ?: 0) * config.missionBossKillXp
+        return totalXp.coerceAtMost(config.missionMaxXp)
     }
 }

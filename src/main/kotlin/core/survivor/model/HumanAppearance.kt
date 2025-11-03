@@ -2,11 +2,6 @@ package core.model.game.data
 
 import kotlinx.serialization.Serializable
 
-// Humanapppearance is the base class of Survivorapppearance
-// the game can't take both, because Survivorapppearance doesn't have deserialize method
-// and it delegates deserialize to Humanapppearance itself
-// The difference between Humanapppearance and Survivorapppearance is within clothing_upper/lower
-// and accessories field
 @Serializable
 data class HumanAppearance(
     val forceHair: Boolean = false,

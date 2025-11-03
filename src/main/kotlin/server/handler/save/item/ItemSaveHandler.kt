@@ -1,6 +1,7 @@
 package server.handler.save.item
 
 import context.requirePlayerContext
+import core.data.GameDefinition
 import core.items.model.Item
 import dev.deadzone.core.model.game.data.hasEnded
 import dev.deadzone.core.model.game.data.reduceBy
@@ -26,15 +27,16 @@ class ItemSaveHandler : SaveSubHandler {
     private fun generateRecycleRewards(itemType: String): List<Item> {
         val rewards = mutableListOf<Item>()
 
+        val config = GameDefinition.config
         val baseRewards = mapOf(
-            "wood" to 2..5,
-            "metal" to 1..3,
-            "cloth" to 1..4,
-            "water" to 1..2
+            "wood" to config.recycleWoodMin..config.recycleWoodMax,
+            "metal" to config.recycleMetalMin..config.recycleMetalMax,
+            "cloth" to config.recycleClothMin..config.recycleClothMax,
+            "water" to config.recycleWaterMin..config.recycleWaterMax
         )
 
         baseRewards.forEach { (type, range) ->
-            if (Random.nextDouble() < 0.3) {
+            if (Random.nextDouble() < config.recycleChancePerResource) {
                 val qty = Random.nextInt(range.first, range.last + 1).toUInt()
                 rewards.add(Item(
                     id = UUID.new(),
@@ -189,13 +191,14 @@ class ItemSaveHandler : SaveSubHandler {
                     return@with
                 }
 
-                val timePerItem = 10
-                val timePerQty = 5
+                val config = GameDefinition.config
+                val timePerItem = config.batchRecycleTimePerItem
+                val timePerQty = config.batchRecycleTimePerQty
                 val totalQty = recycledOutputItems.sumOf { it.qty.toInt() }
                 val totalTime = itemsToRecycle.size * timePerItem + totalQty * timePerQty
 
-                val minCost = 50
-                val costPerMin = 0.5
+                val minCost = config.batchRecycleMinCost
+                val costPerMin = config.batchRecycleCostPerMin
                 val cost = maxOf(minCost, (costPerMin * (totalTime / 60.0)).toInt())
 
                 if (buy) {

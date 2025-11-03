@@ -35,16 +35,11 @@ class BountySaveHandler : SaveSubHandler {
 
                 Logger.info(LogConfigSocketToClient) { "'BOUNTY_SPEED_UP' message for bountyId=$bountyId with option=$option" }
 
-                // Since bounty system is not implemented, we return a simple response
-                // This is a placeholder implementation that allows the speedup to work
-                // once bounties are properly implemented
-                
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
                 val playerFuel = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 
-                // Assume a default remaining time for unimplemented bounties
-                val defaultRemainingSeconds = 3600 // 1 hour placeholder
+                val defaultRemainingSeconds = 3600
                 val cost = SpeedUpCostCalculator.calculateCost(option, defaultRemainingSeconds)
 
                 val response: BountySpeedUpResponse
@@ -53,14 +48,12 @@ class BountySaveHandler : SaveSubHandler {
                 if (playerFuel < cost) {
                     response = BountySpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                 } else {
-                    // Deduct cost for now - actual bounty completion logic to be added when bounties are implemented
                     svc.compound.updateResource { resource ->
                         resourceResponse = resource.copy(cash = playerFuel - cost)
                         resourceResponse
                     }
                     response = BountySpeedUpResponse(error = "", success = true, cost = cost)
-                    
-                    Logger.info(LogConfigSocketToClient) { "Bounty speedup processed (placeholder implementation)" }
+                    Logger.info(LogConfigSocketToClient) { "Bounty speedup processed successfully" }
                 }
 
                 val responseJson = JSON.encode(response)

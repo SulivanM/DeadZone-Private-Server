@@ -10,5 +10,5 @@ data class StoreSale(
     val levelMax: Int = 2147483647,
     val start: Long,
     val end: Long,
-    val items: List<String>?,  // assigned to itemKeys, a list of string
+    val items: List<String>?,
 )

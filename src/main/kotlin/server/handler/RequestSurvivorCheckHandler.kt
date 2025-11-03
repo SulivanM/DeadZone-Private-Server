@@ -13,12 +13,6 @@ import utils.Time
 import kotlin.collections.random
 import kotlin.random.Random
 
-/**
- * Handle `rsc` message by:
- *
- * 1. Sending a reponse in JSON with success set to true
- *
- */
 class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
         return message.type == NetworkMessage.REQUEST_SURVIVOR_CHECK || message.contains(NetworkMessage.REQUEST_SURVIVOR_CHECK)
@@ -30,10 +24,10 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
 
         val responseMsg =
             listOf(
-                NetworkMessage.SEND_RESPONSE,  // Message Type
-                id ?: "m",   // id
-                Time.now(),   // server time
-                """{"success": true}""".trimIndent() // response
+                NetworkMessage.SEND_RESPONSE,  
+                id ?: "m",   
+                Time.now(),   
+                """{"success": true}""".trimIndent() 
             )
 
         val newSrv = generateSurvivor()
@@ -62,7 +56,7 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
             title = "",
             morale = emptyMap(),
             injuries = emptyList(),
-            level = 1,
+            level = -1,
             xp = 0,
             missionId = null,
             assignmentId = null,
@@ -85,7 +79,6 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
         """.trimIndent()
     }
 
-    // popular culture some troll names
     val maleNames = setOf(
         "Tony Stark", "Peter Parker", "Bruce Wayne", "Clark Kent", "Steve Rogers",
         "Luke Skywalker", "Genshin Impact", "Rick Roll", "Joel Miller", "Arthur Morgan",

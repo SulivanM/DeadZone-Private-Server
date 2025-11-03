@@ -2,7 +2,7 @@ package core.survivor
 
 import core.model.game.data.Survivor
 import data.collection.PlayerObjects
-import data.db.PlayerObjectsTable
+import data.db.PlayerAccounts
 import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
@@ -12,13 +12,13 @@ import utils.JSON
 class SurvivorRepositoryMaria(private val database: Database) : SurvivorRepository {
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {
         return database.suspendedTransactionResult {
-            PlayerObjectsTable
+            PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
                     val playerObjects =
-                        JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                        JSON.decode(PlayerObjects.serializer(), row[PlayerAccounts.playerObjectsJson])
                     playerObjects.survivors
                 } ?: throw NoSuchElementException("getSurvivors: No PlayerObjects found with id=$playerId")
         }
@@ -26,19 +26,19 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
 
     override suspend fun addSurvivor(playerId: String, survivor: Survivor): Result<Unit> {
         return database.suspendedTransactionResult {
-            val currentData = PlayerObjectsTable
+            val currentData = PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerAccounts.playerObjectsJson])
                 } ?: throw NoSuchElementException("addSurvivor: No PlayerObjects found with id=$playerId")
 
             val survivors = currentData.survivors.toMutableList()
             val updatedData = currentData.copy(survivors = survivors + survivor)
 
-            val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
+            val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
+                it[playerObjectsJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in addSurvivor for playerId=$playerId")
@@ -48,12 +48,12 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
 
     override suspend fun updateSurvivor(playerId: String, srvId: String, updatedSurvivor: Survivor): Result<Unit> {
         return database.suspendedTransactionResult {
-            val currentData = PlayerObjectsTable
+            val currentData = PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerAccounts.playerObjectsJson])
                 } ?: throw NoSuchElementException("updateSurvivor: No PlayerObjects found with id=$playerId")
 
             val survivors = currentData.survivors.toMutableList()
@@ -65,8 +65,8 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
             survivors[survivorIndex] = updatedSurvivor
             val updatedData = currentData.copy(survivors = survivors)
 
-            val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
+            val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
+                it[playerObjectsJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in updateSurvivor for playerId=$playerId")
@@ -76,18 +76,18 @@ class SurvivorRepositoryMaria(private val database: Database) : SurvivorReposito
 
     override suspend fun updateSurvivors(playerId: String, survivors: List<Survivor>): Result<Unit> {
         return database.suspendedTransactionResult {
-            val currentData = PlayerObjectsTable
+            val currentData = PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    JSON.decode(PlayerObjects.serializer(), row[PlayerAccounts.playerObjectsJson])
                 } ?: throw NoSuchElementException("updateSurvivors: No PlayerObjects with id=$playerId")
 
             val updatedData = currentData.copy(survivors = survivors)
 
-            val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
+            val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
+                it[playerObjectsJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update survivors in updateSurvivors for playerId=$playerId")

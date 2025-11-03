@@ -1,8 +1,5 @@
 package dev.deadzone.utils
 
-/**
- * Ansi colors (256) constants to style console.
- */
 @Suppress("unused", "ConstPropertyName")
 object AnsiColors {
     const val Reset = "\u001B[0m"

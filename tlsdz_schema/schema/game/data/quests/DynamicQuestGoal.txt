@@ -1,6 +1,0 @@
-data DynamicQuestGoal
-
-type: DynamicQuestGoalEnum!
-stat: String?
-survivor: String?
-goal: Int!

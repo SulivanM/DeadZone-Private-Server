@@ -9,10 +9,6 @@ import server.protocol.PIOSerializer
 import utils.Logger
 import utils.UUID
 
-/**
- * Representation of a player connection.
- * @property playerId reference to which player does this socket belongs to. Only known after client send join message.
- */
 class Connection(
     var playerId: String = "[Undetermined]",
     val connectionId: String = UUID.new(),
@@ -23,16 +19,10 @@ class Connection(
 ) {
     private var lastActivity = System.currentTimeMillis()
 
-    /**
-     * Update the last activity timestamp
-     */
     fun updateActivity() {
         lastActivity = System.currentTimeMillis()
     }
 
-    /**
-     * Send raw unserialized message (non-PIO) to client
-     */
     suspend fun sendRaw(b: ByteArray, enableLogging: Boolean = true, logFull: Boolean = true) {
         try {
             if (enableLogging) {
@@ -46,9 +36,6 @@ class Connection(
         }
     }
 
-    /**
-     * Send a serialized PIO message
-     */
     suspend fun sendMessage(type: String, vararg args: Any, enableLogging: Boolean = true, logFull: Boolean = true) {
         try {
             val msg = buildList {

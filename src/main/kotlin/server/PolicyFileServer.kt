@@ -17,11 +17,6 @@ data class PolicyFileServerConfig(
     val allowedPorts: List<Int> = listOf(2121, 2122, 2123)
 )
 
-/**
- * Flash Player policy file server
- * Required for Flash to establish socket connections
- * Must run on port 843 (requires admin/root on Linux)
- */
 class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
     override val name: String = "PolicyFileServer"
 
@@ -36,9 +31,6 @@ class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
         this.policyServerScope = CoroutineScope(scope.coroutineContext + SupervisorJob() + Dispatchers.IO)
     }
 
-    /**
-     * Starts the policy file server
-     */
     override suspend fun start() {
         if (running) {
             Logger.warn("Policy file server already running")
@@ -75,14 +67,12 @@ class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
                     val bytesRead = input.readAvailable(buffer, 0, buffer.size)
                     if (bytesRead <= 0) break
 
-                    // Check if it's policy file request
                     val request = buffer.copyOfRange(0, bytesRead)
                     if (request.startsWithBytes(POLICY_FILE_REQUEST)) {
                         val policyFile = generatePolicyFile().toByteArray(Charsets.UTF_8)
                         output.writeFully(policyFile)
                     }
 
-                    // Break, then close connection after sending response
                     break
                 }
             } catch (e: Exception) {
@@ -93,11 +83,10 @@ class PolicyFileServer(private val config: PolicyFileServerConfig) : Server {
         }
     }
 
-    // Policy file response
     private fun generatePolicyFile(): String {
         val portsString = config.allowedPorts.joinToString(",")
         return """<?xml version="1.0"?>
-<!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
+<!DOCTYPE cross-domain-policy SYSTEM "http:
 <cross-domain-policy>
     <allow-access-from domain="*" to-ports="$portsString" />
 </cross-domain-policy>

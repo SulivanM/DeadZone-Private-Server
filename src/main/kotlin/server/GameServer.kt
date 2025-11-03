@@ -8,7 +8,6 @@ import server.messaging.SocketMessageDispatcher
 import server.protocol.PIODeserializer
 import utils.Logger
 import utils.UUID
-import utils.sanitizedString
 import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.util.date.*
@@ -30,6 +29,25 @@ import server.tasks.impl.BuildingRepairStopParameter
 import server.tasks.impl.JunkRemovalStopParameter
 import java.net.SocketException
 import kotlin.system.measureTimeMillis
+import server.POLICY_FILE_REQUEST
+
+// Extension function for ByteArray sanitization (moved from utils/ByteArrayUtils.kt)
+private fun ByteArray.sanitizedString(max: Int = 512, placeholder: Char = '.'): String {
+    val decoded = String(this, Charsets.UTF_8)
+    val sanitized = decoded.map { ch ->
+        if (ch.isISOControl() && ch != '\n' && ch != '\r' && ch != '\t') placeholder
+        else if (!ch.isDefined() || !ch.isLetterOrDigit() && ch !in setOf(
+                ' ', '.', ',', ':', ';', '-', '_',
+                '{', '}', '[', ']', '(', ')', '"',
+                '\'', '/', '\\', '?', '=', '+', '*',
+                '%', '&', '|', '<', '>', '!', '@',
+                '#', '$', '^', '~'
+            )
+        ) placeholder
+        else ch
+    }.joinToString("")
+    return sanitized.take(max) + if (sanitized.length > max) "..." else ""
+}
 
 data class GameServerConfig(
     val host: String = "127.0.0.1",
@@ -62,7 +80,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.TimeUpdate,
                 stopInputFactory = {},
                 deriveId = { playerId, category, _ ->
-                    // "TU-playerId123"
+                    
                     "${category.code}-$playerId"
                 }
             )
@@ -70,7 +88,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.Building.Create,
                 stopInputFactory = { BuildingCreateStopParameter() },
                 deriveId = { playerId, category, stopInput ->
-                    // "BLD-CREATE-bldId123-playerId123"
+                    
                     "${category.code}-${stopInput.buildingId}-$playerId"
                 }
             )
@@ -78,7 +96,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.Building.Repair,
                 stopInputFactory = { BuildingRepairStopParameter() },
                 deriveId = { playerId, category, stopInput ->
-                    // "BLD-REPAIR-bldId123-playerId123"
+                    
                     "${category.code}-${stopInput.buildingId}-$playerId"
                 }
             )
@@ -86,7 +104,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.Mission.Return,
                 stopInputFactory = { MissionReturnStopParameter() },
                 deriveId = { playerId, category, stopInput ->
-                    // "MIS-RETURN-missionId123-playerId123"
+                    
                     "${category.code}-${stopInput.missionId}-$playerId"
                 }
             )
@@ -94,7 +112,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.Task.JunkRemoval,
                 stopInputFactory = { JunkRemovalStopParameter() },
                 deriveId = { playerId, category, stopInput ->
-                    // "TASK-JUNK-taskId123-playerId123"
+                    
                     "${category.code}-${stopInput.taskId}-$playerId"
                 }
             )
@@ -102,7 +120,7 @@ class GameServer(private val config: GameServerConfig) : Server {
                 category = TaskCategory.BatchRecycle.Complete,
                 stopInputFactory = { BatchRecycleCompleteStopParameter() },
                 deriveId = { playerId, category, stopInput ->
-                    // "BATCH-RECYCLE-jobId123-playerId123"
+                    
                     "${category.code}-${stopInput.jobId}-$playerId"
                 }
             )
@@ -166,14 +184,22 @@ class GameServer(private val config: GameServerConfig) : Server {
                             break
                         }
 
-                        val data2 = if (data.startsWithBytes(byteArrayOf(0x00))) {
+                        // Only drop leading 0x00 if there's more data after it
+                        val data2 = if (data.size > 1 && data.startsWithBytes(byteArrayOf(0x00))) {
                             data.drop(1).toByteArray()
                         } else data
 
+                        Logger.debug { "Received ${data.size} bytes, after processing: ${data2.size} bytes, first bytes: ${data.take(10).joinToString(" ") { "%02X".format(it) }}" }
+
                         val deserialized = PIODeserializer.deserialize(data2)
+                        Logger.debug { "Deserialized to: $deserialized" }
+
                         val msg = SocketMessage.fromRaw(deserialized)
                         if (msg.isEmpty()) {
-                            Logger.debug { "==== [SOCKET] Ignored empty message from connection=$connection, raw: $msg" }
+                            Logger.debug { "==== [SOCKET] Received handshake/ping from connection=$connection, sending ACK" }
+                            // Send a simple acknowledgment back to the client
+                            // PlayerIO protocol: send back a 0x00 (false) to acknowledge
+                            connection.sendRaw(byteArrayOf(0x00), enableLogging = false)
                             continue
                         }
 
@@ -194,10 +220,10 @@ class GameServer(private val config: GameServerConfig) : Server {
                     }
                 }
             } catch (_: ClosedByteChannelException) {
-                // Handle connection reset gracefully - this is expected when clients disconnect abruptly
+                
                 Logger.info { "Client ${connection.remoteAddress} disconnected abruptly (connection reset)" }
             } catch (e: SocketException) {
-                // Handle other socket-related exceptions gracefully
+                
                 when {
                     e.message?.contains("Connection reset") == true -> {
                         Logger.info { "Client ${connection.remoteAddress} connection was reset by peer" }
@@ -212,13 +238,11 @@ class GameServer(private val config: GameServerConfig) : Server {
                     }
                 }
             } catch (e: Exception) {
-                Logger.error { "Unexpected error in socket for ${connection.remoteAddress}: $e" }
-                e.printStackTrace()
+                Logger.error { "Unexpected error in socket for ${connection.remoteAddress}: ${e.message}\n${e.stackTraceToString()}" }
             } finally {
-                // Cleanup logic - this will run regardless of how the connection ended
+                
                 Logger.info { "Cleaning up connection for ${connection.remoteAddress}" }
 
-                // Only perform cleanup if playerId is set (client was authenticated)
                 if (connection.playerId != "[Undetermined]") {
                     serverContext.onlinePlayerRegistry.markOffline(connection.playerId)
                     serverContext.playerAccountRepository.updateLastLogin(connection.playerId, getTimeMillis())

@@ -2,7 +2,7 @@ package core.items
 
 import core.model.game.data.BatchRecycleJob
 import data.collection.PlayerObjects
-import data.db.PlayerObjectsTable
+import data.db.PlayerAccounts
 import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
@@ -12,12 +12,12 @@ import utils.JSON
 class BatchRecycleJobRepositoryMaria(private val database: Database) : BatchRecycleJobRepository {
     private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {
         return database.suspendedTransactionResult {
-            PlayerObjectsTable
+            PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?.let { row ->
-                    val playerObjects = JSON.decode(PlayerObjects.serializer(), row[PlayerObjectsTable.dataJson])
+                    val playerObjects = JSON.decode(PlayerObjects.serializer(), row[PlayerAccounts.playerObjectsJson])
                     transform(playerObjects)
                 } ?: throw NoSuchElementException("getPlayerObjectsData: No PlayerObjects found with id=$playerId")
         }
@@ -28,17 +28,17 @@ class BatchRecycleJobRepositoryMaria(private val database: Database) : BatchRecy
         updateAction: (PlayerObjects) -> PlayerObjects
     ): Result<Unit> {
         return database.suspendedTransactionResult {
-            val currentRow = PlayerObjectsTable
+            val currentRow = PlayerAccounts
                 .selectAll()
-                .where { PlayerObjectsTable.playerId eq playerId }
+                .where { PlayerAccounts.playerId eq playerId }
                 .singleOrNull()
                 ?: throw NoSuchElementException("updatePlayerObjectsData: No PlayerObjects found with id=$playerId")
 
-            val currentData = JSON.decode(PlayerObjects.serializer(), currentRow[PlayerObjectsTable.dataJson])
+            val currentData = JSON.decode(PlayerObjects.serializer(), currentRow[PlayerAccounts.playerObjectsJson])
             val updatedData = updateAction(currentData)
 
-            val rowsUpdated = PlayerObjectsTable.update({ PlayerObjectsTable.playerId eq playerId }) {
-                it[dataJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
+            val rowsUpdated = PlayerAccounts.update({ PlayerAccounts.playerId eq playerId }) {
+                it[playerObjectsJson] = JSON.encode(PlayerObjects.serializer(), updatedData)
             }
             if (rowsUpdated == 0) {
                 throw IllegalStateException("Failed to update player objects data for playerId=$playerId")

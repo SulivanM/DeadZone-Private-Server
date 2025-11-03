@@ -39,6 +39,17 @@ object Logger {
     private const val MAX_LOG_ROTATES = 5
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
+    fun verbose(msg: String) = verbose { msg }
+    fun verbose(config: LogConfig, forceLogFull: Boolean? = null, msg: () -> String) =
+        verbose(config.src, config.targets, forceLogFull ?: config.logFull, msg)
+
+    fun verbose(
+        src: LogSource = LogSource.SOCKET,
+        targets: Set<LogTarget> = setOf(LogTarget.PRINT),
+        logFull: Boolean = true,
+        msg: () -> String
+    ) = log(src, targets, LogLevel.VERBOSE, msg, logFull)
+
     fun success(msg: String) = success { msg }
     fun success(config: LogConfig, forceLogFull: Boolean? = null, msg: () -> String) =
         success(config.src, config.targets, forceLogFull ?: config.logFull, msg)
@@ -131,11 +142,13 @@ object Logger {
 
     fun colorizeLog(level: LogLevel, text: String): String {
         val (fg, bg) = when (level) {
+            LogLevel.VERBOSE -> AnsiColors.BlackText to AnsiColors.Debug
             LogLevel.SUCCESS -> AnsiColors.BlackText to AnsiColors.Success
             LogLevel.DEBUG -> AnsiColors.BlackText to AnsiColors.Debug
             LogLevel.INFO -> AnsiColors.BlackText to AnsiColors.Info
             LogLevel.WARN -> AnsiColors.BlackText to AnsiColors.Warn
             LogLevel.ERROR -> AnsiColors.WhiteText to AnsiColors.Error
+            LogLevel.NOTHING -> AnsiColors.BlackText to AnsiColors.Debug
         }
         return "$bg$fg$text${AnsiColors.Reset}"
     }
@@ -164,11 +177,12 @@ object Logger {
 
     fun setLevel(level: String) {
         when (level) {
-            "0" -> setLevel(LogLevel.SUCCESS)
-            "1" -> setLevel(LogLevel.DEBUG)
-            "2" -> setLevel(LogLevel.INFO)
-            "3" -> setLevel(LogLevel.WARN)
-            "4" -> setLevel(LogLevel.ERROR)
+            "0" -> setLevel(LogLevel.VERBOSE)
+            "1" -> setLevel(LogLevel.SUCCESS)
+            "2" -> setLevel(LogLevel.DEBUG)
+            "3" -> setLevel(LogLevel.INFO)
+            "4" -> setLevel(LogLevel.WARN)
+            "5" -> setLevel(LogLevel.ERROR)
             else -> setLevel(LogLevel.DEBUG)
         }
     }
@@ -178,17 +192,12 @@ object Logger {
     }
 }
 
-/**
- * Raw console access that bypass Jansi.
- *
- * This is only needed when you want to style the console (e.g., colored text, emoji display)
- */
 object BypassJansi {
     private val rawOut = PrintStream(FileOutputStream(FileDescriptor.out), true, Charsets.UTF_8)
     fun println(msg: String) = rawOut.println(msg)
 }
 
-enum class LogLevel { SUCCESS, DEBUG, INFO, WARN, ERROR }
+enum class LogLevel { VERBOSE, SUCCESS, DEBUG, INFO, WARN, ERROR, NOTHING }
 
 sealed class LogTarget {
     object PRINT : LogTarget()

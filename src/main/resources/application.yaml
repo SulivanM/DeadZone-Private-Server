@@ -6,7 +6,7 @@ ktor:
   deployment:
     port: 8080
 game:
-  enableAdmin: "$ADMIN:true"
+  enableAdmin: "$ADMIN:false"
   host: "127.0.0.1"
   port: 7777
 broadcast:

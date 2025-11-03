@@ -3,9 +3,6 @@ package user
 import user.model.UserProfile
 import data.collection.PlayerAccount
 
-/**
- * Player account repository, analogous to game service's repo
- */
 interface PlayerAccountRepository {
     suspend fun doesUserExist(username: String): Result<Boolean>
 
@@ -21,10 +18,5 @@ interface PlayerAccountRepository {
 
     suspend fun updateLastLogin(playerId: String, lastLogin: Long): Result<Unit>
 
-    /**
-     * Verify credentials of the given username and password
-     *
-     * @return playerId for the corresponding username if success
-     */
     suspend fun verifyCredentials(username: String, password: String): Result<String?>
 }
