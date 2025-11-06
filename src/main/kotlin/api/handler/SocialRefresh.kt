@@ -19,43 +19,40 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
 @OptIn(ExperimentalSerializationApi::class)
-suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: String?) {
-    if (token.isNullOrBlank()) {
-        call.respond(HttpStatusCode.Unauthorized, "missing_token")
-        return
+suspend fun RoutingContext.socialRefresh(serverContext: ServerContext, token: String) {
+    val socialRefreshArgs = call.receiveChannel().toByteArray() // Actually no input is given
+
+    logInput(socialRefreshArgs.decodeToString(), disableLogging = true)
+
+    val pid = serverContext.sessionManager.getPlayerId(token)!!
+    val result = serverContext.playerAccountRepository.getProfileOfPlayerId(pid)
+    result.onFailure {
+        Logger.error(LogConfigAPIError) { "Failure on getProfileOfPlayerId for playerId=$pid: ${it.message}" }
     }
 
-    val pid = runCatching { serverContext.sessionManager.getPlayerId(token) }.getOrNull()
-    if (pid.isNullOrBlank()) {
-        call.respond(HttpStatusCode.Unauthorized, "invalid_token")
-        return
+    val userProfile = requireNotNull(result.getOrThrow()) {
+        "getProfileOfPlayerId succeed but returned profile is null"
     }
-
-    val profile = serverContext.playerAccountRepository.getProfileOfPlayerId(pid).getOrNull()
-    if (profile == null) {
-        Logger.error(LogConfigAPIError) { "Profile not found for playerId=$pid" }
-        call.respond(HttpStatusCode.InternalServerError, "profile_missing")
-        return
-    }
-
-    val output = if (pid == AdminData.PLAYER_ID) {
+    val socialRefreshOutput = if (pid == AdminData.PLAYER_ID) {
         SocialRefreshOutput.admin()
     } else {
         SocialRefreshOutput(
             myProfile = SocialProfile(
                 userId = pid,
-                displayName = profile.displayName,
-                avatarUrl = profile.avatarUrl,
-                lastOnline = profile.lastLogin,
-                countryCode = profile.countryCode ?: "",
-                userToken = token
+                displayName = userProfile.displayName,
+                avatarUrl = userProfile.avatarUrl,
+                lastOnline = userProfile.lastLogin,
+                countryCode = userProfile.countryCode ?: "",
+                userToken = token,
             ),
             friends = emptyList(),
             blocked = ""
         )
     }
 
-    val encoded = ProtoBuf.encodeToByteArray(output)
-    logOutput(encoded, disableLogging = true)
-    call.respondBytes(encoded.pioFraming())
+    val encodedOutput = ProtoBuf.encodeToByteArray(socialRefreshOutput)
+
+    logOutput(encodedOutput, disableLogging = true)
+
+    call.respondBytes(encodedOutput.pioFraming())
 }

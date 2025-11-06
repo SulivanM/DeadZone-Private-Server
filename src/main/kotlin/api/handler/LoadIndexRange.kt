@@ -31,7 +31,7 @@ suspend fun RoutingContext.loadIndexRange() {
         return
     }
 
-    logInput(args, disableLogging = true)
+    logInput(args, disableLogging = false)
 
     val outputBytes = try {
         ProtoBuf.encodeToByteArray(
