@@ -3,7 +3,9 @@ package core.compound
 import core.PlayerService
 import core.model.game.data.*
 import utils.LogConfigSocketError
+import utils.LogLevel
 import utils.Logger
+import utils.DataLogger
 import io.ktor.util.date.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -19,13 +21,23 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
     fun getIndexOfBuilding(bldId: String): Int {
         val idx = buildings.indexOfFirst { it.id == bldId }
         if (idx == -1) {
-            Logger.error(LogConfigSocketError) { "Building bldId=$bldId not found for playerId=$playerId" }
+            DataLogger.event("BuildingNotFound")
+                .prefixText("Building not found")
+                .playerId(playerId)
+                .data("buildingId", bldId)
+                .data("operation", "getIndexOfBuilding")
+                .record()
+                .log(LogLevel.ERROR)
         }
         return idx
     }
 
     fun getBuilding(bldId: String): BuildingLike? {
         return buildings.find { it.id == bldId }
+    }
+
+    fun getAllBuildings(): List<BuildingLike> {
+        return buildings.toList()
     }
 
     suspend fun updateBuilding(
@@ -39,7 +51,14 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 
         val result = compoundRepository.updateBuilding(playerId, bldId, update)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on updateBuilding for playerId=$playerId: ${it.message}" }
+            DataLogger.event("BuildingUpdateError")
+                .prefixText("Error updating building")
+                .playerId(playerId)
+                .data("buildingId", bldId)
+                .data("operation", "updateBuilding")
+                .data("error", it.message ?: "unknown")
+                .record()
+                .log(LogLevel.ERROR)
         }
         result.onSuccess {
             buildings[idx] = update
@@ -50,7 +69,14 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
     suspend fun updateAllBuildings(buildings: List<BuildingLike>): Result<Unit> {
         val result = compoundRepository.updateAllBuildings(playerId, buildings)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on updateAllBuildings for playerId=$playerId: ${it.message}" }
+            DataLogger.event("BuildingsUpdateError")
+                .prefixText("Error updating all buildings")
+                .playerId(playerId)
+                .data("buildingCount", buildings.size)
+                .data("operation", "updateAllBuildings")
+                .data("error", it.message ?: "unknown")
+                .record()
+                .log(LogLevel.ERROR)
         }
         result.onSuccess {
             this.buildings.clear()
@@ -63,10 +89,25 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         val create = createAction()
         val result = compoundRepository.createBuilding(playerId, create)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on createBuilding for playerId=$playerId: ${it.message}" }
+            DataLogger.event("BuildingCreateError")
+                .prefixText("Error creating building")
+                .playerId(playerId)
+                .data("buildingId", create.id)
+                .data("buildingType", create.type)
+                .data("operation", "createBuilding")
+                .data("error", it.message ?: "unknown")
+                .record()
+                .log(LogLevel.ERROR)
         }
         result.onSuccess {
             this.buildings.add(create)
+            DataLogger.event("BuildingCreated")
+                .prefixText("Building created successfully")
+                .playerId(playerId)
+                .data("buildingId", create.id)
+                .data("buildingType", create.type)
+                .record()
+                .log(LogLevel.INFO)
         }
         return result
     }
@@ -74,14 +115,26 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
     suspend fun deleteBuilding(bldId: String): Result<Unit> {
         val result = compoundRepository.deleteBuilding(playerId, bldId)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on deleteBuilding for playerId=$playerId: ${it.message}" }
+            DataLogger.event("BuildingDeleteError")
+                .prefixText("Error deleting building")
+                .playerId(playerId)
+                .data("buildingId", bldId)
+                .data("operation", "deleteBuilding")
+                .data("error", it.message ?: "unknown")
+                .record()
+                .log(LogLevel.ERROR)
         }
         result.onSuccess {
             this.buildings.removeIf { it.id == bldId }
+            DataLogger.event("BuildingDeleted")
+                .prefixText("Building deleted successfully")
+                .playerId(playerId)
+                .data("buildingId", bldId)
+                .record()
+                .log(LogLevel.INFO)
         }
         return result
     }
-
 
     suspend fun collectBuilding(bldId: String): Result<GameResources> {
         val lastUpdate = lastResourceValueUpdated[bldId]
@@ -102,7 +155,13 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         val update = updateAction(this.resources)
         val result = compoundRepository.updateGameResources(playerId, update)
         result.onFailure {
-            Logger.error(LogConfigSocketError) { "Error on updateResource for playerId=$playerId: ${it.message}" }
+            DataLogger.event("ResourceUpdateError")
+                .prefixText("Error updating resources")
+                .playerId(playerId)
+                .data("operation", "updateResource")
+                .data("error", it.message ?: "unknown")
+                .record()
+                .log(LogLevel.ERROR)
         }
         result.onSuccess {
             this.resources = update
@@ -112,8 +171,8 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 
     fun calculateResource(durationSec: Duration): Double {
         val productionRate = 4
-        // Parameter: building level, effects
-        // See GameDefinitions of building.xml for realistic result
+        
+        
         return 10.0 + (productionRate * durationSec.inWholeMinutes)
     }
 
@@ -146,7 +205,14 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
                     oldBld.copy(resourceValue = calculateResource((now - lastUpdate).seconds))
                 }
                 updateResult.onFailure {
-                    Logger.error(LogConfigSocketError) { "Failed to update building ${bldLike.id} during close for playerId=$playerId: ${it.message}" }
+                    DataLogger.event("BuildingCloseError")
+                        .prefixText("Failed to update building during close")
+                        .playerId(playerId)
+                        .data("buildingId", bldLike.id)
+                        .data("operation", "close")
+                        .data("error", it.message ?: "unknown")
+                        .record()
+                        .log(LogLevel.ERROR)
                 }
             }
         }
