@@ -1,7 +1,7 @@
 import core.model.game.data.Survivor
 import core.survivor.SurvivorRepository
 import core.survivor.SurvivorService
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 class TestSurvivorService {
 
     @Test
-    fun testInitLoadsSurvivors() = runBlocking {
+    fun testInitLoadsSurvivors() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
 
@@ -21,7 +21,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testGetSurvivorLeader() = runBlocking {
+    fun testGetSurvivorLeader() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -34,7 +34,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testAddNewSurvivorSuccess() = runBlocking {
+    fun testAddNewSurvivorSuccess() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -56,7 +56,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testAddNewSurvivorFailure() = runBlocking {
+    fun testAddNewSurvivorFailure() = runTest {
         val mockRepo = MockSurvivorRepository(shouldFail = true)
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -78,7 +78,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testUpdateSurvivorSuccess() = runBlocking {
+    fun testUpdateSurvivorSuccess() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -95,7 +95,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testUpdateSurvivorNotFound() = runBlocking {
+    fun testUpdateSurvivorNotFound() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -106,7 +106,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testUpdateSurvivorFailure() = runBlocking {
+    fun testUpdateSurvivorFailure() = runTest {
         val mockRepo = MockSurvivorRepository(shouldFail = true)
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -119,7 +119,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testUpdateSurvivorsSuccess() = runBlocking {
+    fun testUpdateSurvivorsSuccess() = runTest {
         val mockRepo = MockSurvivorRepository()
         val service = SurvivorService("leader1", mockRepo)
         service.init("player1")
@@ -143,7 +143,7 @@ class TestSurvivorService {
     }
 
     @Test
-    fun testInitAppliesDefaultLastName() = runBlocking {
+    fun testInitAppliesDefaultLastName() = runTest {
         val mockRepo = MockSurvivorRepository(includeEmptyLastName = true)
         val service = SurvivorService("leader1", mockRepo)
 

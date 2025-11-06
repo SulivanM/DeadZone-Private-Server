@@ -1,6 +1,6 @@
 import core.metadata.PlayerObjectsMetadataRepository
 import core.metadata.PlayerObjectsMetadataService
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertTrue
@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 class TestPlayerObjectsMetadataService {
 
     @Test
-    fun testInitLoadsFlags() = runBlocking {
+    fun testInitLoadsFlags() = runTest {
         val mockRepo = MockPlayerObjectsMetadataRepository()
         val service = PlayerObjectsMetadataService(mockRepo)
 
@@ -19,7 +19,7 @@ class TestPlayerObjectsMetadataService {
     }
 
     @Test
-    fun testUpdatePlayerFlagsSuccess() = runBlocking {
+    fun testUpdatePlayerFlagsSuccess() = runTest {
         val mockRepo = MockPlayerObjectsMetadataRepository()
         val service = PlayerObjectsMetadataService(mockRepo)
         service.init("player1")
@@ -32,7 +32,7 @@ class TestPlayerObjectsMetadataService {
     }
 
     @Test
-    fun testUpdatePlayerFlagsFailure() = runBlocking {
+    fun testUpdatePlayerFlagsFailure() = runTest {
         val mockRepo = MockPlayerObjectsMetadataRepository(shouldFail = true)
         val service = PlayerObjectsMetadataService(mockRepo)
         service.init("player1")
@@ -46,7 +46,7 @@ class TestPlayerObjectsMetadataService {
     }
 
     @Test
-    fun testUpdatePlayerNicknameSuccess() = runBlocking {
+    fun testUpdatePlayerNicknameSuccess() = runTest {
         val mockRepo = MockPlayerObjectsMetadataRepository()
         val service = PlayerObjectsMetadataService(mockRepo)
         service.init("player1")
@@ -57,7 +57,7 @@ class TestPlayerObjectsMetadataService {
     }
 
     @Test
-    fun testUpdatePlayerNicknameFailure() = runBlocking {
+    fun testUpdatePlayerNicknameFailure() = runTest {
         val mockRepo = MockPlayerObjectsMetadataRepository(shouldFail = true)
         val service = PlayerObjectsMetadataService(mockRepo)
         service.init("player1")
@@ -85,5 +85,9 @@ class MockPlayerObjectsMetadataRepository(private val shouldFail: Boolean = fals
     override suspend fun updatePlayerNickname(playerId: String, nickname: String): Result<Unit> {
         return if (shouldFail) Result.failure(Exception("Update failed"))
         else Result.success(Unit)
+    }
+
+    override suspend fun clearNotifications(playerId: String): Result<Unit> {
+        TODO("Not yet implemented")
     }
 }
