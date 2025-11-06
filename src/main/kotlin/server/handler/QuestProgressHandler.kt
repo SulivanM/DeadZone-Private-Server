@@ -6,12 +6,6 @@ import server.messaging.SocketMessage
 import server.messaging.SocketMessageHandler
 import server.protocol.PIOSerializer
 
-/**
- * Handle `qp` message by:
- *
- * 1. Sending quest progress JSON
- *
- */
 class QuestProgressHandler() : SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
         return message.getString(NetworkMessage.QUEST_PROGRESS) != null

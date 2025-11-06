@@ -1,8 +1,5 @@
 package server.messaging
 
-/**
- * CC commands constants used by the game.
- */
 @Suppress("Unused", "SpellCheckingInspection")
 object CommandMessage {
     const val STORE_CLEAR = "storeClear"

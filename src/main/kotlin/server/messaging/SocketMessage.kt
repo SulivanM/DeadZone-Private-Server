@@ -2,15 +2,6 @@ package server.messaging
 
 import utils.parseJsonToMap
 
-/**
- * A higher-level representation of game message sent to the socket server.
- *
- * Message is always a flat list of even length (if odd then the first is the type).
- * Two of each element is paired as key-value pair.
- *
- * @constructor Raw deserialized data received from socket connection
- *
- */
 class SocketMessage(private val raw: List<Any>) {
     val type: String? = if (raw.size % 2 == 1 && raw.size != 1) raw.firstOrNull() as? String else null
 
@@ -28,13 +19,6 @@ class SocketMessage(private val raw: List<Any>) {
         return map.keys.isEmpty()
     }
 
-    /**
-     * Type of socket message in String.
-     *
-     * This will check [type] (which is non-null string if length of message is odd).
-     * The fallback will be the first key of the message map.
-     * If message type is not able to be determined after these two, this will return `[Undetermined]`
-     */
     fun msgTypeToString(): String {
         if (map.keys.firstOrNull() == "s") {
             return "save/${getSaveSubType()}"
@@ -47,13 +31,6 @@ class SocketMessage(private val raw: List<Any>) {
         return (this.getMap("s")?.get("data") as? Map<String, Any?>)?.get("_type") as String? ?: ""
     }
 
-    /**
-     * Get a value (`any` type) from particular key.
-     * Use [getString], [getInt], etc for typed result
-     *
-     * @param key
-     * @return the value from the corresponding key in the message
-     */
     fun get(key: String): Any? = map[key]
 
     fun contains(key: String): Boolean {
