@@ -6,6 +6,4 @@ quest: Quest! // inherited
 
 questType: Int!
 accepted: Boolean!
-goals: List<DynamicQuestGoal> = []
-rewards: List<DynamicQuestReward> = []
-failurePenalties: List<DynamicQuestPenalty> = []
+attributes: List<QuestAttribute> = []
