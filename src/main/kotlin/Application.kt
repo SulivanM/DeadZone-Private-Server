@@ -69,6 +69,30 @@ import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
+private fun clearLogsAndTelemetry() {
+    // Clear logs directory
+    val logsDir = File("logs")
+    if (logsDir.exists() && logsDir.isDirectory) {
+        logsDir.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                file.delete()
+                Logger.info("${Emoji.Save} Deleted log file: ${file.name}")
+            }
+        }
+    }
+    
+    // Clear telemetry directory
+    val telemetryDir = File("telemetry")
+    if (telemetryDir.exists() && telemetryDir.isDirectory) {
+        telemetryDir.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                file.delete()
+                Logger.info("${Emoji.Save} Deleted telemetry file: ${file.name}")
+            }
+        }
+    }
+}
+
 @Suppress("unused")
 fun Application.module() {
     install(WebSockets) {
@@ -82,6 +106,9 @@ fun Application.module() {
         useColor = environment.config.propertyOrNull("logger.colorful")?.getString()?.toBooleanStrictOrNull() ?: true
     )
     Logger.info("${Emoji.Rocket} Starting DeadZone server")
+    
+    // Clear logs and telemetry directories on server restart
+    clearLogsAndTelemetry()
 
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
@@ -150,6 +177,7 @@ fun Application.module() {
         throw e
     }
     val sessionManager = SessionManager()
+    val joinKeyManager = user.auth.JoinKeyManager()
     val playerAccountRepository = PlayerAccountRepositoryMaria(database.database, json)
     val onlinePlayerRegistry = OnlinePlayerRegistry()
     val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
@@ -165,6 +193,7 @@ fun Application.module() {
         db = database,
         playerAccountRepository = playerAccountRepository,
         sessionManager = sessionManager,
+        joinKeyManager = joinKeyManager,
         onlinePlayerRegistry = onlinePlayerRegistry,
         authProvider = authProvider,
         taskDispatcher = taskDispatcher,
