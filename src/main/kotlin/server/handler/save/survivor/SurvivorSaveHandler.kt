@@ -7,6 +7,7 @@ import core.model.game.data.Survivor
 import core.model.game.data.SurvivorClassConstants_Constants
 import core.model.game.data.SurvivorLoadoutEntry
 import core.survivor.model.injury.Injury
+import core.survivor.InjuryService
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
 import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
@@ -18,6 +19,7 @@ import server.handler.save.survivor.response.SurvivorClassResponse
 import server.handler.save.survivor.response.SurvivorLoadoutResponse
 import server.handler.save.survivor.response.SurvivorInjurySpeedUpResponse
 import server.handler.save.survivor.response.SurvivorReassignSpeedUpResponse
+import server.handler.save.survivor.response.SurvivorInjureResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
 import utils.JSON
@@ -275,7 +277,7 @@ class SurvivorSaveHandler : SaveSubHandler {
                 if (playerFuel < cost) {
                     response = SurvivorInjurySpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                 } else {
-                    // For injuries, we simply remove the injury on speedup (instant heal)
+                    
                     val updateResult = svc.survivor.updateSurvivor(survivorId) { currentSurvivor ->
                         currentSurvivor.copy(
                             injuries = currentSurvivor.injuries.filter { it.id != injuryId }
@@ -410,7 +412,6 @@ class SurvivorSaveHandler : SaveSubHandler {
                 if (playerFuel < cost) {
                     response = SurvivorReassignSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                 } else {
-                    // Remove the reassign timer
                     val updateResult = svc.survivor.updateSurvivor(survivorId) { currentSurvivor ->
                         currentSurvivor.copy(reassignTimer = null)
                     }
@@ -437,11 +438,151 @@ class SurvivorSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.SURVIVOR_INJURE -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_INJURE' message [not implemented]" }
+                val survivorId = data["id"] as? String
+                val severityGroup = data["s"] as? String
+                val cause = data["c"] as? String
+                val force = (data["f"] as? Boolean) ?: false
+                val isCritical = (data["cr"] as? Boolean) ?: false
+
+                if (survivorId == null || severityGroup == null || cause == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                Logger.info(LogConfigSocketToClient) { 
+                    "SURVIVOR_INJURE: survivorId=$survivorId, severity=$severityGroup, cause=$cause, force=$force, critical=$isCritical" 
+                }
+
+                if (!InjuryService.isValidSeverityGroup(severityGroup) || !InjuryService.isValidCause(cause)) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val svc = serverContext.requirePlayerContext(playerId).services
+
+                val survivor = svc.survivor.getAllSurvivors().find { it.id.equals(survivorId, ignoreCase = true) }
+                if (survivor == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Survivor not found: $survivorId" }
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val injury = InjuryService.generateInjury(severityGroup, cause, force, isCritical)
+
+                if (injury == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = true, srv = survivor.id, inj = null)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val updateResult = svc.survivor.updateSurvivor(survivor.id) { currentSurvivor ->
+                    currentSurvivor.copy(
+                        injuries = currentSurvivor.injuries + injury
+                    )
+                }
+
+                val responseJson = if (updateResult.isSuccess) {
+                    Logger.info(LogConfigSocketToClient) { 
+                        "Injury added: ${injury.type} (${injury.severity}) at ${injury.location} for survivor ${survivor.id}" 
+                    }
+                    JSON.encode(
+                        SurvivorInjureResponse(success = true, srv = survivor.id, inj = injury)
+                    )
+                } else {
+                    Logger.error(LogConfigSocketToClient) { 
+                        "Failed to add injury to survivor: ${updateResult.exceptionOrNull()?.message}" 
+                    }
+                    JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                }
+
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_ENEMY_INJURE -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'SURVIVOR_ENEMY_INJURE' message [not implemented]" }
+                val survivorId = data["id"] as? String
+                val severityGroup = data["s"] as? String
+                val cause = data["c"] as? String
+                val force = (data["f"] as? Boolean) ?: false
+                val isCritical = (data["cr"] as? Boolean) ?: false
+
+                if (survivorId == null || severityGroup == null || cause == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                Logger.info(LogConfigSocketToClient) { 
+                    "SURVIVOR_ENEMY_INJURE: survivorId=$survivorId, severity=$severityGroup, cause=$cause, force=$force, critical=$isCritical" 
+                }
+
+                if (!InjuryService.isValidSeverityGroup(severityGroup) || !InjuryService.isValidCause(cause)) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val svc = serverContext.requirePlayerContext(playerId).services
+
+                val survivor = svc.survivor.getAllSurvivors().find { it.id.equals(survivorId, ignoreCase = true) }
+                if (survivor == null) {
+                    Logger.warn(LogConfigSocketToClient) { "Enemy survivor not found: $survivorId" }
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val injury = InjuryService.generateInjury(severityGroup, cause, force, isCritical)
+
+                if (injury == null) {
+                    val responseJson = JSON.encode(
+                        SurvivorInjureResponse(success = true, srv = survivor.id, inj = null)
+                    )
+                    send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+                    return@with
+                }
+
+                val updateResult = svc.survivor.updateSurvivor(survivor.id) { currentSurvivor ->
+                    currentSurvivor.copy(
+                        injuries = currentSurvivor.injuries + injury
+                    )
+                }
+
+                val responseJson = if (updateResult.isSuccess) {
+                    Logger.info(LogConfigSocketToClient) { 
+                        "Enemy injury added: ${injury.type} (${injury.severity}) at ${injury.location} for survivor ${survivor.id}" 
+                    }
+                    JSON.encode(
+                        SurvivorInjureResponse(success = true, srv = survivor.id, inj = injury)
+                    )
+                } else {
+                    Logger.error(LogConfigSocketToClient) { 
+                        "Failed to add injury to enemy survivor: ${updateResult.exceptionOrNull()?.message}" 
+                    }
+                    JSON.encode(
+                        SurvivorInjureResponse(success = false)
+                    )
+                }
+
+                send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
             }
 
             SaveDataMethod.SURVIVOR_HEAL_INJURY -> {
