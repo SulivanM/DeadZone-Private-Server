@@ -1,3 +1,0 @@
-enum DynamicQuestPenaltyEnum
-
-morale: String = "morale"

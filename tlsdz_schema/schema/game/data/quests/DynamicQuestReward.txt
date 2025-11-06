@@ -1,5 +1,0 @@
-data DynamicQuestReward
-
-type: DynamicQuestRewardEnum!
-value: String! // some are string and int
-moraleType: MoraleConstants? // Only if type == "morale"
