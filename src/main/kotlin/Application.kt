@@ -43,6 +43,7 @@ import org.jetbrains.exposed.sql.Database
 import server.core.OnlinePlayerRegistry
 import server.GameServer
 import server.GameServerConfig
+import server.handler.save.alliance.AllianceSaveHandler
 import server.handler.save.arena.ArenaSaveHandler
 import server.handler.save.bounty.BountySaveHandler
 import server.handler.save.chat.ChatSaveHandler
@@ -184,10 +185,10 @@ fun Application.module() {
     val taskDispatcher = ServerTaskDispatcher()
     val playerContextTracker = PlayerContextTracker()
     val saveHandlers = listOf(
-        ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(), CommandSaveHandler(),
-        BuildingSaveHandler(), CmpMiscSaveHandler(), TaskSaveHandler(), CrateSaveHandler(),
-        ItemSaveHandler(), MiscSaveHandler(), MissionSaveHandler(), PurchaseSaveHandler(),
-        QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler()
+        AllianceSaveHandler(), ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(),
+        CommandSaveHandler(), BuildingSaveHandler(), CmpMiscSaveHandler(), TaskSaveHandler(),
+        CrateSaveHandler(), ItemSaveHandler(), MiscSaveHandler(), MissionSaveHandler(),
+        PurchaseSaveHandler(), QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler()
     )
     val serverContext = ServerContext(
         db = database,

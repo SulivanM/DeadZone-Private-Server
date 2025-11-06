@@ -21,6 +21,7 @@ data class ServerContext(
     val playerContextTracker: PlayerContextTracker,
     val saveHandlers: List<SaveSubHandler>,
     val config: ServerConfig,
+    val allianceCreationTracker: AllianceCreationTracker = AllianceCreationTracker(),
 )
 
 fun ServerContext.getPlayerContextOrNull(playerId: String): PlayerContext? =
