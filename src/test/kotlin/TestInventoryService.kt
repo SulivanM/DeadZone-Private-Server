@@ -1,8 +1,8 @@
 import core.items.InventoryRepository
 import core.items.InventoryService
-import core.items.model.InventoryObject
 import core.items.model.Item
-import kotlinx.coroutines.runBlocking
+import data.collection.Inventory
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 class TestInventoryService {
 
     @Test
-    fun testInitLoadsInventory() = runBlocking {
+    fun testInitLoadsInventory() = runTest {
         val mockRepo = MockInventoryRepository()
         val service = InventoryService(mockRepo)
 
@@ -22,7 +22,7 @@ class TestInventoryService {
     }
 
     @Test
-    fun testUpdateInventorySuccess() = runBlocking {
+    fun testUpdateInventorySuccess() = runTest {
         val mockRepo = MockInventoryRepository()
         val service = InventoryService(mockRepo)
         service.init("player1")
@@ -36,7 +36,7 @@ class TestInventoryService {
     }
 
     @Test
-    fun testUpdateInventoryFailure() = runBlocking {
+    fun testUpdateInventoryFailure() = runTest {
         val mockRepo = MockInventoryRepository(shouldFail = true)
         val service = InventoryService(mockRepo)
         service.init("player1")
@@ -50,7 +50,7 @@ class TestInventoryService {
     }
 
     @Test
-    fun testUpdateSchematicsSuccess() = runBlocking {
+    fun testUpdateSchematicsSuccess() = runTest {
         val mockRepo = MockInventoryRepository()
         val service = InventoryService(mockRepo)
         service.init("player1")
@@ -64,7 +64,7 @@ class TestInventoryService {
     }
 
     @Test
-    fun testUpdateSchematicsFailure() = runBlocking {
+    fun testUpdateSchematicsFailure() = runTest {
         val mockRepo = MockInventoryRepository(shouldFail = true)
         val service = InventoryService(mockRepo)
         service.init("player1")
@@ -79,14 +79,17 @@ class TestInventoryService {
 }
 
 class MockInventoryRepository(private val shouldFail: Boolean = false) : InventoryRepository {
-    override suspend fun getInventory(playerId: String): Result<InventoryObject> {
-        return Result.success(InventoryObject(
-            inventory = listOf(
-                Item(type = "pipe", qty = 5u),
-                Item(type = "metal", qty = 10u)
-            ),
-            schematics = byteArrayOf(1, 2, 3)
-        ))
+    override suspend fun getInventory(playerId: String): Result<Inventory> {
+        return Result.success(
+            Inventory(
+                inventory = listOf(
+                    Item(type = "pipe", qty = 5u),
+                    Item(type = "metal", qty = 10u)
+                ),
+                schematics = byteArrayOf(1, 2, 3),
+                playerId = playerId
+            )
+        )
     }
 
     override suspend fun updateInventory(playerId: String, inventory: List<Item>): Result<Unit> {
