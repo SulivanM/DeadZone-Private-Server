@@ -25,7 +25,7 @@ class CommandSaveHandler : SaveSubHandler {
 
                 when (type) {
                     "schematic" -> {
-                        // not tested
+                        
                         val schem = data["schem"] as? String ?: return
                         val item = SchematicItem(type = type, schem = schem, new = true)
                         val response = JSON.encode(item)
@@ -33,7 +33,7 @@ class CommandSaveHandler : SaveSubHandler {
                     }
 
                     "crate" -> {
-                        // not tested
+                        
                         val series = data["series"] as? Int ?: return
                         val repeat = (data["repeat"] as? Int) ?: 1
                         repeat(repeat) {
@@ -48,7 +48,7 @@ class CommandSaveHandler : SaveSubHandler {
                     }
 
                     else -> {
-                        // not tested with mod
+                        
                         val level = data["level"] as? Int ?: return
                         val qty = data["qty"] as? Int ?: 1
                         val mod1 = data["mod1"] as? String?
@@ -67,7 +67,6 @@ class CommandSaveHandler : SaveSubHandler {
                     }
                 }
             }
-
 
             CommandMessage.GIVE_RARE -> {
                 val type = (data["type"] as String?) ?: return

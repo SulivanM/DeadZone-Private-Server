@@ -6,10 +6,10 @@ import kotlinx.serialization.Serializable
 data class BuildingCollectResponse(
     val success: Boolean = true,
     val locked: Boolean,
-    val resource: String, // point to GameResources constants
+    val resource: String,
     val collected: Double,
     val remainder: Double,
     val total: Double,
-    val bonus: Double, // some special bonus IDK
+    val bonus: Double,
     val destroyed: Boolean = false
 )

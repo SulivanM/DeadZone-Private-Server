@@ -3,12 +3,9 @@ package data.collection
 import core.model.network.RemotePlayerData
 import kotlinx.serialization.Serializable
 
-/**
- * Neighbor history table
- */
 @Serializable
 data class NeighborHistory(
-    val playerId: String, // reference to UserDocument
+    val playerId: String, 
     val map: Map<String, @Serializable RemotePlayerData>? = emptyMap()
 ) {
     companion object {

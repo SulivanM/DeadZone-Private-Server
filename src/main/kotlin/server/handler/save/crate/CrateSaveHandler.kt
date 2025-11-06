@@ -34,9 +34,8 @@ class CrateSaveHandler : SaveSubHandler {
 
                 Logger.info(LogConfigSocketToClient) { "Opening crateId=$crateId with keyId=$keyId" }
 
-                // Broadcast item unboxed
                 try {
-                    val playerName = connection.playerId // You might want to get the actual player name
+                    val playerName = connection.playerId 
                     val itemName = item.name ?: "Unknown Item"
                     val quality = item.quality?.toString() ?: ""
 

@@ -3,9 +3,6 @@ package server.core
 import context.ServerContext
 import kotlinx.coroutines.CoroutineScope
 
-/**
- * Represent a server.
- */
 interface Server {
     val name: String
 

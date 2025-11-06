@@ -24,10 +24,10 @@ data class Survivor(
     val missionId: String? = null,
     val assignmentId: String? = null,
     val reassignTimer: TimerData? = null,
-    val appearance: HumanAppearance? = null, // HumanAppearance > SurvivorAppearance
+    val appearance: HumanAppearance? = null,
     val scale: Double = 1.22,
     val voice: String,
-    val accessories: Map<String, String> = emptyMap(),  // key is parsed to int, string is accessory id
+    val accessories: Map<String, String> = emptyMap(),
     val maxClothingAccessories: Int = 1
 ) {
     companion object {

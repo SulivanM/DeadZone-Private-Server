@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BuildingRepairSpeedUpResponse(
-    val error: String, // not enough fuel error: PlayerIOError.NotEnoughCoins.errorID
+    val error: String,
     val success: Boolean = true,
     val cost: Int,
 )

@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SurvivorLoadoutEntry(
-    val weapon: String,  // weapon id
-    val gear1: String,  // gear id
-    val gear2: String,  // gear id
+    val weapon: String,
+    val gear1: String,
+    val gear2: String,
 ) {
     companion object {
         fun playerLoudout(): SurvivorLoadoutEntry {
