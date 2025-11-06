@@ -42,6 +42,7 @@ tlsdz_schema/outpy/
 tlsdz_schema/outkt/
 tlsdz_schema/sidebar.js
 logs/
+telemetry/
 .kotlin
 data/db/
 deploy/
