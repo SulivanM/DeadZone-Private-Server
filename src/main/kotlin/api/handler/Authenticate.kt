@@ -21,21 +21,9 @@ import kotlinx.serialization.protobuf.ProtoBuf
 
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
-    val body = try {
+    val authenticateArgs = ProtoBuf.decodeFromByteArray<AuthenticateArgs>(
         call.receiveChannel().toByteArray()
-    } catch (e: Exception) {
-        Logger.error { "authenticate: failed to read request body: ${e.message}" }
-        call.respond(HttpStatusCode.BadRequest, "invalid_body")
-        return
-    }
-
-    val authenticateArgs = try {
-        ProtoBuf.decodeFromByteArray<AuthenticateArgs>(body)
-    } catch (e: Exception) {
-        Logger.error { "authenticate: failed to decode args: ${e.message}" }
-        call.respond(HttpStatusCode.BadRequest, "invalid_payload")
-        return
-    }
+    )
 
     logInput(authenticateArgs, disableLogging = true)
 
@@ -43,7 +31,7 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
         .authenticationArguments
         .find { it.key == "userToken" }?.value
 
-    if (userToken.isNullOrBlank()) {
+    if (userToken == null) {
         Logger.error { "Client-error: missing userToken in API 13 request" }
         call.respond(HttpStatusCode.BadRequest, "userToken is missing")
         return
@@ -52,44 +40,22 @@ suspend fun RoutingContext.authenticate(serverContext: ServerContext) {
     val authenticateOutput = if (userToken == AdminData.TOKEN) {
         AuthenticateOutput.admin()
     } else {
-        val isValid = try {
-            serverContext.sessionManager.verify(userToken)
-        } catch (e: Exception) {
-            Logger.error { "authenticate: session verification failed: ${e.message}" }
-            false
-        }
-
-        if (!isValid) {
+        val isValidToken = serverContext.sessionManager.verify(userToken)
+        if (isValidToken) {
+            AuthenticateOutput(
+                token = userToken,
+                userId = serverContext.sessionManager.getPlayerId(userToken)!!,
+                apiServerHosts = listOf(AppConfig.gameHost)
+            )
+        } else {
             call.respond(HttpStatusCode.Unauthorized, "token is invalid, try re-login")
-            return
-        }
-
-        val playerId = try {
-            serverContext.sessionManager.getPlayerId(userToken)
-        } catch (e: Exception) {
-            Logger.error { "authenticate: failed to get playerId from session: ${e.message}" }
             null
         }
+    } ?: return
 
-        if (playerId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.InternalServerError, "failed to resolve player")
-            return
-        }
-
-        AuthenticateOutput(
-            token = userToken,
-            userId = playerId,
-            apiServerHosts = listOf(AppConfig.gameHost)
-        )
-    }
-
-    val encodedOutput = try {
-        ProtoBuf.encodeToByteArray(authenticateOutput)
-    } catch (e: Exception) {
-        Logger.error { "authenticate: failed to encode output: ${e.message}" }
-        call.respond(HttpStatusCode.InternalServerError, "encode_error")
-        return
-    }
+    val encodedOutput = ProtoBuf.encodeToByteArray<AuthenticateOutput>(
+        authenticateOutput
+    )
 
     logOutput(encodedOutput, disableLogging = true)
 
