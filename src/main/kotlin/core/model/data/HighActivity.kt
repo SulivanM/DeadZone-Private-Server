@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class HighActivity(
-    val buildings: List<String>,  // building ids
+    val buildings: List<String>,
 )

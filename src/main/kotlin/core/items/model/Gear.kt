@@ -8,7 +8,7 @@ data class Gear(
     val _attireXMLInvalid: Boolean = false,
     val animType: String = "",
     val attire: List<AttireData> = listOf(),
-    val attireXMLList: List<String> = listOf(),  // List<XMLList> actually
+    val attireXMLList: List<String> = listOf(),
     val gearType: UInt = 1u,
     val gearClass: String = "",
     val requiredSurvivorClass: String?,

@@ -11,5 +11,5 @@ data class Task(
     val time: Double,
     val items: List<Item>?,
     val completed: Boolean,
-    val survivors: List<String>,  // survivor ids
+    val survivors: List<String>,
 )

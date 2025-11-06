@@ -8,12 +8,12 @@ data class EnemyResults(
     val attackerId: String,
     val attackerNickname: String,
     val numSrvDown: Int = 0,
-    val survivors: List<String> = listOf(),  // survivor ids
-    val srvDown: List<String> = listOf(),  // survivor ids
+    val survivors: List<String> = listOf(),
+    val srvDown: List<String> = listOf(),
     val loot: List<Item> = listOf(),
-    val prodBuildingsRaided: List<String> = listOf(),  // building ids
-    val buildingsDestroyed: List<String> = listOf(),  // building ids
-    val trapsTriggered: List<String> = listOf(),  // building ids
-    val trapsDisarmed: List<String> = listOf(),  // building ids
+    val prodBuildingsRaided: List<String> = listOf(),
+    val buildingsDestroyed: List<String> = listOf(),
+    val trapsTriggered: List<String> = listOf(),
+    val trapsDisarmed: List<String> = listOf(),
     val totalBuildingsLooted: Int?
 )

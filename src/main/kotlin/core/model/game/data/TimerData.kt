@@ -11,11 +11,11 @@ import kotlin.time.toDuration
 
 @Serializable
 data class TimerData(
-    val start: Long, // epoch millis
-    val length: Long, // length in seconds!
-    // If sending this via API, the value should be JSONElement. Use Json.encodeToJsonElement()
+    val start: Long, 
+    val length: Long, 
+    
     @Serializable(with = AnyMapSerializer::class)
-    val data: Map<String, Any>? // this depends on each response. e.g., building upgrade need level
+    val data: Map<String, Any>? 
 ) {
     companion object {
         fun runForDuration(
@@ -31,13 +31,6 @@ data class TimerData(
     }
 }
 
-/**
- * Reduce the timer data length by [hours].
- *
- * **This will first calculate the remaining time before subtracting**
- *
- * @return `null` if the timer has finished after the reduction.
- */
 fun TimerData.reduceBy(hours: Duration): TimerData? {
     if (this.hasEnded()) return null
 
@@ -48,13 +41,6 @@ fun TimerData.reduceBy(hours: Duration): TimerData? {
     return this.copy(length = reducedLength.toLong(DurationUnit.SECONDS))
 }
 
-/**
- * Reduce the timer data length by half.
- *
- * **This will first calculate the remaining time before subtracting**
- *
- * @return `null` if the timer has finished after the reduction.
- */
 fun TimerData.reduceByHalf(): TimerData? {
     if (this.hasEnded()) return null
 
@@ -74,21 +60,11 @@ fun TimerData.secondsLeftToEnd(): Int {
     return ((start.milliseconds + this.length.seconds) - getTimeMillis().milliseconds).toInt(DurationUnit.SECONDS)
 }
 
-/**
- * Change the length of the timer using the provided block.
- *
- * A `null` timer represent no timer is set or the timer has finished.
- *
- * @return `null` if timer was already `null`.
- */
 fun TimerData?.changeLength(updateLength: (Duration?) -> Duration): TimerData? {
     if (this == null) return null
     return this.copy(length = updateLength(this.length.seconds).toLong(DurationUnit.SECONDS))
 }
 
-/**
- * Return `null` if time has finished (or less than 1 seconds).
- */
 fun TimerData?.removeIfFinished(): TimerData? {
     if (this == null) return null
     return if (this.hasEnded() || this.secondsLeftToEnd() < 1) null else this

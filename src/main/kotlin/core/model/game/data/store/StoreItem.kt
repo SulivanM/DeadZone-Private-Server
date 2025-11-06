@@ -18,7 +18,7 @@ data class StoreItem(
     val levelMax: Int = 2147483647,
     val start: Long?,
     val end: Long?,
-    val PriceCoins: Int?,  // pricecoins else usd or kkr
+    val PriceCoins: Int?,
     val priceUSD: Double?,
     val priceKKR: Int?,
     val orgPriceFUEL: Int?,

@@ -8,8 +8,8 @@ import utils.Logger
 class PlayerObjectsMetadataService(
     private val playerObjectsMetadataRepository: PlayerObjectsMetadataRepository
 ) : PlayerService {
-    private var flags: ByteArray = PlayerFlags.newgame() // use newgame flags to avoid null
-    private var nickname: String? = null // nickname null will prompt leader creation
+    private var flags: ByteArray = PlayerFlags.newgame()
+    private var nickname: String? = null
     private lateinit var playerId: String
 
     suspend fun updatePlayerFlags(flags: ByteArray): Result<Unit> {
