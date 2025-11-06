@@ -16,12 +16,6 @@ import java.nio.ByteOrder
 import java.util.zip.GZIPOutputStream
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Handle `join` message by:
- *
- * 1. Sending `playerio.joinresult`
- * 2. Sending `gr` message
- */
 class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
         return message.getString(NetworkMessage.JOIN) != null
@@ -31,17 +25,21 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
         val joinKey = message.getString(NetworkMessage.JOIN)
         Logger.debug { "Handling join with key: $joinKey" }
 
-        val userId = message.getString("serviceUserId")
-            ?: throw IllegalArgumentException("No userId for connection: $connection")
+        val userId = if (joinKey != null) {
+            serverContext.joinKeyManager.resolve(joinKey)
+                ?: throw IllegalArgumentException("Invalid or expired join key: $joinKey")
+        } else {
+            throw IllegalArgumentException("No join key provided")
+        }
         connection.playerId = userId
 
-        // First message: join result
+        serverContext.allianceCreationTracker.clearTracking(userId)
+
         val success = true
         val joinResultMsg = listOf(NetworkMessage.JOIN_RESULT, success)
         send(PIOSerializer.serialize(joinResultMsg), enableLogging = false)
         Logger.debug { "Sent playerio.joinresult:$success to playerId=$userId" }
 
-        // Create PlayerContext which initializes per-player services
         serverContext.playerContextTracker.createContext(
             playerId = connection.playerId,
             connection = connection,
@@ -75,7 +73,6 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
             }
         }
 
-        // Second message: game ready message
         val gameReadyMsg = listOf(
             NetworkMessage.GAME_READY,
             Time.now(),
@@ -89,12 +86,6 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
         Logger.debug { "Sent game ready message to playerId=$userId" }
     }
 
-    /**
-     * Pack all xml.gz resources in data/xml/ and manually added compressed
-     * resources_secondary.xml.gz in data/
-     *
-     * Core.swf doesn't request these, the server has to send it manually.
-     */
     fun produceBinaries(): ByteArray {
         val xmlResources = listOf(
             "static/game/data/resources_secondary.xml",
@@ -129,7 +120,6 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
 
         val output = ByteArrayOutputStream()
 
-        // 1. Write number of files as a single byte
         output.write(xmlResources.size)
 
         for (path in xmlResources) {
@@ -151,16 +141,12 @@ class JoinHandler(private val serverContext: ServerContext) : SocketMessageHandl
                     .removeSuffix(".gz")
                 val uriBytes = uri.toByteArray(Charsets.UTF_8)
 
-                // 2. Write URI length as 2-byte little endian
                 output.writeShortLE(uriBytes.size)
 
-                // 3. Write URI bytes
                 output.write(uriBytes)
 
-                // 4. Write file size as 4-byte little endian
                 output.writeIntLE(fileBytes.size)
 
-                // 5. Write file data
                 output.write(fileBytes)
             }
         }
