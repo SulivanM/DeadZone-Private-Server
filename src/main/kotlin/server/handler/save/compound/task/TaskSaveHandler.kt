@@ -14,7 +14,9 @@ import server.tasks.impl.JunkRemovalStopParameter
 import server.tasks.impl.JunkRemovalTask
 import utils.JSON
 import utils.LogConfigSocketToClient
+import utils.LogLevel
 import utils.Logger
+import utils.DataLogger
 import utils.SpeedUpCostCalculator
 import kotlin.time.Duration.Companion.seconds
 
@@ -69,7 +71,16 @@ class TaskSaveHandler : SaveSubHandler {
                 val survivors = data["survivors"] as? List<*>
                 val length = (data["length"] as? Number)?.toInt() ?: 0
 
-                Logger.info(LogConfigSocketToClient) { "Task started: type=$taskType, buildingId=$buildingId, taskId=$taskId, length=$length, survivors=${survivors?.size}" }
+                DataLogger.event("TaskStarted")
+                    .prefixText("Task started")
+                    .playerId(connection.playerId)
+                    .data("taskType", taskType ?: "unknown")
+                    .data("buildingId", buildingId ?: "unknown")
+                    .data("taskId", taskId ?: "unknown")
+                    .data("length", length)
+                    .data("survivorCount", survivors?.size ?: 0)
+                    .record()
+                    .log(LogLevel.INFO)
 
                 val items = when (taskType) {
                     "junk_removal" -> generateJunkRemovalItems()
@@ -92,9 +103,15 @@ class TaskSaveHandler : SaveSubHandler {
                         length.seconds
                     }
 
-                    Logger.info(LogConfigSocketToClient) {
-                        "Junk removal task: base=$length seconds, survivors=$numSurvivors, actual duration=$actualDuration"
-                    }
+                    DataLogger.event("JunkRemovalTaskConfig")
+                        .playerId(connection.playerId)
+                        .data("taskId", taskId)
+                        .data("buildingId", buildingId)
+                        .data("baseDurationSec", length)
+                        .data("survivorCount", numSurvivors)
+                        .data("actualDurationSec", actualDuration.inWholeSeconds)
+                        .record()
+                        .log(LogLevel.INFO)
 
                     val playerContext = serverContext.requirePlayerContext(connection.playerId)
                     val compoundService = playerContext.services.compound
@@ -126,7 +143,13 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_CANCELLED -> {
                 val taskId = data["id"] as? String
                 val taskType = data["type"] as? String
-                Logger.info(LogConfigSocketToClient) { "Task cancelled: taskId=$taskId, type=$taskType" }
+                DataLogger.event("TaskCancelled")
+                    .prefixText("Task cancelled")
+                    .playerId(connection.playerId)
+                    .data("taskId", taskId ?: "unknown")
+                    .data("taskType", taskType ?: "unknown")
+                    .record()
+                    .log(LogLevel.INFO)
 
                 if (taskType == "junk_removal" && taskId != null) {
                     junkRemovalTasks.remove(taskId)
@@ -146,7 +169,13 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SURVIVOR_ASSIGNED -> {
                 val taskId = data["id"] as? String
                 val survivors = data["survivors"] as? List<*>
-                Logger.info(LogConfigSocketToClient) { "Survivors assigned to task: taskId=$taskId, survivors=${survivors?.size}" }
+                DataLogger.event("TaskSurvivorAssigned")
+                    .prefixText("Survivors assigned to task")
+                    .playerId(connection.playerId)
+                    .data("taskId", taskId ?: "unknown")
+                    .data("survivorCount", survivors?.size ?: 0)
+                    .record()
+                    .log(LogLevel.INFO)
 
                 send(PIOSerializer.serialize(buildMsg(saveId, "{}")))
             }
@@ -154,7 +183,13 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SURVIVOR_REMOVED -> {
                 val taskId = data["id"] as? String
                 val survivors = data["survivors"] as? List<*>
-                Logger.info(LogConfigSocketToClient) { "Survivors removed from task: taskId=$taskId, survivors=${survivors?.size}" }
+                DataLogger.event("TaskSurvivorRemoved")
+                    .prefixText("Survivors removed from task")
+                    .playerId(connection.playerId)
+                    .data("taskId", taskId ?: "unknown")
+                    .data("survivorCount", survivors?.size ?: 0)
+                    .record()
+                    .log(LogLevel.INFO)
 
                 send(PIOSerializer.serialize(buildMsg(saveId, "{}")))
             }
@@ -162,7 +197,13 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SPEED_UP -> {
                 val taskId = data["id"] as? String
                 val option = data["option"] as? String
-                Logger.info(LogConfigSocketToClient) { "Task speed up: taskId=$taskId, option=$option" }
+                DataLogger.event("TaskSpeedUpRequest")
+                    .prefixText("Task speed up requested")
+                    .playerId(connection.playerId)
+                    .data("taskId", taskId ?: "unknown")
+                    .data("option", option ?: "unknown")
+                    .record()
+                    .log(LogLevel.INFO)
 
                 if (taskId == null || option == null) {
                     val errorResponse = TaskSpeedUpResponse(error = "Missing taskId or option", success = false)
@@ -172,7 +213,13 @@ class TaskSaveHandler : SaveSubHandler {
 
                 val taskInfo = junkRemovalTasks[taskId]
                 if (taskInfo == null) {
-                    Logger.warn(LogConfigSocketToClient) { "Task speed up: task not found with taskId=$taskId" }
+                    DataLogger.event("TaskSpeedUpError")
+                        .prefixText("Task not found")
+                        .playerId(connection.playerId)
+                        .data("taskId", taskId)
+                        .data("errorReason", "task_not_found")
+                        .record()
+                        .log(LogLevel.WARN)
                     val errorResponse = TaskSpeedUpResponse(error = "Task not found", success = false)
                     send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
                     return@with
@@ -182,16 +229,29 @@ class TaskSaveHandler : SaveSubHandler {
                 val elapsedSeconds = (elapsedTimeMs / 1000).toInt()
                 val secondsRemaining = maxOf(0, taskInfo.durationSeconds - elapsedSeconds)
 
-                Logger.info(LogConfigSocketToClient) { 
-                    "Task speed up: elapsed=$elapsedSeconds, remaining=$secondsRemaining, total=${taskInfo.durationSeconds}" 
-                }
+                DataLogger.event("TaskSpeedUpCalculation")
+                    .playerId(connection.playerId)
+                    .data("taskId", taskId)
+                    .data("elapsedSec", elapsedSeconds)
+                    .data("remainingSec", secondsRemaining)
+                    .data("totalDurationSec", taskInfo.durationSeconds)
+                    .record()
+                    .log(LogLevel.VERBOSE)
 
                 val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
                 val currentCash = svc.compound.getResources().cash
 
                 if (currentCash < cost) {
-                    Logger.warn(LogConfigSocketToClient) { "Task speed up: not enough cash for playerId=${connection.playerId}" }
+                    DataLogger.event("TaskSpeedUpError")
+                        .prefixText("Not enough cash")
+                        .playerId(connection.playerId)
+                        .data("taskId", taskId)
+                        .data("cost", cost)
+                        .data("currentCash", currentCash)
+                        .data("errorReason", "insufficient_cash")
+                        .record()
+                        .log(LogLevel.WARN)
                     val errorResponse = TaskSpeedUpResponse(error = "55", success = false, cost = cost)
                     send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
                     return@with
