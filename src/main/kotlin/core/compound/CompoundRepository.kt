@@ -4,14 +4,13 @@ import core.model.game.data.BuildingLike
 import core.model.game.data.GameResources
 
 interface CompoundRepository {
-    // Resource C_U_
+    
     suspend fun getGameResources(playerId: String): Result<GameResources>
     suspend fun updateGameResources(
         playerId: String,
         newResources: GameResources
     ): Result<Unit>
 
-    // Building CRUD
     suspend fun createBuilding(
         playerId: String,
         newBuilding: BuildingLike

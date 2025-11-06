@@ -7,7 +7,7 @@ import utils.UUID
 
 @Serializable
 data class JunkBuilding(
-    // from Building
+    
     val id: String = UUID.new(),
     val name: String? = null,
     val type: String,
@@ -20,7 +20,6 @@ data class JunkBuilding(
     val upgrade: TimerData? = null,
     val repair: TimerData? = null,
 
-    // JunkBuilding-specific fields
     val items: List<Item> = emptyList(),
     val pos: String,
     val rot: String

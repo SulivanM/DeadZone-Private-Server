@@ -102,12 +102,11 @@ fun BuildingLike.copy(
     )
 }
 
-
 @Serializable
 data class Building(
-    val id: String = UUID.new(),    // building's unique ID
+    val id: String = UUID.new(),
     val name: String? = null,
-    val type: String,  // building's ID in buildings.xml, not to be confused with type in XML
+    val type: String,
     val level: Int = 0,
     val rotation: Int = 0,
     val tx: Int = 0,
