@@ -25,7 +25,13 @@ class TestLootService {
     fun testLootServiceInitialization() {
         val parameter = LootParameter(
             areaLevel = 1,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
@@ -37,7 +43,13 @@ class TestLootService {
     fun testInsertLoots() {
         val parameter = LootParameter(
             areaLevel = 1,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
@@ -65,7 +77,13 @@ class TestLootService {
 
         val parameter = LootParameter(
             areaLevel = 1,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sceneWithItems, parameter)
@@ -81,7 +99,10 @@ class TestLootService {
             baseWeight = 100.0,
             specificItemBoost = mapOf("pipe" to 2.0),
             itemTypeBoost = mapOf("weapon" to 1.5),
-            itemQualityBoost = mapOf("rare" to 1.2)
+            itemQualityBoost = mapOf("rare" to 1.2),
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
@@ -94,7 +115,12 @@ class TestLootService {
         val parameter = LootParameter(
             areaLevel = 1,
             baseWeight = 100.0,
-            itemWeightOverrides = mapOf("pipe" to 500.0)
+            itemWeightOverrides = mapOf("pipe" to 500.0),
+            playerLevel = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
@@ -106,7 +132,13 @@ class TestLootService {
     fun testInsertedLootsTracking() {
         val parameter = LootParameter(
             areaLevel = 1,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
@@ -125,7 +157,13 @@ class TestLootService {
 
         val parameter = LootParameter(
             areaLevel = 1,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(emptyScene, parameter)
@@ -138,7 +176,13 @@ class TestLootService {
     fun testHighLevelAreaFiltering() {
         val parameter = LootParameter(
             areaLevel = 50,
-            baseWeight = 100.0
+            baseWeight = 100.0,
+            playerLevel = TODO(),
+            itemWeightOverrides = TODO(),
+            specificItemBoost = TODO(),
+            itemTypeBoost = TODO(),
+            itemQualityBoost = TODO(),
+            fuelLimit = TODO()
         )
 
         val service = LootService(sampleSceneXML, parameter)
