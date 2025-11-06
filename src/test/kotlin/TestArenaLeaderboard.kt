@@ -1,3 +1,6 @@
+import core.model.game.data.arena.ActiveArenaSession
+import data.collection.Alliance
+import data.collection.AllianceMember
 import data.collection.ArenaLeaderboardEntry
 import data.collection.Inventory
 import data.collection.NeighborHistory
@@ -166,6 +169,54 @@ class MockBigDB : BigDB {
             .sortedWith(compareByDescending<ArenaLeaderboardEntry> { it.level }.thenByDescending { it.points })
             .take(limit)
     }
-    
+
+    override suspend fun saveActiveArenaSession(session: ActiveArenaSession) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getActiveArenaSession(sessionId: String): ActiveArenaSession? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getActiveArenaSessionsForPlayer(playerId: String): List<ActiveArenaSession> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteActiveArenaSession(sessionId: String) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun createAlliance(alliance: Alliance) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getAlliance(allianceId: String): Alliance? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateAlliance(alliance: Alliance) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun addAllianceMember(member: AllianceMember) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getAllianceMembers(allianceId: String): List<AllianceMember> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getPlayerAllianceMembership(playerId: String): AllianceMember? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun updateAllianceMember(member: AllianceMember) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun removeAllianceMember(playerId: String) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun shutdown() {}
 }
