@@ -23,9 +23,6 @@ import kotlinx.serialization.json.longOrNull
 import kotlin.collections.map
 import kotlin.collections.mapValues
 
-/**
- * Preset JSON serialization and deserialization.
- */
 object JSON {
     lateinit var json: Json
 
@@ -86,11 +83,7 @@ fun Any?.toJsonValue(): JsonElement = when (this) {
     is String -> JsonPrimitive(this)
     is Number -> JsonPrimitive(this)
     is Boolean -> JsonPrimitive(this)
-    is Map<*, *> -> {
-        // Keys must be strings for JSON
-        (this as? Map<String, *>)?.toJsonElement()
-            ?: error("Map keys must be strings: $this")
-    }
+    is Map<*, *> -> (this as? Map<String, *>)?.toJsonElement() ?: error("Map keys must be strings: $this")
     is Iterable<*> -> buildJsonArray { this@toJsonValue.forEach { add(it.toJsonValue()) } }
-    else -> JsonPrimitive(this.toString()) // fallback — stores as string
+    else -> JsonPrimitive(this.toString())
 }

@@ -9,12 +9,6 @@ import server.tasks.TaskConfig
 import server.tasks.TaskScheduler
 import kotlin.time.Duration
 
-/**
- * Task for creating and upgrading building with or without cash option.
- *
- * This is used for:
- * - MISSION_RETURN_COMPLETE (used in MISSION_END)
- */
 class MissionReturnTask(
     override val taskInputBlock: MissionReturnParameter.() -> Unit,
     override val stopInputBlock: MissionReturnStopParameter.() -> Unit
@@ -32,10 +26,6 @@ class MissionReturnTask(
     override fun createTaskInput(): MissionReturnParameter = MissionReturnParameter()
     override fun createStopInput(): MissionReturnStopParameter = MissionReturnStopParameter()
 
-    /**
-     * Main execution: waits until `buildDuration` then run `execute()`,
-     * which will send BUILDING_COMPLETE message to client.
-     */
     @InternalTaskAPI
     override suspend fun execute(connection: Connection) {
         connection.sendMessage(NetworkMessage.MISSION_RETURN_COMPLETE, taskInput.missionId)
