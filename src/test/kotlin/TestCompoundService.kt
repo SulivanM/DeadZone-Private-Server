@@ -3,7 +3,10 @@ import core.compound.CompoundService
 import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.GameResources
-import kotlinx.coroutines.runBlocking
+import core.model.game.data.copy
+import core.model.game.data.id
+import core.model.game.data.level
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -13,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 class TestCompoundService {
 
     @Test
-    fun testInitLoadsResourcesAndBuildings() = runBlocking {
+    fun testInitLoadsResourcesAndBuildings() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
 
@@ -25,7 +28,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testGetBuilding() = runBlocking {
+    fun testGetBuilding() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -37,7 +40,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateBuildingSuccess() = runBlocking {
+    fun testUpdateBuildingSuccess() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -53,7 +56,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateBuildingNotFound() = runBlocking {
+    fun testUpdateBuildingNotFound() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -64,7 +67,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateBuildingFailure() = runBlocking {
+    fun testUpdateBuildingFailure() = runTest {
         val mockRepo = MockCompoundRepository(shouldFail = true)
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -77,7 +80,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testCreateBuildingSuccess() = runBlocking {
+    fun testCreateBuildingSuccess() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -96,7 +99,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testCreateBuildingFailure() = runBlocking {
+    fun testCreateBuildingFailure() = runTest {
         val mockRepo = MockCompoundRepository(shouldFail = true)
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -113,7 +116,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testDeleteBuildingSuccess() = runBlocking {
+    fun testDeleteBuildingSuccess() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -125,7 +128,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testDeleteBuildingFailure() = runBlocking {
+    fun testDeleteBuildingFailure() = runTest {
         val mockRepo = MockCompoundRepository(shouldFail = true)
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -137,7 +140,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateResourceSuccess() = runBlocking {
+    fun testUpdateResourceSuccess() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -151,7 +154,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateResourceFailure() = runBlocking {
+    fun testUpdateResourceFailure() = runTest {
         val mockRepo = MockCompoundRepository(shouldFail = true)
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -165,7 +168,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testCalculateResource() = runBlocking {
+    fun testCalculateResource() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
@@ -176,7 +179,7 @@ class TestCompoundService {
     }
 
     @Test
-    fun testUpdateAllBuildingsSuccess() = runBlocking {
+    fun testUpdateAllBuildingsSuccess() = runTest {
         val mockRepo = MockCompoundRepository()
         val service = CompoundService(mockRepo)
         service.init("player1")
