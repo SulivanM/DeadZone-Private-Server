@@ -1,6 +1,7 @@
 package data.collection
 
 import core.data.AdminData
+import core.data.GameDefinition
 import core.metadata.model.ByteArrayAsBase64Serializer
 import core.model.data.HighActivity
 import core.model.data.Notification
@@ -29,6 +30,7 @@ import core.model.game.data.quests.GQDataObj
 import core.model.game.data.research.ResearchState
 import core.model.game.data.skills.SkillState
 import core.model.network.RemotePlayerData
+import core.model.game.data.alliance.AllianceLifetimeStats
 import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.Serializable
 
@@ -75,10 +77,14 @@ data class PlayerObjects(
     val nextDZBountyIssue: Long,
     val highActivity: HighActivity?,
     val notifications: List<Notification?>?,
+    val allianceId: String? = null,
+    val allianceTag: String? = null,
+    val allianceWarStats: AllianceLifetimeStats? = null,
 ) {
     companion object {
         fun admin(): PlayerObjects {
             val mockFlags = IntRange(0, 8).map { false }.toByteArray()
+            val config = GameDefinition.config
 
             return PlayerObjects(
                 playerId = AdminData.PLAYER_ID,
@@ -92,13 +98,13 @@ data class PlayerObjects(
                 research = ResearchState(active = listOf(), mapOf()),
                 skills = null,
                 resources = GameResources(
-                    cash = 100000,
-                    wood = 99999,
-                    metal = 99999,
-                    cloth = 99999,
-                    food = 200,
-                    water = 200,
-                    ammunition = 99999
+                    cash = config.adminCash,
+                    wood = config.adminWood,
+                    metal = config.adminMetal,
+                    cloth = config.adminCloth,
+                    food = config.adminFood,
+                    water = config.adminWater,
+                    ammunition = config.adminAmmunition
                 ),
                 survivors = SurvivorCollection.threeSurvivors(),
                 playerAttributes = Attributes.dummy(),
@@ -138,6 +144,7 @@ data class PlayerObjects(
 
         fun newgame(pid: String, nickname: String, playerSrvId: String): PlayerObjects {
             val mockFlags = IntRange(0, 8).map { false }.toByteArray()
+            val config = GameDefinition.config
             val playerSrv = Survivor(
                 id = playerSrvId,
                 title = nickname,
@@ -171,9 +178,13 @@ data class PlayerObjects(
                 research = ResearchState(active = emptyList(), levels = emptyMap()),
                 skills = null,
                 resources = GameResources(
-                    // cash should be 100, ammo should be 150
-                    cash = 1000, wood = 300, metal = 300,
-                    cloth = 300, food = 25, water = 25, ammunition = 1000
+                    cash = config.startingCash,
+                    wood = config.startingWood,
+                    metal = config.startingMetal,
+                    cloth = config.startingCloth,
+                    food = config.startingFood,
+                    water = config.startingWater,
+                    ammunition = config.startingAmmunition
                 ),
                 survivors = listOf(playerSrv),
                 playerAttributes = Attributes.dummy(),
@@ -249,6 +260,9 @@ data class PlayerObjects(
         if (dzBounty != other.dzBounty) return false
         if (highActivity != other.highActivity) return false
         if (notifications != other.notifications) return false
+        if (allianceId != other.allianceId) return false
+        if (allianceTag != other.allianceTag) return false
+        if (allianceWarStats != other.allianceWarStats) return false
 
         return true
     }
@@ -293,6 +307,9 @@ data class PlayerObjects(
         result = 31 * result + (dzBounty?.hashCode() ?: 0)
         result = 31 * result + (highActivity?.hashCode() ?: 0)
         result = 31 * result + (notifications?.hashCode() ?: 0)
+        result = 31 * result + (allianceId?.hashCode() ?: 0)
+        result = 31 * result + (allianceTag?.hashCode() ?: 0)
+        result = 31 * result + (allianceWarStats?.hashCode() ?: 0)
         return result
     }
 }
