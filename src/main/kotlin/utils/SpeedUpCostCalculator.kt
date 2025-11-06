@@ -1,40 +1,27 @@
 package utils
 
+import core.data.GameDefinition
 import kotlin.math.ceil
 import kotlin.math.max
 
 object SpeedUpCostCalculator {
     fun calculateCost(option: String, secondsRemaining: Int): Int {
+        val speedUpConfig = GameDefinition.costTable.getSpeedUpConfig(option)
+            ?: return 0
+
+        if (!speedUpConfig.enabled) {
+            return 0
+        }
+
         return when (option) {
-            "SpeedUpOneHour" -> {
-                val costPerMin = 0.35
-                val minCost = 25
-                val timeInMinutes = secondsRemaining / 60.0
-                max(minCost, ceil(costPerMin * timeInMinutes).toInt())
-            }
-            "SpeedUpTwoHour" -> {
-                val costPerMin = 0.3
-                val minCost = 40
-                val timeInMinutes = secondsRemaining / 60.0
-                max(minCost, ceil(costPerMin * timeInMinutes).toInt())
-            }
+            "SpeedUpFree" -> 0
             "SpeedUpHalf" -> {
-                val costPerMin = 0.4
-                val minCost = 60
-                val timeInMinutes = (secondsRemaining * 0.5) / 60.0
-                max(minCost, ceil(costPerMin * timeInMinutes).toInt())
-            }
-            "SpeedUpComplete" -> {
-                val costPerMin = 0.5
-                val minCost = 80
-                val timeInMinutes = secondsRemaining / 60.0
-                max(minCost, ceil(costPerMin * timeInMinutes).toInt())
-            }
-            "SpeedUpFree" -> {
-                0
+                val timeInMinutes = (secondsRemaining * (speedUpConfig.percent ?: 0.5)) / 60.0
+                max(speedUpConfig.minCost, ceil(speedUpConfig.costPerMin * timeInMinutes).toInt())
             }
             else -> {
-                0
+                val timeInMinutes = secondsRemaining / 60.0
+                max(speedUpConfig.minCost, ceil(speedUpConfig.costPerMin * timeInMinutes).toInt())
             }
         }
     }
