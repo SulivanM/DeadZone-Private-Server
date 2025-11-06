@@ -1,6 +1,7 @@
 package server.handler.save.compound.building
 
 import context.requirePlayerContext
+import core.data.GameDefinition
 import core.model.game.data.*
 import dev.deadzone.core.model.game.data.TimerData
 import dev.deadzone.core.model.game.data.reduceBy
@@ -10,6 +11,7 @@ import dev.deadzone.socket.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.compound.building.response.*
+import server.messaging.NetworkMessage
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
 import server.tasks.TaskCategory
@@ -45,10 +47,13 @@ class BuildingSaveHandler : SaveSubHandler {
                 val r = data["rotation"] as? Int ?: return
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_CREATE' message for $saveId and $bldId,$bldType to tx=$x, ty=$y, rotation=$r" }
 
-                val buildDuration = 1444.seconds
+                val buildingDef = GameDefinition.findBuilding(bldType)
+                val buildTimeSeconds = buildingDef?.getLevel(0)?.time ?: 5
+                val buildXp = buildingDef?.getLevel(0)?.xp ?: 50
+                val buildDuration = buildTimeSeconds.seconds
                 val timer = TimerData.runForDuration(
                     duration = buildDuration,
-                    data = mapOf("level" to 0, "type" to "upgrade", "xp" to 50)
+                    data = mapOf("level" to 0, "type" to "upgrade", "xp" to buildXp)
                 )
 
                 val result = svc.createBuilding {
@@ -128,18 +133,23 @@ class BuildingSaveHandler : SaveSubHandler {
                 val bldId = data["id"] as? String ?: return
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_UPGRADE' message for $saveId and $bldId" }
 
-                val buildDuration = 10.seconds
-                lateinit var timer: TimerData
+                var timer: TimerData? = null
+                var buildDuration: Duration? = null
                 val result = svc.updateBuilding(bldId) { bld ->
+                    val buildingDef = GameDefinition.findBuilding(bld.type)
+                    val nextLevel = bld.level + 1
+                    val buildTimeSeconds = buildingDef?.getLevel(nextLevel)?.time ?: 10
+                    val buildXp = buildingDef?.getLevel(nextLevel)?.xp ?: 50
+                    buildDuration = buildTimeSeconds.seconds
                     timer = TimerData.runForDuration(
-                        duration = buildDuration,
-                        data = mapOf("level" to (bld.level + 1), "type" to "upgrade", "xp" to 50)
+                        duration = buildDuration!!,
+                        data = mapOf("level" to nextLevel, "type" to "upgrade", "xp" to buildXp)
                     )
                     bld.copy(upgrade = timer)
                 }
 
                 val response: BuildingUpgradeResponse
-                if (result.isSuccess) {
+                if (result.isSuccess && timer != null && buildDuration != null) {
                     response = BuildingUpgradeResponse(success = true, items = emptyMap(), timer = timer)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to upgrade building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
@@ -149,7 +159,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
-                if (result.isSuccess) {
+                if (result.isSuccess && buildDuration != null) {
                     serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
                         taskToRun = BuildingCreateTask(
@@ -199,7 +209,7 @@ class BuildingSaveHandler : SaveSubHandler {
                         res.getNonEmptyResAmountOrNull()?.toDouble()
                     ) { "Unexpected null on getNonEmptyResAmountOrNull during collect resource" }
                     val currentResource = svc.getResources()
-                    val limit = 100_000_000.0 // TODO: Base this on storage capacity from GameDefinitions
+                    val limit = calculateStorageCapacity(svc.getAllBuildings(), resType)
                     val expectedResource = currentResource.wood + resAmount
                     val remainder = expectedResource - limit
                     val total = min(limit, expectedResource)
@@ -311,21 +321,18 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (playerFuel < cost) {
                         response = BuildingSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                     } else {
-                        // successful response
                         val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         val updateResourceResult = svc.compound.updateResource { resource ->
                             resourceResponse = resource.copy(cash = playerFuel - cost)
                             resourceResponse
                         }
 
-                        // if for some reason DB fail, do not proceed the speed up request
                         response = if (updateBuildingResult.isFailure || updateResourceResult.isFailure) {
                             BuildingSpeedUpResponse(error = "", success = false, cost = 0)
                         } else {
                             BuildingSpeedUpResponse(error = "", success = true, cost = cost)
                         }
 
-                        // end the currently active building task
                         serverContext.taskDispatcher.stopTaskFor<BuildingCreateStopParameter>(
                             connection = connection,
                             category = TaskCategory.Building.Create,
@@ -334,8 +341,6 @@ class BuildingSaveHandler : SaveSubHandler {
                             }
                         )
 
-                        // then restart it to change the timer
-                        // if construction ended after the speed up, automatically start with zero second delay
                         serverContext.taskDispatcher.runTaskFor(
                             connection = connection,
                             taskToRun = BuildingCreateTask(
@@ -355,13 +360,12 @@ class BuildingSaveHandler : SaveSubHandler {
                         )
                     }
                 } else {
-                    // unexpected DB error response
                     Logger.error(LogConfigSocketError) { "Failed to speed up create building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
                     response = BuildingSpeedUpResponse(error = "", success = false, cost = 0)
                 }
 
                 val responseJson = JSON.encode(response)
-                val resourceResponseJson = JSON.encode(resourceResponse)
+                val resourceResponseJson = resourceResponse?.let { JSON.encode(it) } ?: "null"
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
@@ -369,16 +373,21 @@ class BuildingSaveHandler : SaveSubHandler {
                 val bldId = data["id"] as? String ?: return
                 Logger.info(LogConfigSocketToClient) { "'BUILDING_REPAIR' message for $saveId and $bldId" }
 
-                val buildDuration = 10.seconds
-                val timer = TimerData.runForDuration(
-                    duration = buildDuration,
-                    data = mapOf("type" to "repair")
-                )
-
-                val result = svc.updateBuilding(bldId) { bld -> bld.copy(repair = timer) }
+                var buildDuration: Duration? = null
+                var timer: TimerData? = null
+                val result = svc.updateBuilding(bldId) { bld ->
+                    val buildingDef = GameDefinition.findBuilding(bld.type)
+                    val buildTimeSeconds = buildingDef?.getLevel(bld.level)?.time ?: 10
+                    buildDuration = buildTimeSeconds.seconds
+                    timer = TimerData.runForDuration(
+                        duration = buildDuration!!,
+                        data = mapOf("type" to "repair")
+                    )
+                    bld.copy(repair = timer)
+                }
 
                 val response: BuildingRepairResponse
-                if (result.isSuccess) {
+                if (result.isSuccess && timer != null && buildDuration != null) {
                     response = BuildingRepairResponse(success = true, items = emptyMap(), timer = timer)
                 } else {
                     Logger.error(LogConfigSocketError) { "Failed to repair building bldId=$bldId for playerId=$playerId: ${result.exceptionOrNull()?.message}" }
@@ -388,7 +397,7 @@ class BuildingSaveHandler : SaveSubHandler {
                 val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
 
-                if (result.isSuccess) {
+                if (result.isSuccess && buildDuration != null) {
                     serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
                         taskToRun = BuildingRepairTask(
@@ -465,21 +474,18 @@ class BuildingSaveHandler : SaveSubHandler {
                     if (playerFuel < cost) {
                         response = BuildingRepairSpeedUpResponse(error = notEnoughCoinsErrorId, success = false, cost = cost)
                     } else {
-                        // successful response
                         val updateBuildingResult = svc.compound.updateBuilding(bldId) { newBuilding as BuildingLike }
                         val updateResourceResult = svc.compound.updateResource { resource ->
                             resourceResponse = resource.copy(cash = playerFuel - cost)
                             resourceResponse
                         }
 
-                        // if for some reason DB fail, do not proceed the speed up request
                         response = if (updateBuildingResult.isFailure || updateResourceResult.isFailure) {
                             BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
                         } else {
                             BuildingRepairSpeedUpResponse(error = "", success = true, cost = cost)
                         }
 
-                        // end the currently active building repair task
                         serverContext.taskDispatcher.stopTaskFor<BuildingRepairStopParameter>(
                             connection = connection,
                             category = TaskCategory.Building.Repair,
@@ -488,8 +494,6 @@ class BuildingSaveHandler : SaveSubHandler {
                             }
                         )
 
-                        // then restart it to change the timer
-                        // if construction ended after the speed up, automatically start with zero second delay
                         serverContext.taskDispatcher.runTaskFor(
                             connection = connection,
                             taskToRun = BuildingRepairTask(
@@ -509,13 +513,12 @@ class BuildingSaveHandler : SaveSubHandler {
                         )
                     }
                 } else {
-                    // unexpected DB error response
                     Logger.error(LogConfigSocketError) { "Failed to speed up repair building bldId=$bldId for playerId=$playerId: old=${building.toCompactString()} new=${newBuilding?.toCompactString()}" }
                     response = BuildingRepairSpeedUpResponse(error = "", success = false, cost = 0)
                 }
 
                 val responseJson = JSON.encode(response)
-                val resourceResponseJson = JSON.encode(resourceResponse)
+                val resourceResponseJson = resourceResponse?.let { JSON.encode(it) } ?: "null"
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson, resourceResponseJson)))
             }
 
@@ -610,6 +613,11 @@ class BuildingSaveHandler : SaveSubHandler {
 
                 val responseJson = JSON.encode(response)
                 send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+
+                if (result.isSuccess) {
+                    connection.sendMessage(NetworkMessage.TASK_COMPLETE, bldId)
+                    connection.sendMessage(NetworkMessage.BUILDING_COMPLETE, bldId)
+                }
             }
 
             SaveDataMethod.BUILDING_REPAIR_BUY -> {
@@ -620,5 +628,20 @@ class BuildingSaveHandler : SaveSubHandler {
                 Logger.warn(LogConfigSocketToClient) { "Received 'BUILDING_TRAP_EXPLODE' message [not implemented]" }
             }
         }
+    }
+
+    private fun calculateStorageCapacity(buildings: List<BuildingLike>, resourceType: String): Double {
+        val storageBuildings = buildings.mapNotNull { building ->
+            val buildingDef = GameDefinition.findBuilding(building.type)
+            if (buildingDef?.store == resourceType) building to buildingDef else null
+        }
+
+        var totalCapacity = 0.0
+        for ((building, buildingDef) in storageBuildings) {
+            val level = buildingDef.getLevel(building.level)
+            level?.capacity?.let { totalCapacity += it }
+        }
+
+        return if (totalCapacity > 0.0) totalCapacity else 100_000_000.0
     }
 }
