@@ -2,9 +2,13 @@ package core.items
 
 import core.PlayerService
 import core.items.model.Item
-import utils.LogConfigSocketError
-import utils.Logger
+import common.LogConfigSocketError
+import common.Logger
 
+/**
+ * Service for managing player inventory and schematics.
+ * Provides operations for item management, crafting recipes, and inventory updates.
+ */
 class InventoryService(
     private val inventoryRepository: InventoryRepository
 ) : PlayerService {

@@ -1,3 +1,0 @@
-data UserData
-
-email: String!

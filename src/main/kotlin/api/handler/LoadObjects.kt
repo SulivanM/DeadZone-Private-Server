@@ -3,16 +3,16 @@ package api.handler
 import api.message.db.BigDBObject
 import api.message.db.LoadObjectsArgs
 import api.message.db.LoadObjectsOutput
-import api.utils.pioFraming
+import api.protocol.pioFraming
 import context.ServerContext
 import context.getPlayerContextOrNull
 import data.collection.NeighborHistory
 import dev.deadzone.core.LazyDataUpdater
-import utils.LogConfigAPIError
-import utils.LogConfigSocketToClient
-import utils.Logger
-import utils.logInput
-import utils.logOutput
+import common.LogConfigAPIError
+import common.LogConfigSocketToClient
+import common.Logger
+import common.logInput
+import common.logOutput
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -59,7 +59,7 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
             "PlayerObjects" -> {
                 val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
                 val updatedResources = LazyDataUpdater.depleteResources(lastLogin, playerObjects.resources)
-                val updatedSurvivors = playerObjects.survivors.map { srv -> srv.copy(level = max(srv.level, 1)) }
+                val updatedSurvivors = playerObjects.survivors
 
                 val ctx = serverContext.getPlayerContextOrNull(playerId)
                 if (ctx != null) {

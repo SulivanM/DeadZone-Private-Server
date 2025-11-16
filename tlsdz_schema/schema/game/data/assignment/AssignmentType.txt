@@ -1,5 +1,0 @@
-enum AssignmentType
-
-None: String = "None"
-Raid: String = "Raid"
-Arena: String = "Arena"

@@ -1,4 +1,0 @@
-data ArenaSession
-
-points: Int!
-state: Map<String, AssignmentStageState> = {}

@@ -1,8 +1,11 @@
 package server.messaging
 
+/**
+ * Save data method constants used by the game.
+ */
 @Suppress("Unused", "SpellCheckingInspection")
 object SaveDataMethod {
-    
+    // -------------------- COMPOUND_BUILDING --------------------
     const val BUILDING_CREATE = "bld_create"
     const val BUILDING_CREATE_BUY = "bld_create_buy"
     const val BUILDING_UPGRADE = "bld_upgrade"
@@ -33,6 +36,7 @@ object SaveDataMethod {
         BUILDING_TRAP_EXPLODE,
     )
 
+    // -------------------- COMPOUND_TASK --------------------
     const val TASK_STARTED = "tsk_start"
     const val TASK_CANCELLED = "tsk_cancelled"
     const val TASK_SURVIVOR_ASSIGNED = "tsk_srv_assign"
@@ -47,6 +51,7 @@ object SaveDataMethod {
         TASK_SPEED_UP,
     )
 
+    // -------------------- COMPOUND_MISC --------------------
     const val CRAFT_ITEM = "craft_item"
     const val CRAFT_UPGRADE = "craft_upgrade"
     const val CRAFT_SCHEMATIC = "craft_schematic"
@@ -67,6 +72,7 @@ object SaveDataMethod {
         RALLY_ASSIGNMENT
     )
 
+    // -------------------- ITEM --------------------
     const val ITEM = "itm"
     const val ITEM_BUY = "itm_buy"
     const val ITEM_LIST = "itm_list"
@@ -89,6 +95,7 @@ object SaveDataMethod {
         ITEM_BATCH_DISPOSE,
     )
 
+    // -------------------- MISSION --------------------
     const val MISSION_START = "mis_start"
     const val MISSION_END = "mis_end"
     const val MISSION_INJURY = "mis_inj"
@@ -119,6 +126,7 @@ object SaveDataMethod {
         STAT
     )
 
+    // -------------------- SURVIVOR --------------------
     const val SURVIVOR_CLASS = "srv_class"
     const val SURVIVOR_OFFENCE_LOADOUT = "srv_oLoadout"
     const val SURVIVOR_DEFENCE_LOADOUT = "srv_dLoadout"
@@ -157,6 +165,7 @@ object SaveDataMethod {
         RESET_LEADER,
     )
 
+    // -------------------- RAID --------------------
     const val RAID_START = "raid_start"
     const val RAID_CONTINUE = "raid_cont"
     const val RAID_ABORT = "raid_abort"
@@ -169,6 +178,7 @@ object SaveDataMethod {
         RAID_DEATH,
     )
 
+    // -------------------- ARENA --------------------
     const val ARENA_START = "arena_start"
     const val ARENA_CONTINUE = "arena_cont"
     const val ARENA_FINISH = "arena_fin"
@@ -189,6 +199,7 @@ object SaveDataMethod {
         ARENA_LEADERBOARD,
     )
 
+    // -------------------- QUEST --------------------
     const val QUEST_COLLECT = "quest_collect"
     const val QUEST_TRACK = "quest_track"
     const val QUEST_UNTRACK = "quest_untrack"
@@ -207,6 +218,7 @@ object SaveDataMethod {
         GLOBAL_QUEST_COLLECT
     )
 
+    // -------------------- CRATE --------------------
     const val CRATE_UNLOCK = "crate_unlock"
     const val CRATE_MYSTERY_UNLOCK = "crate_mystery_unlock"
 
@@ -215,6 +227,7 @@ object SaveDataMethod {
         CRATE_MYSTERY_UNLOCK
     )
 
+    // -------------------- ALLIANCE --------------------
     const val ALLIANCE_CREATE = "alliance_create"
     const val ALLIANCE_COLLECT_WINNINGS = "alliance_collectWinnings"
     const val ALLIANCE_QUERY_WINNINGS = "alliance_queryWinnings"
@@ -233,6 +246,7 @@ object SaveDataMethod {
         ALLIANCE_GET_LIFETIMESTATS,
     )
 
+    // -------------------- CHAT --------------------
     const val CHAT_SILENCED = "chat_silenced"
     const val CHAT_KICKED = "chat_kicked"
     const val CHAT_GET_CONTACTS_AND_BLOCKS = "chat_getContactsBlocks"
@@ -257,6 +271,7 @@ object SaveDataMethod {
         CHAT_REMOVE_ALL_BLOCKS,
     )
 
+    // -------------------- BOUNTY --------------------
     const val BOUNTY_VIEW = "dzbountyview"
     const val BOUNTY_SPEED_UP = "dzbountyspeedup"
     const val BOUNTY_NEW = "dzbountynew"
@@ -271,6 +286,7 @@ object SaveDataMethod {
         BOUNTY_ADD,
     )
 
+    // -------------------- PURCHASE --------------------
     const val RESOURCE_BUY = "res_buy"
     const val PROTECTION_BUY = "prot_buy"
     const val PAYVAULT_BUY = "payvault_buy"
@@ -293,11 +309,13 @@ object SaveDataMethod {
         DEATH_MOBILE_RENAME
     )
 
+    // -------------------- COMMON --------------------
     const val STAT = "stat"
     const val GET_STATS = "stat_get"
     const val GLOBAL_STAT = "gstat"
     const val STAT_DATA = "stat_data"
 
+    // -------------------- MISC --------------------
     const val TUTORIAL_PVP_PRACTICE = "tut_pvppractice"
     const val TUTORIAL_COMPLETE = "tut_complete"
     const val GET_OFFERS = "get_offers"

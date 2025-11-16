@@ -1,6 +1,0 @@
-data AbstractUser
-
-data: UserData!
-email: String!
-time: Long!
-defaultCurrency: String! // Currency constants

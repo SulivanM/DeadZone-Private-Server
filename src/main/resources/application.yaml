@@ -18,9 +18,9 @@ policy:
   host: "0.0.0.0"
   port: 843
 maria:
-  url: jdbc:mariadb://localhost:3306/prod_deadzone_game
-  user: root
-  password: "adm123"
+  url: jdbc:mariadb://0.0.0.0:3306/yourdatabasename
+  user: yourusername
+  password: "yourpassword"
 logger:
   level: 0
   colorful: true

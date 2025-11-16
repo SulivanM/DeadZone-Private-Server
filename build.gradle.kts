@@ -13,6 +13,24 @@ repositories {
     mavenCentral()
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        freeCompilerArgs.add("-opt-in=kotlin.io.encoding.ExperimentalEncodingApi")
+    }
+}
+
 application {
     mainClass.set("io.ktor.server.netty.EngineMain")
 }
@@ -34,15 +52,21 @@ tasks.withType<ShadowJar> {
 val copyGameFiles by tasks.registering(Copy::class) {
     from("static")
     into("deploy/static")
+    mustRunAfter(tasks.shadowJar)
 }
 
 val copyRunScripts by tasks.registering(Copy::class) {
     from("autorun.bat", "autorun.sh")
     into("deploy")
+    mustRunAfter(tasks.shadowJar)
 }
 
 tasks.shadowJar {
     finalizedBy(copyGameFiles, copyRunScripts)
+}
+
+tasks.named("startShadowScripts") {
+    mustRunAfter(copyRunScripts, copyGameFiles)
 }
 
 dependencies {

@@ -2,7 +2,7 @@ package user.auth
 
 import user.model.PlayerSession
 import core.data.AdminData
-import utils.UUID
+import common.UUID
 import io.ktor.util.date.getTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +12,17 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Manages authentication sessions between web login and game client.
+ *
+ * - After a successful website login, this class issues a session token for the player.
+ * - The client uses this token for API requests.
+ * - On API requests, this class verifies if the token is valid and unexpired.
+ * - Token will be refreshed upon successful verification.
+ * - The client website makes API requests every 50 minutes to refresh the token.
+ * This ensures that the token remains valid, even when the game is not actively making API requests.
+ * - Session refreshes is limited to 6 hours. This means player will not be able to make API requests after 6 hours online.
+ */
 class SessionManager {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
     private val CLEANUP_INTERVAL_MS = 5 * 60 * 1000L

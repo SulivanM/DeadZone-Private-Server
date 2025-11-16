@@ -1,3 +1,0 @@
-data Morale
-
-maps: Map<String, Double>! = {}

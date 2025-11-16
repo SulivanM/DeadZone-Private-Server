@@ -1,5 +1,0 @@
-data TimerData
-
-start: Long! //milliseconds
-length: Long!
-data: Map<String, Double>?

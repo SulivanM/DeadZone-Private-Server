@@ -18,7 +18,7 @@ data class AuthenticateOutput(
     val notificationClickPayload: String = "",
     val isInstalledByPublishingNetwork: Boolean = false,
     val deprecated1: List<String> = emptyList(),
-    val apiSecurity: Int = 0,
+    val apiSecurity: Int = 0, // ENUM: depends on enum definition
     val apiServerHosts: List<String> = emptyList()
 ) {
     companion object {

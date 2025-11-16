@@ -1,11 +1,15 @@
 package server.messaging
 
+/**
+ * Network message constants used by the game.
+ */
 @Suppress("Unused", "SpellCheckingInspection")
 object NetworkMessage {
-    
+    // custom definition
     const val JOIN = "join"
     const val JOIN_RESULT = "playerio.joinresult"
 
+    // from game
     const val INIT_COMPLETE = "ic"
     const val ERROR = "err"
     const val BANNED = "ban"

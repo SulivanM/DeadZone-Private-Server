@@ -1,8 +1,5 @@
 package server.protocol
 
-import kotlinx.serialization.json.Json
-import utils.toJsonElement
-import utils.toJsonValue
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -34,12 +31,6 @@ object PIOSerializer {
             buffer.addAll(encoded.drop(nonZero))
         }
 
-        fun writeJsonAsString(jsonString: String) {
-            val encoded = jsonString.toByteArray(Charsets.UTF_8)
-            writeTagWithLength(encoded.size, Pattern.STRING_SHORT_PATTERN, Pattern.STRING_PATTERN)
-            buffer.addAll(encoded.toList())
-        }
-
         fun serializeValue(value: Any) {
             when (value) {
                 is String -> {
@@ -54,6 +45,10 @@ object PIOSerializer {
 
                 is Int -> {
                     writeTagWithLength(value, Pattern.UNSIGNED_INT_SHORT_PATTERN, Pattern.INT_PATTERN)
+                }
+
+                is UInt -> {
+                    writeTagWithLength(value.toInt(), Pattern.UNSIGNED_INT_SHORT_PATTERN, Pattern.INT_PATTERN)
                 }
 
                 is Long -> {
@@ -83,18 +78,34 @@ object PIOSerializer {
                     buffer.addAll(value.toList())
                 }
 
-                is Map<*, *> -> {
-                    
-                    
-                    @Suppress("UNCHECKED_CAST")
-                    val stringKeyMap = value as? Map<String, *>
-                        ?: throw IllegalArgumentException("Map keys must be strings for serialization: $value")
-                    writeJsonAsString(Json.encodeToString(stringKeyMap.toJsonElement()))
+                is List<*> -> {
+                    // Sérialiser une liste comme une sous-structure
+                    // Format: taille (n-1), puis chaque élément
+                    serializeValue(value.size - 1)
+                    value.forEach { element ->
+                        if (element != null) {
+                            serializeValue(element)
+                        } else {
+                            // Sérialiser null comme une chaîne vide
+                            serializeValue("")
+                        }
+                    }
                 }
 
-                is List<*> -> {
-                    
-                    writeJsonAsString(Json.encodeToString(value.toJsonValue()))
+                is Map<*, *> -> {
+                    // Sérialiser une map comme une liste de paires clé-valeur
+                    // Format: taille (nombre de paires * 2 - 1), puis clé1, valeur1, clé2, valeur2, ...
+                    val flatList = mutableListOf<Any>()
+                    value.forEach { (k, v) ->
+                        if (k != null) {
+                            flatList.add(k)
+                            flatList.add(v ?: "")
+                        }
+                    }
+                    serializeValue(flatList.size - 1)
+                    flatList.forEach { element ->
+                        serializeValue(element)
+                    }
                 }
 
                 else -> throw IllegalArgumentException("Unsupported type: ${value::class}")

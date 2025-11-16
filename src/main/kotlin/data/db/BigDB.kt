@@ -1,60 +1,168 @@
 package data.db
 
-import data.collection.Alliance
-import data.collection.AllianceMember
-import data.collection.ArenaLeaderboardEntry
-import data.collection.Inventory
-import data.collection.NeighborHistory
-import data.collection.PlayerAccount
-import data.collection.PlayerObjects
+import data.collection.*
 
 enum class CollectionName {
     PLAYER_ACCOUNT_COLLECTION, PLAYER_OBJECTS_COLLECTION,
     NEIGHBOR_HISTORY_COLLECTION, INVENTORY_COLLECTION,
-    ARENA_LEADERBOARD_COLLECTION, ACTIVE_ARENA_SESSIONS_COLLECTION,
-    ALLIANCES_COLLECTION, ALLIANCE_MEMBERS_COLLECTION,
 }
 
+/**
+ * Representation of PlayerIO BigDB
+ */
 interface BigDB {
-    
+    // each method load the corresponding collection
     suspend fun loadPlayerAccount(playerId: String): PlayerAccount?
     suspend fun loadPlayerObjects(playerId: String): PlayerObjects?
     suspend fun loadNeighborHistory(playerId: String): NeighborHistory?
     suspend fun loadInventory(playerId: String): Inventory?
 
+    /**
+     * A cheat solution to update [PlayerObjects] without relying on repository CRUD methods.
+     *
+     * This updates the entire JSON with the given [updatedPlayerObjects].
+     */
     suspend fun updatePlayerObjectsJson(playerId: String, updatedPlayerObjects: PlayerObjects)
 
+    /**
+     * Update Inventory JSON for a player
+     */
+    suspend fun updateInventoryJson(playerId: String, updatedInventory: Inventory)
+
+    /**
+     * Update NeighborHistory JSON for a player
+     */
+    suspend fun updateNeighborHistoryJson(playerId: String, updatedNeighborHistory: NeighborHistory)
+
+    /**
+     * Create a new object in BigDB or return existing if loadExisting is true
+     *
+     * @param table The table name (PlayerObjects, Inventory, NeighborHistory)
+     * @param key The object key (typically playerId)
+     * @param properties Map of properties to set
+     * @param loadExisting If true and object exists, return existing object instead of error
+     * @return The created or existing object version
+     */
+    suspend fun createObject(table: String, key: String, properties: Map<String, Any>, loadExisting: Boolean): String?
+
+    /**
+     * Save changes to an existing object with optional optimistic locking
+     *
+     * @param table The table name
+     * @param key The object key
+     * @param onlyIfVersion Only save if current version matches (optimistic locking)
+     * @param changes Map of property changes to apply
+     * @param createIfMissing Create the object if it doesn't exist
+     * @return The new version string after save
+     */
+    suspend fun saveObjectChanges(
+        table: String,
+        key: String,
+        onlyIfVersion: String?,
+        changes: Map<String, Any>,
+        createIfMissing: Boolean
+    ): String?
+
+    /**
+     * Delete objects by their keys
+     *
+     * @param table The table name
+     * @param keys List of keys to delete
+     */
+    suspend fun deleteObjects(table: String, keys: List<String>)
+
+    /**
+     * Get a particular collection without type safety.
+     *
+     * Typically used when repository independent of DB implementation needs
+     * to its implementor collection.
+     */
     fun <T> getCollection(name: CollectionName): T
 
-    suspend fun createUser(username: String, password: String): String
+    /**
+     * Create a user with the provided username and password.
+     *
+     * This method is defined in BigDB because it require access to all 5 collections,
+     * in which a focused repository do not own.
+     *
+     * @param username The username for the account
+     * @param password The password for the account
+     * @param email The email address (optional)
+     * @param countryCode The country code (optional)
+     * @return playerId (UUID) of the newly created user.
+     */
+    suspend fun createUser(username: String, password: String, email: String? = null, countryCode: String? = null): String
 
-    suspend fun saveArenaLeaderboardEntry(entry: ArenaLeaderboardEntry)
+    // ==================== PayVault Operations ====================
 
-    suspend fun getArenaLeaderboard(arenaName: String, limit: Int = 100): List<ArenaLeaderboardEntry>
+    /**
+     * Load PayVault data for a player
+     */
+    suspend fun loadPayVault(playerId: String): PayVaultData?
 
-    suspend fun saveActiveArenaSession(session: core.model.game.data.arena.ActiveArenaSession)
+    /**
+     * Update PayVault data
+     */
+    suspend fun updatePayVault(playerId: String, payVault: PayVaultData)
 
-    suspend fun getActiveArenaSession(sessionId: String): core.model.game.data.arena.ActiveArenaSession?
+    /**
+     * Credit coins to player's vault
+     */
+    suspend fun creditCoins(playerId: String, amount: Long, reason: String): PayVaultData
 
-    suspend fun getActiveArenaSessionsForPlayer(playerId: String): List<core.model.game.data.arena.ActiveArenaSession>
+    /**
+     * Debit coins from player's vault
+     */
+    suspend fun debitCoins(playerId: String, amount: Long, reason: String): PayVaultData
 
-    suspend fun deleteActiveArenaSession(sessionId: String)
+    /**
+     * Add items to player's vault
+     */
+    suspend fun giveItems(playerId: String, items: List<PayVaultItemData>): PayVaultData
 
-    suspend fun createAlliance(alliance: Alliance)
+    /**
+     * Consume items from player's vault
+     */
+    suspend fun consumeItems(playerId: String, itemIds: List<String>): PayVaultData
 
-    suspend fun getAlliance(allianceId: String): Alliance?
+    // ==================== Alliance Operations ====================
 
-    suspend fun updateAlliance(alliance: Alliance)
+    /**
+     * Create a new alliance
+     */
+    suspend fun createAlliance(
+        allianceId: String,
+        name: String,
+        tag: String,
+        bannerBytes: String,
+        thumbImage: String,
+        creatorPlayerId: String
+    ): Boolean
 
-    suspend fun addAllianceMember(member: AllianceMember)
+    /**
+     * Check if alliance name exists
+     */
+    suspend fun allianceNameExists(name: String): Boolean
 
-    suspend fun getAllianceMembers(allianceId: String): List<AllianceMember>
+    /**
+     * Check if alliance tag exists
+     */
+    suspend fun allianceTagExists(tag: String): Boolean
 
-    suspend fun getPlayerAllianceMembership(playerId: String): AllianceMember?
+    /**
+     * Load alliance data by ID
+     */
+    suspend fun loadAlliance(allianceId: String): core.model.game.data.alliance.AllianceData?
 
-    suspend fun updateAllianceMember(member: AllianceMember)
+    /**
+     * Get all members of an alliance
+     */
+    suspend fun getAllianceMembers(allianceId: String): List<core.model.game.data.alliance.AllianceMember>
 
-    suspend fun removeAllianceMember(playerId: String)
+    /**
+     * Get all messages from an alliance
+     */
+    suspend fun getAllianceMessages(allianceId: String): List<core.model.game.data.alliance.AllianceMessage>
 
     suspend fun shutdown()
 }

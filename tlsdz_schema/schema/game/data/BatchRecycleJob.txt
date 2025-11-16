@@ -1,6 +1,0 @@
-data BatchRecycleJob
-
-id: String!
-items: List<Item>!
-start: Long!
-end: Int!

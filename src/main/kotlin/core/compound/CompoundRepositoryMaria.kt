@@ -9,7 +9,7 @@ import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import utils.JSON
+import common.JSON
 
 class CompoundRepositoryMaria(private val database: Database) : CompoundRepository {
 

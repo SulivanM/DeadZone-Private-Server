@@ -1,7 +1,0 @@
-data PublishingNetworkProfile
-
-userId: String!
-displayName: String!
-avatarUrl: String!
-lastOnline: Long!
-countryCode: String!

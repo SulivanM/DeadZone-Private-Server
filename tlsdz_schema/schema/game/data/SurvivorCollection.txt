@@ -1,3 +1,0 @@
-data SurvivorCollection
-
-list: List<Survivor>! = []

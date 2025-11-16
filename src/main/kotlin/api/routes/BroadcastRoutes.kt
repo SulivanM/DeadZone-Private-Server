@@ -9,7 +9,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import utils.Logger
+import common.Logger
 
 @Serializable
 data class BroadcastRequest(
@@ -26,7 +26,7 @@ data class BroadcastResponse(
 
 fun Route.broadcastRoutes(context: ServerContext) {
     route("/api/broadcast") {
-        
+        // Get broadcast status
         get("/status") {
             call.respond(
                 HttpStatusCode.OK,
@@ -37,6 +37,7 @@ fun Route.broadcastRoutes(context: ServerContext) {
             )
         }
 
+        // Send a broadcast message (admin only in production)
         post("/send") {
             if (context.config.isProd && !context.config.adminEnabled) {
                 call.respond(HttpStatusCode.Forbidden, BroadcastResponse(false, "Broadcast API is disabled in production"))
@@ -77,6 +78,7 @@ fun Route.broadcastRoutes(context: ServerContext) {
             }
         }
 
+        // Quick test endpoint for plain text
         post("/test") {
             if (context.config.isProd && !context.config.adminEnabled) {
                 call.respond(HttpStatusCode.Forbidden, BroadcastResponse(false, "Broadcast API is disabled in production"))

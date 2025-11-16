@@ -1,3 +1,0 @@
-data MissionCollection
-
-list: List<MissionData>! = []

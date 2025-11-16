@@ -1,6 +1,6 @@
 package server.handler
 
-import dev.deadzone.socket.messaging.HandlerContext
+import server.messaging.HandlerContext
 import server.protocol.PIOSerializer
 import server.messaging.NetworkMessage
 import server.messaging.SocketMessage

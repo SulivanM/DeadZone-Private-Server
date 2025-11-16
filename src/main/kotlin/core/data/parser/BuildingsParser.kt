@@ -177,7 +177,7 @@ class BuildingsParser : GameResourcesParser {
             val security = getChildElementText(lvlElement, "security")?.toIntOrNull()
             val capacity = getChildElementText(lvlElement, "cap")?.toIntOrNull()
             val maxUpgradeLevel = getChildElementText(lvlElement, "max_upgrade_level")?.toIntOrNull()
-            val production = parseBuildingProduction(lvlElement)
+            val production = parseBuildingProduction(lvlElement, capacity)
             val requirements = parseBuildingRequirements(lvlElement)
             val items = parseBuildingLevelItems(lvlElement)
 
@@ -203,16 +203,15 @@ class BuildingsParser : GameResourcesParser {
         return levels
     }
 
-    private fun parseBuildingProduction(element: Element): BuildingProduction? {
-        val prodElements = element.getElementsByTagName("prod")
-        if (prodElements.length == 0) return null
+    private fun parseBuildingProduction(element: Element, capacity: Int?): BuildingProduction? {
+        // Check if this level has a production rate (for resource-producing buildings)
+        val rate = getChildElementText(element, "rate")?.toDoubleOrNull()
+        
+        // If no rate is defined, this is not a production building level
+        if (rate == null) return null
 
-        val prodElement = prodElements.item(0) as Element
-        val rate = getChildElementText(prodElement, "rate")?.toDoubleOrNull()
-        val cap = getChildElementText(prodElement, "cap")?.toIntOrNull()
-        val capacity = getChildElementText(prodElement, "capacity")?.toIntOrNull()
-
-        return BuildingProduction(rate, cap, capacity)
+        // For production buildings, capacity (cap) represents the production storage capacity
+        return BuildingProduction(rate = rate, cap = capacity, capacity = capacity)
     }
 
     private fun parseBuildingRequirements(element: Element): BuildingRequirements? {

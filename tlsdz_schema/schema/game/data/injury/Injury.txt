@@ -1,9 +1,0 @@
-data Injury
-
-id: String!
-type: String!
-location: String!
-severity: String!
-damage: Double!
-morale: Double!
-timer: TimerData?

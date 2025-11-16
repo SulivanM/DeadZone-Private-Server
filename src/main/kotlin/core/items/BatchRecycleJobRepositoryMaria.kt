@@ -7,7 +7,7 @@ import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import utils.JSON
+import common.JSON
 
 class BatchRecycleJobRepositoryMaria(private val database: Database) : BatchRecycleJobRepository {
     private suspend fun <T> getPlayerObjectsData(playerId: String, transform: (PlayerObjects) -> T): Result<T> {

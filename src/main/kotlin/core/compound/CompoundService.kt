@@ -1,15 +1,18 @@
 package core.compound
 
 import core.PlayerService
+import core.data.GameDefinition
 import core.model.game.data.*
-import utils.LogConfigSocketError
-import utils.LogLevel
-import utils.Logger
-import utils.DataLogger
+import common.LogConfigSocketError
+import common.Logger
 import io.ktor.util.date.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Service for managing player compound data including resources and buildings.
+ * Handles resource updates, building operations, and storage capacity calculations.
+ */
 class CompoundService(private val compoundRepository: CompoundRepository) : PlayerService {
     private lateinit var resources: GameResources
     private val buildings = mutableListOf<BuildingLike>()
@@ -18,26 +21,30 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 
     fun getResources() = resources
 
+    fun getBuildings(): List<BuildingLike> = buildings
+
+    fun getStorageLimit(): Int {
+        var totalCapacity = 0
+        for (bldLike in buildings) {
+            val buildingDef = GameDefinition.findBuilding(bldLike.type) ?: continue
+            val levelDef = buildingDef.getLevel(bldLike.level) ?: continue
+            val capacity = levelDef.production?.capacity ?: levelDef.capacity ?: continue
+            totalCapacity += capacity
+        }
+        // Return at least a base capacity even if no storage buildings
+        return if (totalCapacity > 0) totalCapacity else 10000
+    }
+
     fun getIndexOfBuilding(bldId: String): Int {
         val idx = buildings.indexOfFirst { it.id == bldId }
         if (idx == -1) {
-            DataLogger.event("BuildingNotFound")
-                .prefixText("Building not found")
-                .playerId(playerId)
-                .data("buildingId", bldId)
-                .data("operation", "getIndexOfBuilding")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Building bldId=$bldId not found for playerId=$playerId" }
         }
         return idx
     }
 
     fun getBuilding(bldId: String): BuildingLike? {
         return buildings.find { it.id == bldId }
-    }
-
-    fun getAllBuildings(): List<BuildingLike> {
-        return buildings.toList()
     }
 
     suspend fun updateBuilding(
@@ -51,14 +58,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
 
         val result = compoundRepository.updateBuilding(playerId, bldId, update)
         result.onFailure {
-            DataLogger.event("BuildingUpdateError")
-                .prefixText("Error updating building")
-                .playerId(playerId)
-                .data("buildingId", bldId)
-                .data("operation", "updateBuilding")
-                .data("error", it.message ?: "unknown")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Error on updateBuilding for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             buildings[idx] = update
@@ -69,14 +69,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
     suspend fun updateAllBuildings(buildings: List<BuildingLike>): Result<Unit> {
         val result = compoundRepository.updateAllBuildings(playerId, buildings)
         result.onFailure {
-            DataLogger.event("BuildingsUpdateError")
-                .prefixText("Error updating all buildings")
-                .playerId(playerId)
-                .data("buildingCount", buildings.size)
-                .data("operation", "updateAllBuildings")
-                .data("error", it.message ?: "unknown")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Error on updateAllBuildings for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.buildings.clear()
@@ -89,25 +82,10 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         val create = createAction()
         val result = compoundRepository.createBuilding(playerId, create)
         result.onFailure {
-            DataLogger.event("BuildingCreateError")
-                .prefixText("Error creating building")
-                .playerId(playerId)
-                .data("buildingId", create.id)
-                .data("buildingType", create.type)
-                .data("operation", "createBuilding")
-                .data("error", it.message ?: "unknown")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Error on createBuilding for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.buildings.add(create)
-            DataLogger.event("BuildingCreated")
-                .prefixText("Building created successfully")
-                .playerId(playerId)
-                .data("buildingId", create.id)
-                .data("buildingType", create.type)
-                .record()
-                .log(LogLevel.INFO)
         }
         return result
     }
@@ -115,32 +93,23 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
     suspend fun deleteBuilding(bldId: String): Result<Unit> {
         val result = compoundRepository.deleteBuilding(playerId, bldId)
         result.onFailure {
-            DataLogger.event("BuildingDeleteError")
-                .prefixText("Error deleting building")
-                .playerId(playerId)
-                .data("buildingId", bldId)
-                .data("operation", "deleteBuilding")
-                .data("error", it.message ?: "unknown")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Error on deleteBuilding for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.buildings.removeIf { it.id == bldId }
-            DataLogger.event("BuildingDeleted")
-                .prefixText("Building deleted successfully")
-                .playerId(playerId)
-                .data("buildingId", bldId)
-                .record()
-                .log(LogLevel.INFO)
         }
         return result
     }
+
 
     suspend fun collectBuilding(bldId: String): Result<GameResources> {
         val lastUpdate = lastResourceValueUpdated[bldId]
             ?: return Result.failure(NoSuchElementException("Building bldId=$bldId is not categorized as production buildings"))
 
-        val collectedAmount = calculateResource(lastUpdate.seconds)
+        val building = getBuilding(bldId)
+            ?: return Result.failure(NoSuchElementException("Building bldId=$bldId not found"))
+
+        val collectedAmount = calculateResource(building.type, building.level, lastUpdate.seconds)
         lastResourceValueUpdated[bldId] = getTimeMillis()
 
         val updateResult = updateBuilding(bldId) { oldBld ->
@@ -155,13 +124,7 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         val update = updateAction(this.resources)
         val result = compoundRepository.updateGameResources(playerId, update)
         result.onFailure {
-            DataLogger.event("ResourceUpdateError")
-                .prefixText("Error updating resources")
-                .playerId(playerId)
-                .data("operation", "updateResource")
-                .data("error", it.message ?: "unknown")
-                .record()
-                .log(LogLevel.ERROR)
+            Logger.error(LogConfigSocketError) { "Error on updateResource for playerId=$playerId: ${it.message}" }
         }
         result.onSuccess {
             this.resources = update
@@ -169,11 +132,24 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
         return result
     }
 
-    fun calculateResource(durationSec: Duration): Double {
-        val productionRate = 4
-        
-        
-        return 10.0 + (productionRate * durationSec.inWholeMinutes)
+    fun calculateResource(buildingType: String, buildingLevel: Int, durationSec: Duration): Double {
+        val buildingDef = GameDefinition.findBuilding(buildingType)
+        if (buildingDef == null) {
+            Logger.warn { "Building type $buildingType not found in GameDefinition, using default rate" }
+            return 10.0 + (4 * durationSec.inWholeMinutes)
+        }
+
+        val levelDef = buildingDef.getLevel(buildingLevel)
+        if (levelDef == null) {
+            Logger.warn { "Building level $buildingLevel not found for type $buildingType, using default rate" }
+            return 10.0 + (4 * durationSec.inWholeMinutes)
+        }
+
+        val productionRate = levelDef.production?.rate ?: 4.0
+        val productionCap = levelDef.production?.cap ?: Int.MAX_VALUE
+
+        val produced = productionRate * durationSec.inWholeMinutes
+        return minOf(produced, productionCap.toDouble())
     }
 
     override suspend fun init(playerId: String): Result<Unit> {
@@ -202,17 +178,10 @@ class CompoundService(private val compoundRepository: CompoundRepository) : Play
                 if (bldLike is JunkBuilding) continue
                 val lastUpdate = lastResourceValueUpdated[bldLike.id] ?: continue
                 val updateResult = updateBuilding(bldLike.id) { oldBld ->
-                    oldBld.copy(resourceValue = calculateResource((now - lastUpdate).seconds))
+                    oldBld.copy(resourceValue = calculateResource(oldBld.type, oldBld.level, (now - lastUpdate).seconds))
                 }
                 updateResult.onFailure {
-                    DataLogger.event("BuildingCloseError")
-                        .prefixText("Failed to update building during close")
-                        .playerId(playerId)
-                        .data("buildingId", bldLike.id)
-                        .data("operation", "close")
-                        .data("error", it.message ?: "unknown")
-                        .record()
-                        .log(LogLevel.ERROR)
+                    Logger.error(LogConfigSocketError) { "Failed to update building ${bldLike.id} during close for playerId=$playerId: ${it.message}" }
                 }
             }
         }

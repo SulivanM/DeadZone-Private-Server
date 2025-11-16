@@ -1,8 +1,11 @@
-package dev.deadzone.socket.messaging
+package server.messaging
 
 import server.core.Connection
 import server.messaging.SocketMessage
 
+/**
+ * Encapsulate objects and data needed by handlers to handle message.
+ */
 class HandlerContext(
     val connection: Connection,
     val message: SocketMessage

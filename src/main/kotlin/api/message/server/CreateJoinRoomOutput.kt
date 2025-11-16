@@ -6,14 +6,14 @@ import kotlinx.serialization.Serializable
 data class CreateJoinRoomOutput(
     val roomId: String = "",
     val joinKey: String = "",
-    val endpoints: ServerEndpoint,
+    val endpoints: List<ServerEndpoint> = emptyList(),
 ) {
     companion object {
         fun defaultRoom(): CreateJoinRoomOutput {
             return CreateJoinRoomOutput(
                 roomId = "defaultRoomId",
                 joinKey = "defaultJoinKey",
-                endpoints = ServerEndpoint.socketServer()
+                endpoints = listOf(ServerEndpoint.socketServer())
             )
         }
     }

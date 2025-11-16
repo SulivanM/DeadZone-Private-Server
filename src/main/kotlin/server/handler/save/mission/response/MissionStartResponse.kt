@@ -2,10 +2,15 @@ package server.handler.save.mission.response
 
 import server.handler.save.BaseResponse
 import kotlinx.serialization.Serializable
+import core.items.model.Item
+import core.model.game.data.MissionStats
+import core.model.game.data.assignment.AssignmentResult
+import dev.deadzone.core.model.game.data.TimerData
 import java.io.File
 import java.io.InputStreamReader
 import java.util.zip.GZIPInputStream
 
+// SaveDataMethod.MISSION_START, MissionData.as line 685
 @Serializable
 data class MissionStartResponse(
     val disabled: Boolean = false,
@@ -25,6 +30,29 @@ data class MissionStartResponse(
     val allianceRoundActive: Boolean,
     val allianceError: Boolean,
     val allianceAttackerWinPoints: Int,
+    
+    // ===== Fields for automated missions (client calls onMissionEndSaved with MISSION_START response) =====
+    // When automated=true, client expects MissionEndResponse fields in the MISSION_START response
+    // See MissionData.as line 744-745: if(param1.automated === true) { onMissionEndSaved(param1); }
+    
+    val xpEarned: Int? = null,
+    val xp: XpBreakdown? = null,
+    val returnTimer: TimerData? = null,
+    val lockTimer: TimerData? = null,
+    val loot: List<Item>? = null,
+    val itmCounters: Map<String, Int>? = null,
+    val injuries: List<InjuryData>? = null,
+    val survivors: List<SurvivorResult>? = null,
+    val player: PlayerSurvivor? = null,
+    val levelPts: Int? = null,
+    val cooldown: String? = null,
+    val stats: MissionStats? = null,
+    val bountyCollect: Boolean? = null,
+    val bounty: Double? = null,
+    val allianceFlagCaptured: Boolean? = null,
+    val bountyCap: Int? = null,
+    val bountyCapTimestamp: Long? = null,
+    val assignmentresult: AssignmentResult? = null
 ) : BaseResponse()
 
 fun resolveAndLoadScene(areaType: String): String? {
@@ -44,12 +72,12 @@ fun loadSceneXML(filename: String): String {
 }
 
 val areaTypeToScenes = mapOf(
-    
-    
-    
-    
-    
-    
+    // missing:
+    // Convenience Store (areaType: tutorialStore)
+    // Department Store (areaType: deptStore)
+    // Forest (areaType: forest)
+    // Suburban Street (areaType: substreet)
+    // Street (areaType: street)
 
     "compound" to listOf(
         "compound"
@@ -214,7 +242,7 @@ val areaTypeToScenes = mapOf(
         "interior-store-2",
         "interior-store-3"
     ),
-    
+    // No idea if this is the right one lol
     "tutorialStore" to listOf(
         "interior-store-small-1",
         "interior-store-small-2"
@@ -257,6 +285,8 @@ val areaTypeToScenes = mapOf(
         "street-small-3"
     ),
 
+    // Others
+    // Raid
     "raidBridgeHuman" to listOf(
         "raid-island-bridge-human-01",
         "raid-island-bridge-human-02",
@@ -288,6 +318,7 @@ val areaTypeToScenes = mapOf(
         "raid-island-monument-zombie-03"
     ),
 
+    // Arena
     "stadium" to listOf(
         "exterior-stadium-1-no-spawn",
         "exterior-stadium-3-no-spawn",

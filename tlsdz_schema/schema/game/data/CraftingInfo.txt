@@ -1,5 +1,0 @@
-data CraftingInfo
-
-user_id: String!
-user_name: String!
-date: Long!

@@ -2,15 +2,18 @@ package core.metadata
 
 import core.PlayerService
 import core.metadata.model.PlayerFlags
-import utils.LogConfigSocketToClient
-import utils.Logger
+import common.LogConfigSocketToClient
+import common.Logger
 
 class PlayerObjectsMetadataService(
     private val playerObjectsMetadataRepository: PlayerObjectsMetadataRepository
 ) : PlayerService {
-    private var flags: ByteArray = PlayerFlags.newgame()
-    private var nickname: String? = null
+    private var flags: ByteArray = PlayerFlags.newgame() // use newgame flags to avoid null
+    private var nickname: String? = null // nickname null will prompt leader creation
     private lateinit var playerId: String
+
+    val repository: PlayerObjectsMetadataRepository
+        get() = playerObjectsMetadataRepository
 
     suspend fun updatePlayerFlags(flags: ByteArray): Result<Unit> {
         val result = playerObjectsMetadataRepository.updatePlayerFlags(playerId, flags)

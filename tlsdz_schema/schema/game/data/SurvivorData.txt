@@ -1,7 +1,0 @@
-data SurvivorData
-
-id: String
-startXP: Int
-startLevel: Int
-endXP: Int
-endLevel: Int

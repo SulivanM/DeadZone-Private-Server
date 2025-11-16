@@ -1,8 +1,8 @@
 package api.handler
 
-import api.message.utils.WriteErrorArgs
-import api.message.utils.WriteErrorError
-import api.utils.pioFraming
+import api.message.WriteErrorArgs
+import api.message.WriteErrorError
+import api.protocol.pioFraming
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -12,10 +12,10 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
-import utils.LogConfigAssetsError
-import utils.LogConfigWriteError
-import utils.Logger
-import utils.logInput
+import common.LogConfigAssetsError
+import common.LogConfigWriteError
+import common.Logger
+import common.logInput
 
 @OptIn(ExperimentalSerializationApi::class)
 suspend fun RoutingContext.writeError() {

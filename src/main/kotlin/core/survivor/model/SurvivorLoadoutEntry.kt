@@ -5,9 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SurvivorLoadoutEntry(
-    val weapon: String,
-    val gear1: String,
-    val gear2: String,
+    val weapon: String,  // weapon id
+    val gear1: String,  // gear id (passive)
+    val gear2: String,  // gear id (active)
+    val gear2_qty: Int = 1  // quantity for active gear (grenades, medkits, etc.)
 ) {
     companion object {
         fun playerLoudout(): SurvivorLoadoutEntry {
@@ -15,6 +16,7 @@ data class SurvivorLoadoutEntry(
                 weapon = AdminData.PLAYER_WEP_ID,
                 gear1 = "",
                 gear2 = "",
+                gear2_qty = 0
             )
         }
 
@@ -23,6 +25,7 @@ data class SurvivorLoadoutEntry(
                 weapon = AdminData.FIGHTER_WEP_ID,
                 gear1 = "",
                 gear2 = "",
+                gear2_qty = 0
             )
         }
 
@@ -31,6 +34,7 @@ data class SurvivorLoadoutEntry(
                 weapon = AdminData.RECON_WEP_ID,
                 gear1 = "",
                 gear2 = "",
+                gear2_qty = 0
             )
         }
     }

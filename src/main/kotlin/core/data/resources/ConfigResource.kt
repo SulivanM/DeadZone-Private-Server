@@ -3,7 +3,8 @@ package core.data.resources
 data class ConfigResource(
     val security: SecurityConfig? = null,
     val playerio: PlayerIOConfig? = null,
-    val paths: PathsConfig? = null
+    val paths: PathsConfig? = null,
+    val constants: Map<String, Any> = emptyMap()
 )
 
 data class SecurityConfig(

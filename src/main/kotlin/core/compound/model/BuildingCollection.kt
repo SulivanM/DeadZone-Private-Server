@@ -8,7 +8,7 @@ data class BuildingCollection(
 ) {
     companion object {
         fun starterBase(): List<BuildingLike> {
-            
+            // player starter junks, based on compound.xml; id randomized, name based on 'name' field on XML.
             val junks = listOf(
                 JunkBuilding(name = "junk", type = "junk-tutorial", pos = "-650,950,-1", rot = "0,0,0"),
                 JunkBuilding(name = "junk1", type = "junk-pile-corner", pos = "-927,-1026,0", rot = "0,0,90"),
@@ -49,7 +49,7 @@ data class BuildingCollection(
 
             return buildList {
                 addAll(junks)
-                
+                // defaults building
                 add(Building(type = "rally", tx = 15, ty = 33, rotation = 0))
                 add(Building(type = "bed", tx = 15, ty = 42, rotation = 0))
                 add(Building(type = "car", tx = 35, ty = 50, rotation = 0))
@@ -84,7 +84,7 @@ data class BuildingCollection(
 
         fun goodBase(): List<BuildingLike> {
             return listOf(
-                
+                // inside
                 Building(type = "bed", tx = 9, ty = 46, level = 4, rotation = 0),
                 Building(type = "bed", tx = 9, ty = 43, level = 4, rotation = 0),
                 Building(type = "bed", tx = 9, ty = 40, level = 4, rotation = 0),
@@ -103,6 +103,7 @@ data class BuildingCollection(
                 Building(type = "bench-engineering", tx = 19, ty = 34, level = 4, rotation = 3),
                 Building(type = "bench-weapon", tx = 19, ty = 44, level = 4, rotation = 0),
 
+                // right side
                 Building(type = "barricadeSmall", tx = 13, ty = 28, level = 4, rotation = 2),
                 Building(type = "barricadeSmall", tx = 15, ty = 27, level = 4, rotation = 1),
                 Building(type = "barricadeSmall", tx = 18, ty = 27, level = 4, rotation = 1),
@@ -110,6 +111,7 @@ data class BuildingCollection(
                 Building(type = "door", tx = 17, ty = 57, level = 4, rotation = 3),
                 Building(type = "rally", tx = 16, ty = 24, level = 0, rotation = 1),
 
+                // outer right side
                 Building(type = "defence-wire", tx = 26, ty = 15, level = 3, rotation = 1),
                 Building(type = "defence-wire", tx = 32, ty = 15, level = 3, rotation = 1),
                 Building(type = "defence-wire", tx = 38, ty = 15, level = 3, rotation = 1),
@@ -119,6 +121,7 @@ data class BuildingCollection(
                 Building(type = "trap-halloween-decoy", tx = 10, ty = 14, level = 0, rotation = 1),
                 Building(type = "trap-halloween-decoy", tx = 8, ty = 14, level = 0, rotation = 1),
 
+                // front side
                 Building(type = "barricadeSmall", tx = 32, ty = 35, level = 4, rotation = 1),
                 Building(type = "barricadeSmall", tx = 35, ty = 35, level = 4, rotation = 1),
                 Building(type = "barricadeLarge", tx = 30, ty = 57, level = 4, rotation = 3),
@@ -134,6 +137,7 @@ data class BuildingCollection(
                 Building(type = "deadend", tx = 37, ty = 38, level = 0, rotation = 0),
                 Building(type = "rally", tx = 32, ty = 44, level = 0, rotation = 0),
 
+                // left side
                 Building(type = "barricadeLarge", tx = 14, ty = 58, level = 4, rotation = 2),
                 Building(type = "barricadeLarge", tx = 15, ty = 63, level = 4, rotation = 3),
                 Building(type = "barricadeLarge", tx = 21, ty = 63, level = 4, rotation = 0),

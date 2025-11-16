@@ -1,18 +1,34 @@
 package server.broadcast
 
 import server.broadcast.BroadcastService.initialize
-import dev.deadzone.socket.core.BroadcastServer
-import utils.Logger
+import server.core.BroadcastServer
+import common.Logger
 
+/**
+ * A singleton service that provides a simple API for broadcasting messages to all connected clients.
+ *
+ * This service offers one-line call to broadcast over [BroadcastServer].
+ * It must be initialized via [initialize] with an instance of [BroadcastServer] before use.
+ *
+ * Note that this service does **not** manage the server lifecycle — it should not start or shut down
+ * the server. Its sole responsibility is to hold a reference to the broadcast server and delegate
+ * broadcast operations.
+ */
 @Suppress("unused")
 object BroadcastService {
     private lateinit var broadcastServer: BroadcastServer
     private var enabled = true
 
+    /**
+     * Initialize the broadcast service
+     */
     fun initialize(broadcastServer: BroadcastServer) {
         this.broadcastServer = broadcastServer
     }
 
+    /**
+     * Broadcasts a message to all connected clients
+     */
     suspend fun broadcast(message: BroadcastMessage) {
         if (!enabled) {
             Logger.warn { "Broadcast is not enabled" }
@@ -20,6 +36,9 @@ object BroadcastService {
         broadcastServer.broadcast(message)
     }
 
+    /**
+     * Broadcasts a raw message string to all connected clients
+     */
     suspend fun broadcast(message: String) {
         if (!enabled) {
             Logger.warn { "Broadcast is not enabled" }
@@ -27,10 +46,17 @@ object BroadcastService {
         broadcastServer.broadcast(message)
     }
 
+    /**
+     * Returns the number of connected clients
+     */
     fun getClientCount(): Int = broadcastServer.getClientCount()
 
+    /**
+     * Checks if the broadcast service is enabled
+     */
     fun isEnabled(): Boolean = enabled
 
+    // Convenience methods for common broadcast types
     suspend fun broadcastPlainText(text: String) {
         broadcast(BroadcastMessage.plainText(text))
     }
@@ -133,22 +159,8 @@ object BroadcastService {
         broadcast(BroadcastMessage(BroadcastProtocol.ALLIANCE_RANK, listOf(allianceName, rank.toString())))
     }
 
-    suspend fun broadcastArenaLeaderboard(playerName: String, arenaName: String, level: Int, points: Int) {
-        broadcast(
-            BroadcastMessage(
-                BroadcastProtocol.ARENA_LEADERBOARD,
-                listOf(playerName, arenaName, level.toString(), points.toString())
-            )
-        )
-    }
-
-    suspend fun broadcastArenaLeader(playerName: String, arenaName: String, level: Int, points: Int) {
-        broadcast(
-            BroadcastMessage(
-                BroadcastProtocol.ARENA_LEADER,
-                listOf(playerName, arenaName, level.toString(), points.toString())
-            )
-        )
+    suspend fun broadcastArenaLeaderboard(playerName: String, rank: Int) {
+        broadcast(BroadcastMessage(BroadcastProtocol.ARENA_LEADERBOARD, listOf(playerName, rank.toString())))
     }
 
     suspend fun broadcastRaidMissionStarted(playerName: String, missionName: String) {

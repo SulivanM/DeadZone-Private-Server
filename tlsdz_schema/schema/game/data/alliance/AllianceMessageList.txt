@@ -1,3 +1,0 @@
-data AllianceMessageList
-
-list: List<AllianceMessage> = []

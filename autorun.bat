@@ -16,6 +16,6 @@ if not exist "%JAVA_PATH%" (
     exit /b 1
 )
 
-:: Launch the server with the proper path
-"%JAVA_PATH%" -jar deadzone-server.jar
+:: Launch the server with native access enabled to suppress Jansi warnings
+"%JAVA_PATH%" --enable-native-access=ALL-UNNAMED -jar deadzone-server.jar
 pause

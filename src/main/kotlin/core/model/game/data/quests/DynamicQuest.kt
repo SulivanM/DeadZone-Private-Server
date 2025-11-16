@@ -1,8 +1,11 @@
 package core.model.game.data.quests
 
-import core.model.game.data.MoraleConstants
 import core.model.game.data.MoraleConstants_Constants
 import kotlinx.serialization.Serializable
+import core.model.game.data.quests.DynamicQuestGoal
+import core.model.game.data.quests.DynamicQuestPenalty
+import core.model.game.data.quests.DynamicQuestReward
+import core.model.game.data.quests.Quest
 import io.ktor.util.date.getTimeMillis
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -11,42 +14,39 @@ import java.nio.ByteOrder
 
 @Serializable
 data class DynamicQuest(
-    val raw: ByteArray,  
-    val quest: Quest,  
+    val raw: ByteArray,  // see DynamicQuest.as for detail of structure
+    val quest: Quest,  // inherited
     val questType: Int,
     val accepted: Boolean,
-    val attributes: List<QuestAttribute> = listOf()
+    val goals: List<DynamicQuestGoal> = listOf(),
+    val rewards: List<DynamicQuestReward> = listOf(),
+    val failurePenalties: List<DynamicQuestPenalty> = listOf()
 ) {
-    
-    val goals: List<QuestAttribute>
-        get() = attributes.filter { it.category == QuestAttributeCategory.GOAL }
-
-    val rewards: List<QuestAttribute>
-        get() = attributes.filter { it.category == QuestAttributeCategory.REWARD }
-
-    val failurePenalties: List<QuestAttribute>
-        get() = attributes.filter { it.category == QuestAttributeCategory.PENALTY }
-
     companion object {
-        
+        // Still wrong! EOF error
         fun dummy(): ByteArray {
             val buffer = ByteBuffer.allocate(2048).order(ByteOrder.LITTLE_ENDIAN)
 
-            buffer.putShort(2)      
-            buffer.putShort(1)      
+            // Version and quest type
+            buffer.putShort(2)      // version
+            buffer.putShort(1)      // quest type
 
+            // Quest ID
             val questIdBytes = ByteArrayOutputStream()
             DataOutputStream(questIdBytes).writeUTF("comfortQuest")
             buffer.put(questIdBytes.toByteArray())
 
-            buffer.put(0) 
-            buffer.put(0) 
-            buffer.put(0) 
-            buffer.put(0) 
+            // Booleans
+            buffer.put(0) // accepted
+            buffer.put(0) // complete
+            buffer.put(0) // collected
+            buffer.put(0) // failed
 
+            // End Time
             buffer.putDouble(getTimeMillis().toDouble())
 
-            buffer.putShort(1) 
+            // ----- Goals -----
+            buffer.putShort(1) // 1 goal
             val goalData = ByteArrayOutputStream()
             val goalOut = DataOutputStream(goalData)
             goalOut.writeUTF("statInc")
@@ -56,25 +56,28 @@ data class DynamicQuest(
             buffer.putShort(goalBytes.size.toShort())
             buffer.put(goalBytes)
 
-            buffer.putShort(1) 
+            // ----- Rewards -----
+            buffer.putShort(1) // 1 reward
             val rewardData = ByteArrayOutputStream()
             val rewardOut = DataOutputStream(rewardData)
-            rewardOut.writeShort(0)      
-            rewardOut.writeInt(500)      
+            rewardOut.writeShort(0)      // type = xp
+            rewardOut.writeInt(500)      // xp amount
             val rewardBytes = rewardData.toByteArray()
             buffer.putShort(rewardBytes.size.toShort())
             buffer.put(rewardBytes)
 
-            buffer.putShort(1) 
+            // ----- Failure Penalties -----
+            buffer.putShort(1) // 1 penalty
             val penaltyData = ByteArrayOutputStream()
             val penaltyOut = DataOutputStream(penaltyData)
-            penaltyOut.writeShort(2)         
-            penaltyOut.writeUTF("comfort")      
-            penaltyOut.writeDouble(5.0)      
+            penaltyOut.writeShort(2)         // type = morale
+            penaltyOut.writeUTF("comfort")      // morale type
+            penaltyOut.writeDouble(5.0)      // morale amount
             val penaltyBytes = penaltyData.toByteArray()
             buffer.putShort(penaltyBytes.size.toShort())
             buffer.put(penaltyBytes)
 
+            // ----- Version-specific field (v2+) -----
             buffer.putInt(12345678)
 
             return buffer.array().sliceArray(0 until buffer.position())

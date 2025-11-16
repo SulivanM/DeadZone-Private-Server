@@ -1,6 +1,0 @@
-data SurvivorLoadoutData
-
-type: String!
-item: Item!
-quantity: Int!
-loadout: SurvivorLoadout!

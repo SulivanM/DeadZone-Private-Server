@@ -1,22 +1,22 @@
 package server.handler.save.item
 
 import context.requirePlayerContext
-import core.data.GameDefinition
 import core.items.model.Item
 import dev.deadzone.core.model.game.data.hasEnded
 import dev.deadzone.core.model.game.data.reduceBy
 import dev.deadzone.core.model.game.data.reduceByHalf
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
-import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.item.response.ItemBatchRecycleSpeedUpResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
-import utils.JSON
-import utils.LogConfigSocketToClient
-import utils.Logger
-import utils.UUID
+import common.JSON
+import common.LogConfigSocketToClient
+import common.Logger
+import core.game.SpeedUpCostCalculator
+import common.UUID
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
@@ -27,16 +27,15 @@ class ItemSaveHandler : SaveSubHandler {
     private fun generateRecycleRewards(itemType: String): List<Item> {
         val rewards = mutableListOf<Item>()
 
-        val config = GameDefinition.config
         val baseRewards = mapOf(
-            "wood" to config.recycleWoodMin..config.recycleWoodMax,
-            "metal" to config.recycleMetalMin..config.recycleMetalMax,
-            "cloth" to config.recycleClothMin..config.recycleClothMax,
-            "water" to config.recycleWaterMin..config.recycleWaterMax
+            "wood" to 2..5,
+            "metal" to 1..3,
+            "cloth" to 1..4,
+            "water" to 1..2
         )
 
         baseRewards.forEach { (type, range) ->
-            if (Random.nextDouble() < config.recycleChancePerResource) {
+            if (Random.nextDouble() < 0.3) {
                 val qty = Random.nextInt(range.first, range.last + 1).toUInt()
                 rewards.add(Item(
                     id = UUID.new(),
@@ -191,14 +190,13 @@ class ItemSaveHandler : SaveSubHandler {
                     return@with
                 }
 
-                val config = GameDefinition.config
-                val timePerItem = config.batchRecycleTimePerItem
-                val timePerQty = config.batchRecycleTimePerQty
+                val timePerItem = 10
+                val timePerQty = 5
                 val totalQty = recycledOutputItems.sumOf { it.qty.toInt() }
                 val totalTime = itemsToRecycle.size * timePerItem + totalQty * timePerQty
 
-                val minCost = config.batchRecycleMinCost
-                val costPerMin = config.batchRecycleCostPerMin
+                val minCost = 50
+                val costPerMin = 0.5
                 val cost = maxOf(minCost, (costPerMin * (totalTime / 60.0)).toInt())
 
                 if (buy) {
@@ -238,7 +236,7 @@ class ItemSaveHandler : SaveSubHandler {
                     send(PIOSerializer.serialize(buildMsg(saveId, """{"success":true,"buy":true}""")))
                     Logger.info(LogConfigSocketToClient) { "ITEM_BATCH_RECYCLE: instant recycle completed for player ${connection.playerId}" }
                 } else {
-                    val jobId = utils.UUID.new()
+                    val jobId = UUID.new()
                     val startTime = io.ktor.util.date.getTimeMillis()
                     val timer = dev.deadzone.core.model.game.data.TimerData(
                         start = startTime,
@@ -332,7 +330,7 @@ class ItemSaveHandler : SaveSubHandler {
                 }
 
                 val secondsRemaining = timer.secondsLeftToEnd()
-                val cost = utils.SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
+                val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                 val currentCash = svc.compound.getResources().cash
                 val notEnoughCoinsErrorId = "55"
 

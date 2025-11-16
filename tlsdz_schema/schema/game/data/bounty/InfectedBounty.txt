@@ -1,9 +1,0 @@
-data InfectedBounty
-
-id: String!
-completed: Boolean!
-abandoned: Boolean!
-viewed: Boolean!
-rewardItemId: String!
-issueTime: Long!
-tasks: List<InfectedBountyTask> = []

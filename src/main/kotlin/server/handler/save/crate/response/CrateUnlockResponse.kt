@@ -8,11 +8,11 @@ import kotlinx.serialization.Serializable
 data class CrateUnlockResponse(
     val success: Boolean = true,
     val item: Item = ItemFactory.getRandomItem(),
-    val effect: String? = null,
-    val cooldown: String? = null,
-    val keyId: String? = null,
-    val keyQty: Int? = null,
-    val crateId: String? = null,
+    val effect: String? = null,   // base64 encoded, parsed to [Effect]
+    val cooldown: String? = null, // similar as above
+    val keyId: String? = null, // to remove the key used to open the crate
+    val keyQty: Int? = null, // to remove the key used to open the crate
+    val crateId: String? = null, // to remove the opened crate
 )
 
 val gachaPoolExample = listOf(

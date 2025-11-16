@@ -5,22 +5,19 @@ import api.routes.authRoutes
 import api.routes.broadcastRoutes
 import api.routes.caseInsensitiveStaticResources
 import api.routes.fileRoutes
-import server.broadcast.BroadcastService
-import server.PolicyFileServer
-import server.PolicyFileServerConfig
-import context.PlayerContextTracker
-import context.ServerConfig
-import context.ServerContext
+import config.ServiceFactory
+import config.ServerFactory
+import config.loadConfiguration
 import core.data.GameDefinition
 import core.metadata.model.ByteArrayAsBase64Serializer
 import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.JunkBuilding
-import data.db.BigDBMariaImpl
-import dev.deadzone.socket.core.BroadcastServer
-import dev.deadzone.socket.core.BroadcastServerConfig
+import server.broadcast.BroadcastService
 import server.ServerContainer
-import utils.Emoji
+import common.Emoji
+import common.JSON
+import common.Logger
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.serialization.kotlinx.protobuf.*
@@ -39,78 +36,99 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.protobuf.ProtoBuf
-import org.jetbrains.exposed.sql.Database
-import server.core.OnlinePlayerRegistry
-import server.GameServer
-import server.GameServerConfig
-import server.handler.save.alliance.AllianceSaveHandler
-import server.handler.save.arena.ArenaSaveHandler
-import server.handler.save.bounty.BountySaveHandler
-import server.handler.save.chat.ChatSaveHandler
-import server.handler.save.command.CommandSaveHandler
-import server.handler.save.compound.building.BuildingSaveHandler
-import server.handler.save.compound.misc.CmpMiscSaveHandler
-import server.handler.save.compound.task.TaskSaveHandler
-import server.handler.save.crate.CrateSaveHandler
-import server.handler.save.item.ItemSaveHandler
-import server.handler.save.misc.MiscSaveHandler
-import server.handler.save.mission.MissionSaveHandler
-import server.handler.save.purchase.PurchaseSaveHandler
-import server.handler.save.quest.QuestSaveHandler
-import server.handler.save.raid.RaidSaveHandler
-import server.handler.save.survivor.SurvivorSaveHandler
-import server.tasks.ServerTaskDispatcher
-import user.PlayerAccountRepositoryMaria
-import user.auth.SessionManager
-import user.auth.WebsiteAuthProvider
-import utils.JSON
-import utils.Logger
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Entry point for the DeadZone server application.
+ */
 fun main(args: Array<String>) = EngineMain.main(args)
 
-private fun clearLogsAndTelemetry() {
-    // Clear logs directory
-    val logsDir = File("logs")
-    if (logsDir.exists() && logsDir.isDirectory) {
-        logsDir.listFiles()?.forEach { file ->
-            if (file.isFile) {
-                file.delete()
-                Logger.info("${Emoji.Save} Deleted log file: ${file.name}")
-            }
-        }
-    }
-    
-    // Clear telemetry directory
-    val telemetryDir = File("telemetry")
-    if (telemetryDir.exists() && telemetryDir.isDirectory) {
-        telemetryDir.listFiles()?.forEach { file ->
-            if (file.isFile) {
-                file.delete()
-                Logger.info("${Emoji.Save} Deleted telemetry file: ${file.name}")
-            }
-        }
-    }
-}
-
+/**
+ * Configures and initializes the Ktor application module.
+ * Sets up database connections, server components, routing, and starts all services.
+ */
 @Suppress("unused")
 fun Application.module() {
+    // Load configuration
+    val config = environment.loadConfiguration()
+
+    // Configure logger
+    Logger.setLevel(level = config.logger.level)
+    Logger.enableColorfulLog(useColor = config.logger.colorful)
+    Logger.info("${Emoji.Rocket} Starting DeadZone server")
+
+    // Configure Ktor plugins
+    configureWebSockets()
+    configureSerialization()
+    configureCORS()
+    configureErrorHandling()
+    install(CallLogging)
+
+    // Initialize game data
+    val json = JSON.json
+    GameDefinition.initialize()
+    AppConfig.initialize(host = config.game.host, port = config.game.port)
+
+    // Initialize game services
+    server.service.BadWordFilterService.initialize()
+    Logger.info("${Emoji.Gaming} Game services initialized")
+
+    // Initialize services and context
+    val database = ServiceFactory.initializeDatabase(config)
+    val serverContext = ServiceFactory.createServerContext(config, database, json)
+
+    // Configure HTTP routes
+    routing {
+        fileRoutes()
+        caseInsensitiveStaticResources("/game/data", File("static"))
+        authRoutes(serverContext)
+        apiRoutes(serverContext)
+        broadcastRoutes(serverContext)
+    }
+
+    // Create and start game servers
+    val servers = ServerFactory.createServers(config)
+    val broadcastServer = ServerFactory.getBroadcastServer(servers)
+    val container = ServerContainer(servers, serverContext)
+
+    runBlocking {
+        container.initializeAll()
+        container.startAll()
+    }
+
+    // Initialize broadcast service
+    broadcastServer?.let { BroadcastService.initialize(it) }
+
+    // Log startup success
+    Logger.info("${Emoji.Party} Server started successfully")
+    Logger.info("${Emoji.Satellite} Socket server listening on ${config.game.host}:${config.game.port}")
+    Logger.info("${Emoji.Internet} API server available at ${config.game.host}:${environment.config.property("ktor.deployment.port").getString()}")
+
+    // Register shutdown hook
+    Runtime.getRuntime().addShutdownHook(Thread {
+        runBlocking {
+            container.shutdownAll()
+        }
+        Logger.info("${Emoji.Red} Server shutdown complete")
+    })
+}
+
+/**
+ * Configure WebSocket support
+ */
+private fun Application.configureWebSockets() {
     install(WebSockets) {
         pingPeriod = 15.seconds
         timeout = 15.seconds
         masking = true
     }
+}
 
-    Logger.setLevel(level = environment.config.propertyOrNull("logger.level")?.getString() ?: "0")
-    Logger.enableColorfulLog(
-        useColor = environment.config.propertyOrNull("logger.colorful")?.getString()?.toBooleanStrictOrNull() ?: true
-    )
-    Logger.info("${Emoji.Rocket} Starting DeadZone server")
-    
-    // Clear logs and telemetry directories on server restart
-    clearLogsAndTelemetry()
-
+/**
+ * Configure JSON and ProtoBuf serialization
+ */
+private fun Application.configureSerialization() {
     val module = SerializersModule {
         polymorphic(BuildingLike::class) {
             subclass(Building::class, Building.serializer())
@@ -126,6 +144,7 @@ fun Application.module() {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
+
     @OptIn(ExperimentalSerializationApi::class)
     install(ContentNegotiation) {
         json(json)
@@ -133,75 +152,12 @@ fun Application.module() {
     }
 
     JSON.initialize(json)
-    GameDefinition.initialize()
+}
 
-    AppConfig.initialize(
-        host = environment.config.propertyOrNull("game.host")?.getString() ?: "127.0.0.1",
-        port = environment.config.propertyOrNull("game.port")?.getString()?.toIntOrNull() ?: 7777
-    )
-
-    val config = ServerConfig(
-        adminEnabled = environment.config.propertyOrNull("game.enableAdmin")?.getString()?.toBooleanStrictOrNull()
-            ?: false,
-        useMaria = true,
-        mariaUrl = environment.config.propertyOrNull("maria.url")?.getString()
-            ?: "jdbc:mariadb://localhost:3306/deadzone",
-        mariaUser = environment.config.propertyOrNull("maria.user")?.getString() ?: "root",
-        mariaPassword = environment.config.propertyOrNull("maria.password")?.getString() ?: "",
-        isProd = !developmentMode,
-        gameHost = environment.config.propertyOrNull("game.host")?.getString() ?: "127.0.0.1",
-        gamePort = environment.config.propertyOrNull("game.port")?.getString()?.toIntOrNull() ?: 7777,
-        broadcastEnabled = environment.config.propertyOrNull("broadcast.enabled")?.getString()?.toBooleanStrictOrNull()
-            ?: true,
-        broadcastHost = environment.config.propertyOrNull("broadcast.host")?.getString() ?: "0.0.0.0",
-        broadcastPorts = environment.config.propertyOrNull("broadcast.ports")?.getString()?.split(",")
-            ?.mapNotNull { it.trim().toIntOrNull() }
-            ?: listOf(2121, 2122, 2123),
-        broadcastPolicyServerEnabled = environment.config.propertyOrNull("broadcast.enablePolicyServer")?.getString()
-            ?.toBooleanStrictOrNull()
-            ?: true,
-        policyHost = environment.config.propertyOrNull("policy.host")?.getString() ?: "0.0.0.0",
-        policyPort = environment.config.propertyOrNull("policy.port")?.getString()?.toIntOrNull() ?: 843,
-    )
-    Logger.info("${Emoji.Database} Connecting to MariaDB...")
-    val database = try {
-        val mariaDb = Database.connect(
-            url = config.mariaUrl,
-            driver = "org.mariadb.jdbc.Driver",
-            user = config.mariaUser,
-            password = config.mariaPassword
-        )
-        Logger.info("${Emoji.Green} MariaDB connected")
-        BigDBMariaImpl(mariaDb, config.adminEnabled)
-    } catch (e: Exception) {
-        Logger.error("${Emoji.Red} MariaDB connection failed: ${e.message}")
-        throw e
-    }
-    val sessionManager = SessionManager()
-    val joinKeyManager = user.auth.JoinKeyManager()
-    val playerAccountRepository = PlayerAccountRepositoryMaria(database.database, json)
-    val onlinePlayerRegistry = OnlinePlayerRegistry()
-    val authProvider = WebsiteAuthProvider(database, playerAccountRepository, sessionManager)
-    val taskDispatcher = ServerTaskDispatcher()
-    val playerContextTracker = PlayerContextTracker()
-    val saveHandlers = listOf(
-        AllianceSaveHandler(), ArenaSaveHandler(), BountySaveHandler(), ChatSaveHandler(),
-        CommandSaveHandler(), BuildingSaveHandler(), CmpMiscSaveHandler(), TaskSaveHandler(),
-        CrateSaveHandler(), ItemSaveHandler(), MiscSaveHandler(), MissionSaveHandler(),
-        PurchaseSaveHandler(), QuestSaveHandler(), RaidSaveHandler(), SurvivorSaveHandler()
-    )
-    val serverContext = ServerContext(
-        db = database,
-        playerAccountRepository = playerAccountRepository,
-        sessionManager = sessionManager,
-        joinKeyManager = joinKeyManager,
-        onlinePlayerRegistry = onlinePlayerRegistry,
-        authProvider = authProvider,
-        taskDispatcher = taskDispatcher,
-        playerContextTracker = playerContextTracker,
-        saveHandlers = saveHandlers,
-        config = config,
-    )
+/**
+ * Configure CORS
+ */
+private fun Application.configureCORS() {
     install(CORS) {
         anyHost()
         allowHeader(HttpHeaders.ContentType)
@@ -212,63 +168,16 @@ fun Application.module() {
         allowMethod(HttpMethod.Delete)
         allowMethod(HttpMethod.Options)
     }
+}
+
+/**
+ * Configure error handling
+ */
+private fun Application.configureErrorHandling() {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             Logger.error("Server error: ${cause.message}")
             call.respondText(text = "500: ${cause.message}", status = HttpStatusCode.InternalServerError)
         }
     }
-    install(CallLogging)
-    routing {
-        fileRoutes()
-        caseInsensitiveStaticResources("/game/data", File("static"))
-        authRoutes(serverContext)
-        apiRoutes(serverContext)
-        broadcastRoutes(serverContext)
-    }
-
-    var broadcastServer: BroadcastServer? = null
-
-    val servers = buildList {
-        add(GameServer(GameServerConfig(host = config.gameHost, port = config.gamePort)))
-
-        if (config.broadcastEnabled) {
-            broadcastServer = BroadcastServer(
-                BroadcastServerConfig(
-                    host = config.broadcastHost,
-                    ports = config.broadcastPorts
-                )
-            ).also { add(it) }
-        }
-
-        if (config.broadcastPolicyServerEnabled) {
-            add(
-                PolicyFileServer(
-                    PolicyFileServerConfig(
-                        host = config.policyHost,
-                        port = config.policyPort,
-                        allowedPorts = config.broadcastPorts
-                    )
-                )
-            )
-        }
-    }
-
-    val container = ServerContainer(servers, serverContext)
-    runBlocking {
-        container.initializeAll()
-        container.startAll()
-    }
-    broadcastServer?.let { BroadcastService.initialize(it) }
-
-    Logger.info("${Emoji.Party} Server started successfully")
-    Logger.info("${Emoji.Satellite} Socket server listening on ${config.gameHost}:${config.gamePort}")
-    Logger.info("${Emoji.Internet} API server available at ${config.gameHost}:${environment.config.property("ktor.deployment.port").getString()}")
-
-    Runtime.getRuntime().addShutdownHook(Thread {
-        runBlocking {
-            container.shutdownAll()
-        }
-        Logger.info("${Emoji.Red} Server shutdown complete")
-    })
 }

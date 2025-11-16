@@ -1,3 +1,0 @@
-data BatchRecycleJobCollection
-
-list: List<BatchRecycleJob> = []

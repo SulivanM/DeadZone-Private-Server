@@ -5,8 +5,8 @@ import context.requirePlayerContext
 import server.core.Connection
 import server.messaging.NetworkMessage
 import server.tasks.*
-import utils.LogConfigSocketError
-import utils.Logger
+import common.LogConfigSocketError
+import common.Logger
 import kotlin.time.Duration
 
 class BatchRecycleCompleteTask(

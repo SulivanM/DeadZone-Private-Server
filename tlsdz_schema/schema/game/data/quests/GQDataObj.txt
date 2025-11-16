@@ -1,7 +1,0 @@
-data GQDataObj
-
-id: String!
-collected: Boolean!
-contributed: Boolean!
-contributedLevel: Int!
-statValues: List<UInt> = []

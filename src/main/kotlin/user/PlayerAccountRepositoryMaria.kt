@@ -9,11 +9,12 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import user.model.UserProfile
-import utils.JSON
-import utils.Logger
+import common.JSON
+import common.Logger
 import kotlin.io.encoding.Base64
 
 class PlayerAccountRepositoryMaria(private val database: Database, private val json: Json) : PlayerAccountRepository {
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     override suspend fun verifyCredentials(username: String, password: String): Result<String?> {
         return database.suspendedTransactionResult {
             val row = PlayerAccounts.selectAll()

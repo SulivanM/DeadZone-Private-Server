@@ -10,6 +10,6 @@ data class AssignmentData(
     val started: Boolean,
     val competed: Boolean,
     val stageindex: Int,
-    val survivors: List<String> = listOf(),
+    val survivors: List<String> = listOf(),  // survivor ids
     val stagelist: List<AssignmentStageData> = listOf()
 )

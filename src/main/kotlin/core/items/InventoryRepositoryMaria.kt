@@ -7,7 +7,7 @@ import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import utils.JSON
+import common.JSON
 
 class InventoryRepositoryMaria(private val database: Database) : InventoryRepository {
     override suspend fun getInventory(playerId: String): Result<Inventory> {

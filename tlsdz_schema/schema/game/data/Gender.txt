@@ -1,5 +1,0 @@
-enum Gender
-
-MALE: String = "male"
-FEMALE: String = "female"
-UNKNOWN: String = "unknown"

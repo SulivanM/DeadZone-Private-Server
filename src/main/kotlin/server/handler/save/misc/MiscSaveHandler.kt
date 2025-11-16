@@ -2,11 +2,17 @@ package server.handler.save.misc
 
 import context.requirePlayerContext
 import core.metadata.model.PlayerFlags_Constants
-import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveHandlerContext
+import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.messaging.SaveDataMethod
-import utils.LogConfigSocketToClient
-import utils.Logger
+import server.protocol.PIOSerializer
+import server.service.OfferService
+import common.JSON
+import common.LogConfigSocketToClient
+import common.Logger
+import common.toJsonElement
+import kotlinx.serialization.json.JsonElement
 import kotlin.experimental.inv
 
 class MiscSaveHandler : SaveSubHandler {
@@ -29,7 +35,7 @@ class MiscSaveHandler : SaveSubHandler {
             }
 
             SaveDataMethod.GET_OFFERS -> {
-                Logger.warn(LogConfigSocketToClient) { "Received 'GET_OFFERS' message [not implemented]" }
+                handleGetOffers(ctx)
             }
 
             SaveDataMethod.NEWS_READ -> {
@@ -58,6 +64,35 @@ class MiscSaveHandler : SaveSubHandler {
             SaveDataMethod.GET_INVENTORY_SIZE -> {
                 Logger.warn(LogConfigSocketToClient) { "Received 'GET_INVENTORY_SIZE' message [not implemented]" }
             }
+        }
+    }
+
+    private suspend fun handleGetOffers(ctx: SaveHandlerContext) = with(ctx) {
+        try {
+            // Get all available offers from the service
+            val offers = OfferService.getOffersAsMap()
+
+            Logger.info(LogConfigSocketToClient) { "GET_OFFERS: Returning ${offers.size} offers" }
+
+            // Build response with success flag and offers map
+            // Client expects: { "success": true, "offers": { "offer_id": { ...offer_data... }, ... } }
+            val responseData = buildMap<String, Any> {
+                put("success", true)
+                put("offers", offers)
+            }
+
+            // Use JSON.encode() with JsonElement.serializer() for proper nested structure serialization
+            val responseJson = JSON.encode(JsonElement.serializer(), responseData.toJsonElement())
+            send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
+        } catch (e: Exception) {
+            Logger.error(LogConfigSocketToClient) { "GET_OFFERS: Error retrieving offers: ${e.message}" }
+
+            val responseData = mapOf(
+                "success" to false,
+                "errorMessage" to "Failed to retrieve offers"
+            )
+            val responseJson = JSON.encode(JsonElement.serializer(), responseData.toJsonElement())
+            send(PIOSerializer.serialize(buildMsg(saveId, responseJson)))
         }
     }
 

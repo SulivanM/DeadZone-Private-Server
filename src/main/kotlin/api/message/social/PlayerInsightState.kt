@@ -1,6 +1,6 @@
 package api.message.social
 
-import api.message.utils.KeyValuePair
+import api.message.KeyValuePair
 import kotlinx.serialization.Serializable
 
 @Serializable

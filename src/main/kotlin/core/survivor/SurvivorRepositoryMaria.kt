@@ -7,7 +7,7 @@ import data.db.suspendedTransactionResult
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
-import utils.JSON
+import common.JSON
 
 class SurvivorRepositoryMaria(private val database: Database) : SurvivorRepository {
     override suspend fun getSurvivors(playerId: String): Result<List<Survivor>> {

@@ -7,4 +7,10 @@ data class InfectedBountyTaskCondition(
     val zombieType: String,
     val killsRequired: Int,
     val kills: Int
-)
+) {
+    /**
+     * Check if this condition is complete
+     */
+    val isComplete: Boolean
+        get() = kills >= killsRequired
+}

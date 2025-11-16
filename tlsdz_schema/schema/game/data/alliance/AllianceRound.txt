@@ -1,7 +1,0 @@
-data AllianceRound
-
-roundNum: Int?
-roundActive: Long?
-roundEnd: Long?
-roundEffects: List<Effect>?
-roundMembers: Int?

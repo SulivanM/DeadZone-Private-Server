@@ -2,9 +2,9 @@ package core.model.game.data
 
 import core.items.model.Item
 import dev.deadzone.core.model.game.data.TimerData
-import utils.LogConfigSocketToClient
-import utils.Logger
-import utils.UUID
+import common.LogConfigSocketToClient
+import common.Logger
+import common.UUID
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -54,6 +54,36 @@ val BuildingLike.repair: TimerData?
         is JunkBuilding -> this.repair
     }
 
+val BuildingLike.tx: Int
+    get() = when (this) {
+        is Building -> this.tx
+        is JunkBuilding -> this.tx
+    }
+
+val BuildingLike.ty: Int
+    get() = when (this) {
+        is Building -> this.ty
+        is JunkBuilding -> this.ty
+    }
+
+val BuildingLike.rotation: Int
+    get() = when (this) {
+        is Building -> this.rotation
+        is JunkBuilding -> this.rotation
+    }
+
+val BuildingLike.destroyed: Boolean
+    get() = when (this) {
+        is Building -> this.destroyed
+        is JunkBuilding -> this.destroyed
+    }
+
+val BuildingLike.resourceValue: Double
+    get() = when (this) {
+        is Building -> this.resourceValue
+        is JunkBuilding -> this.resourceValue
+    }
+
 fun BuildingLike.copy(
     id: String? = null,
     name: String? = null,
@@ -68,7 +98,8 @@ fun BuildingLike.copy(
     repair: Any? = Unspecified,
     items: List<Item>? = null,
     pos: String? = null,
-    rot: String? = null
+    rot: String? = null,
+    assignedSurvivors: Any? = Unspecified
 ): BuildingLike = when (this) {
     is Building -> this.copy(
         id = id ?: this.id,
@@ -81,7 +112,8 @@ fun BuildingLike.copy(
         destroyed = destroyed ?: this.destroyed,
         resourceValue = resourceValue ?: this.resourceValue,
         upgrade = if (upgrade === Unspecified) this.upgrade else upgrade as TimerData?,
-        repair = if (repair === Unspecified) this.repair else repair as TimerData?
+        repair = if (repair === Unspecified) this.repair else repair as TimerData?,
+        assignedSurvivors = if (assignedSurvivors === Unspecified) this.assignedSurvivors else assignedSurvivors as List<String?>?
     )
 
     is JunkBuilding -> this.copy(
@@ -102,11 +134,12 @@ fun BuildingLike.copy(
     )
 }
 
+
 @Serializable
 data class Building(
-    val id: String = UUID.new(),
+    val id: String = UUID.new(),    // building's unique ID
     val name: String? = null,
-    val type: String,
+    val type: String,  // building's ID in buildings.xml, not to be confused with type in XML
     val level: Int = 0,
     val rotation: Int = 0,
     val tx: Int = 0,
@@ -114,7 +147,8 @@ data class Building(
     val destroyed: Boolean = false,
     val resourceValue: Double = 0.0,
     val upgrade: TimerData? = null,
-    val repair: TimerData? = null
+    val repair: TimerData? = null,
+    val assignedSurvivors: List<String?>? = null  // List of survivor IDs assigned to rally points (null = empty slot)
 ) : BuildingLike()
 
 fun Building.toCompactString(): String {

@@ -1,8 +1,11 @@
 package server.messaging
 
 import server.handler.DefaultHandler
-import utils.Logger
+import common.Logger
 
+/**
+ * Dispatch [SocketMessage] to a registered handler
+ */
 class SocketMessageDispatcher() {
     private val handlers = mutableListOf<SocketMessageHandler>()
 

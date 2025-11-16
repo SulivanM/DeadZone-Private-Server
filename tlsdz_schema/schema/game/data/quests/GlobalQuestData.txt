@@ -1,4 +1,0 @@
-data GlobalQuestData
-
-raw: ByteArray!
-map: Map<String, GQDataObj> = {}

@@ -1,4 +1,0 @@
-data NewsArticle
-
-date: Long!
-body: String!

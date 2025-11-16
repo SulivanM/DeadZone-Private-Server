@@ -1,6 +1,0 @@
-data RaidData
-
-assignmentData: AssignmentData!
-ptsPerSurvivor: Int!
-maxSurvivorMissionPoints: Int!
-points: Int!

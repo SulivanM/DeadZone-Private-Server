@@ -1,122 +1,133 @@
 package core.data.assets
 
 import core.data.GameDefinition
-import core.model.game.data.arena.ArenaDefinition
-import core.model.game.data.arena.ArenaRewardTier
-import core.model.game.data.arena.ArenaStageDefinition
+import core.data.resources.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import utils.Logger
 
-class ArenasParser() : GameResourcesParser {
+class ArenasParser : GameResourcesParser {
     override fun parse(doc: Document, gameDefinition: GameDefinition) {
-        val arenas = doc.getElementsByTagName("arena")
+        val arenaNodes = doc.getElementsByTagName("arena")
 
-        for (i in 0 until arenas.length) {
-            val arenaNode = arenas.item(i) as? Element ?: continue
-            val arena = parseArena(arenaNode)
+        for (i in 0 until arenaNodes.length) {
+            val arenaElement = arenaNodes.item(i) as? Element ?: continue
+            val id = arenaElement.getAttribute("id")
 
-            gameDefinition.arenasById[arena.id] = arena
-            
+            if (id.isBlank()) continue
+
+            val levelMin = getChildElementText(arenaElement, "level_min")?.toIntOrNull()
+            val survivorMin = getChildElementText(arenaElement, "survivor_min")?.toIntOrNull()
+            val survivorMax = getChildElementText(arenaElement, "survivor_max")?.toIntOrNull()
+            val pointsPerSurvivor = getChildElementText(arenaElement, "pts_survivor")?.toIntOrNull()
+
+            val resources = parseResources(arenaElement)
+            val audio = parseAudio(arenaElement)
+            val rewards = parseRewards(arenaElement)
+
+            val arena = ArenaResource(
+                id = id,
+                levelMin = levelMin,
+                survivorMin = survivorMin,
+                survivorMax = survivorMax,
+                pointsPerSurvivor = pointsPerSurvivor,
+                resources = resources,
+                audio = audio,
+                rewards = rewards
+            )
+
+            gameDefinition.arenasById[id] = arena
         }
     }
 
-    private fun parseArena(element: Element): ArenaDefinition {
-        val id = element.getAttribute("id")
+    private fun parseResources(arenaElement: Element): List<String> {
+        val resourcesList = mutableListOf<String>()
+        val resourcesElements = arenaElement.getElementsByTagName("resources")
 
-        val levelMin = element.getElementsByTagName("level_min").item(0)?.textContent?.toIntOrNull() ?: 1
-        val survivorMin = element.getElementsByTagName("survivor_min").item(0)?.textContent?.toIntOrNull() ?: 1
-        val survivorMax = element.getElementsByTagName("survivor_max").item(0)?.textContent?.toIntOrNull() ?: 3
-        val pointsPerSurvivor = element.getElementsByTagName("pts_survivor").item(0)?.textContent?.toIntOrNull() ?: 100
+        if (resourcesElements.length > 0) {
+            val resourcesElement = resourcesElements.item(0) as Element
+            val fileNodes = resourcesElement.getElementsByTagName("file")
 
-        val stages = mutableListOf<ArenaStageDefinition>()
-        val stageNodes = element.getElementsByTagName("stage")
-
-        for (i in 0 until stageNodes.length) {
-            val stageNode = stageNodes.item(i) as? Element ?: continue
-            val stage = parseStage(stageNode, i)
-            stages.add(stage)
-        }
-
-        val rewards = mutableListOf<ArenaRewardTier>()
-        val rewardsNode = element.getElementsByTagName("rewards").item(0) as? Element
-        if (rewardsNode != null) {
-            val tierNodes = rewardsNode.getElementsByTagName("tier")
-            for (i in 0 until tierNodes.length) {
-                val tierNode = tierNodes.item(i) as? Element ?: continue
-                val tier = parseRewardTier(tierNode)
-                rewards.add(tier)
-            }
-        }
-
-        return ArenaDefinition(
-            id = id,
-            levelMin = levelMin,
-            survivorMin = survivorMin,
-            survivorMax = survivorMax,
-            pointsPerSurvivor = pointsPerSurvivor,
-            stages = stages,
-            rewards = rewards
-        )
-    }
-
-    private fun parseStage(element: Element, index: Int): ArenaStageDefinition {
-        val stageId = element.getAttribute("id")
-        val time = element.getElementsByTagName("time").item(0)?.textContent?.toIntOrNull() ?: 180
-        val enemyLevel = element.getElementsByTagName("enemy_lvl").item(0)?.textContent?.toIntOrNull() ?: 0
-
-        val maps = mutableListOf<String>()
-        val mapNodes = element.getElementsByTagName("map")
-        for (i in 0 until mapNodes.length) {
-            val mapNode = mapNodes.item(i) as? Element ?: continue
-            val mapUri = mapNode.getAttribute("uri")
-            if (mapUri.isNotBlank()) {
-                maps.add(mapUri)
-            }
-        }
-
-        var triggerPoints = 0
-        val triggerNodes = element.getElementsByTagName("trigger")
-        if (triggerNodes.length > 0) {
-            val firstTrigger = triggerNodes.item(0) as? Element
-            triggerPoints = firstTrigger?.getAttribute("pts")?.toIntOrNull() ?: 0
-        }
-
-        val elites = mutableListOf<String>()
-        val elitesNode = element.getElementsByTagName("elites").item(0) as? Element
-        if (elitesNode != null) {
-            val eliteNodes = elitesNode.getElementsByTagName("elite")
-            for (i in 0 until eliteNodes.length) {
-                val eliteNode = eliteNodes.item(i) as? Element ?: continue
-                val eliteId = eliteNode.getAttribute("id")
-                if (eliteId.isNotBlank()) {
-                    elites.add(eliteId)
+            for (i in 0 until fileNodes.length) {
+                val fileElement = fileNodes.item(i) as? Element ?: continue
+                val uri = fileElement.getAttribute("uri")
+                if (uri.isNotBlank()) {
+                    resourcesList.add(uri)
                 }
             }
         }
 
-        return ArenaStageDefinition(
-            id = stageId,
-            index = index,
-            time = time,
-            enemyLevel = enemyLevel,
-            maps = maps,
-            triggerPoints = triggerPoints,
-            elites = elites
+        return resourcesList
+    }
+
+    private fun parseAudio(arenaElement: Element): ArenaAudio? {
+        val audioElements = arenaElement.getElementsByTagName("audio")
+        if (audioElements.length == 0) return null
+
+        val audioElement = audioElements.item(0) as Element
+
+        return ArenaAudio(
+            ambient = parseAudioList(audioElement, "ambient"),
+            timerWarning = parseAudioList(audioElement, "timer_warning"),
+            survivorDeath = parseAudioList(audioElement, "survivor_death"),
+            zombieExplode = parseAudioList(audioElement, "zombie_explode"),
+            score = parseAudioList(audioElement, "score"),
+            win = parseAudioList(audioElement, "win"),
+            lose = parseAudioList(audioElement, "lose"),
+            zombieDeath = parseAudioList(audioElement, "zombie_death")
         )
     }
 
-    private fun parseRewardTier(element: Element): ArenaRewardTier {
-        val score = element.getAttribute("score").toIntOrNull() ?: 0
+    private fun parseAudioList(audioElement: Element, tagName: String): List<String> {
+        val list = mutableListOf<String>()
+        val nodes = audioElement.getElementsByTagName(tagName)
 
-        val itemNode = element.getElementsByTagName("itm").item(0) as? Element
-        val itemType = itemNode?.getAttribute("type") ?: ""
-        val quantity = itemNode?.getAttribute("q")?.toIntOrNull() ?: 1
+        for (i in 0 until nodes.length) {
+            val element = nodes.item(i) as? Element ?: continue
+            val uri = element.getAttribute("uri")
+            if (uri.isNotBlank()) {
+                list.add(uri)
+            }
+        }
 
-        return ArenaRewardTier(
-            score = score,
-            itemType = itemType,
-            quantity = quantity
-        )
+        return list
+    }
+
+    private fun parseRewards(arenaElement: Element): List<ArenaRewardTier> {
+        val tiers = mutableListOf<ArenaRewardTier>()
+        val rewardsElements = arenaElement.getElementsByTagName("rewards")
+
+        if (rewardsElements.length == 0) return tiers
+
+        val rewardsElement = rewardsElements.item(0) as Element
+        val tierNodes = rewardsElement.getElementsByTagName("tier")
+
+        for (i in 0 until tierNodes.length) {
+            val tierElement = tierNodes.item(i) as? Element ?: continue
+            val score = tierElement.getAttribute("score").toIntOrNull() ?: 0
+
+            val items = mutableListOf<ArenaRewardItem>()
+            val itmNodes = tierElement.getElementsByTagName("itm")
+
+            for (j in 0 until itmNodes.length) {
+                val itmElement = itmNodes.item(j) as? Element ?: continue
+                val type = itmElement.getAttribute("type")
+                val quantity = itmElement.getAttribute("q").toIntOrNull() ?: 1
+
+                if (type.isNotBlank()) {
+                    items.add(ArenaRewardItem(type = type, quantity = quantity))
+                }
+            }
+
+            tiers.add(ArenaRewardTier(score = score, items = items))
+        }
+
+        return tiers
+    }
+
+    private fun getChildElementText(element: Element, tagName: String): String? {
+        val elements = element.getElementsByTagName(tagName)
+        if (elements.length == 0) return null
+        val el = elements.item(0) as? Element ?: return null
+        return el.textContent.trim().takeIf { it.isNotBlank() }
     }
 }

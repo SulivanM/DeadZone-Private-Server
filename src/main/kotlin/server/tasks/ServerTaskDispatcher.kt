@@ -3,13 +3,26 @@ package server.tasks
 import io.ktor.util.date.*
 import kotlinx.coroutines.*
 import server.core.Connection
-import utils.LogConfigSocketError
-import utils.LogSource
-import utils.Logger
+import common.LogConfigSocketError
+import common.LogSource
+import common.Logger
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+/**
+ * Manages and dispatches task instances.
+ *
+ * This dispatcher is also a task scheduler (i.e., the default implementation of [TaskScheduler]).
+ *
+ * @property runningInstances Map of task IDs to currently running [TaskInstance]s.
+ * @property stopIdProviders  Map of each [TaskCategory] to a function capable of deriving a task ID
+ *                            from a `playerId`, [TaskCategory], and a generic [StopInput] type.
+ *                            Every [ServerTask] implementation **must** call [registerStopId] (in GameServer.kt)
+ *                            to register how the dispatcher should compute a task ID for that category when stopping tasks.
+ * @property stopInputFactories Map of each [TaskCategory] to a factory function that
+ *                              creates a new instance of its corresponding `StopInput` type.
+ */
 class ServerTaskDispatcher : TaskScheduler {
     private val runningInstances = mutableMapOf<String, TaskInstance>()
 
@@ -18,6 +31,11 @@ class ServerTaskDispatcher : TaskScheduler {
 
     private val stopInputFactories = mutableMapOf<TaskCategory, () -> Any>()
 
+    /**
+     * Registers a function that derives a task ID for a given task category.
+     *
+     * It always takes a `String` of [Connection.playerId] and a generic [StopInput] type.
+     */
     @Suppress("UNCHECKED_CAST")
     fun <StopInput : Any> registerStopId(
         category: TaskCategory,
@@ -40,6 +58,9 @@ class ServerTaskDispatcher : TaskScheduler {
         }
     }
 
+    /**
+     * Run the selected [taskToRun] for the player's [Connection].
+     */
     fun <TaskInput : Any, StopInput : Any> runTaskFor(
         connection: Connection,
         taskToRun: ServerTask<TaskInput, StopInput>,
@@ -85,6 +106,11 @@ class ServerTaskDispatcher : TaskScheduler {
         )
     }
 
+    /**
+     * Default implementation of [TaskScheduler].
+     *
+     * The process at how specifically task lifecycle is handled is documented in [ServerTask].
+     */
     @OptIn(InternalTaskAPI::class)
     override suspend fun <TaskInput : Any, StopInput : Any> schedule(
         connection: Connection,
@@ -104,8 +130,9 @@ class ServerTaskDispatcher : TaskScheduler {
 
             if (shouldRepeat) {
                 while (currentCoroutineContext().isActive) {
-                    
-                    config.timeout?.let { timeout ->
+                    // Check timeout
+                    val timeout = config.timeout
+                    if (timeout != null) {
                         val now = getTimeMillis().toDuration(DurationUnit.MILLISECONDS)
                         if (now - startTime >= timeout) {
                             task.onCancelled(connection, CancellationReason.TIMEOUT)
@@ -118,12 +145,11 @@ class ServerTaskDispatcher : TaskScheduler {
                     task.onIterationComplete(connection)
 
                     iterationDone++
-                    
-                    config.maxRepeats?.let { max ->
-                        if (iterationDone >= max) {
-                            task.onTaskComplete(connection)
-                            break
-                        }
+                    // Check max repeat
+                    val maxRepeats = config.maxRepeats
+                    if (maxRepeats != null && iterationDone >= maxRepeats) {
+                        task.onTaskComplete(connection)
+                        break
                     }
 
                     delay(config.repeatInterval)
@@ -149,10 +175,16 @@ class ServerTaskDispatcher : TaskScheduler {
         }
     }
 
+    /**
+     * Stop the task of [taskId] by cancelling the associated coroutine job.
+     */
     private fun stopTask(taskId: String) {
         runningInstances.remove(taskId)?.job?.cancel()
     }
 
+    /**
+     * Stop the task with the given [Connection.playerId], [category], and [StopInput].
+     */
     @Suppress("UNCHECKED_CAST")
     fun <StopInput : Any> stopTaskFor(
         connection: Connection,
@@ -195,12 +227,18 @@ class ServerTaskDispatcher : TaskScheduler {
         }
     }
 
+    /**
+     * Stop all tasks for the [playerId]
+     */
     fun stopAllTasksForPlayer(playerId: String) {
         runningInstances
             .filterValues { it.playerId == playerId }
             .forEach { (taskId, _) -> stopTask(taskId) }
     }
 
+    /**
+     * Stop every running tasks instances in the server.
+     */
     fun stopAllPushTasks() {
         runningInstances.forEach { (taskId, _) -> stopTask(taskId) }
     }

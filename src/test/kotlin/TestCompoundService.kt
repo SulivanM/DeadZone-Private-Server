@@ -3,6 +3,9 @@ import core.compound.CompoundService
 import core.model.game.data.Building
 import core.model.game.data.BuildingLike
 import core.model.game.data.GameResources
+import core.model.game.data.copy
+import core.model.game.data.id
+import core.model.game.data.level
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

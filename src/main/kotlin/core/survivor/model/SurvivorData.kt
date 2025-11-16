@@ -15,7 +15,7 @@ data class SurvivorData(
             return SurvivorData(
                 id = id,
                 startXP = 0,
-                startLevel = 2,
+                startLevel = 1,
                 endXP = 1000,
                 endLevel = 4,
             )

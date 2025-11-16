@@ -3,16 +3,22 @@ package server.handler
 import context.ServerContext
 import context.requirePlayerContext
 import core.model.game.data.Survivor
-import dev.deadzone.socket.messaging.HandlerContext
+import server.messaging.HandlerContext
 import server.messaging.NetworkMessage
 import server.messaging.SocketMessage
 import server.messaging.SocketMessageHandler
 import server.protocol.PIOSerializer
-import utils.Logger
-import utils.Time
+import common.Logger
+import common.Time
 import kotlin.collections.random
 import kotlin.random.Random
 
+/**
+ * Handle `rsc` message by:
+ *
+ * 1. Sending a reponse in JSON with success set to true
+ *
+ */
 class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : SocketMessageHandler {
     override fun match(message: SocketMessage): Boolean {
         return message.type == NetworkMessage.REQUEST_SURVIVOR_CHECK || message.contains(NetworkMessage.REQUEST_SURVIVOR_CHECK)
@@ -24,10 +30,10 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
 
         val responseMsg =
             listOf(
-                NetworkMessage.SEND_RESPONSE,  
-                id ?: "m",   
-                Time.now(),   
-                """{"success": true}""".trimIndent() 
+                NetworkMessage.SEND_RESPONSE,  // Message Type
+                id ?: "m",   // id
+                Time.now(),   // server time
+                """{"success": true}""".trimIndent() // response
             )
 
         val newSrv = generateSurvivor()
@@ -56,7 +62,7 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
             title = "",
             morale = emptyMap(),
             injuries = emptyList(),
-            level = -1,
+            level = 1,
             xp = 0,
             missionId = null,
             assignmentId = null,
@@ -74,22 +80,24 @@ class RequestSurvivorCheckHandler(private val serverContext: ServerContext) : So
             "lastName": "${srv.lastName}",
             "gender": "${srv.gender}",
             "classId": "${srv.classId}",
-            "voice": "${srv.voice}"
+            "voice": "${srv.voice}",
+            "level": ${srv.level},
+            "xp": ${srv.xp}
         }
         """.trimIndent()
     }
 
     val maleNames = setOf(
-        "Tony Stark", "Peter Parker", "Bruce Wayne", "Clark Kent", "Steve Rogers",
-        "Luke Skywalker", "Genshin Impact", "Rick Roll", "Joel Miller", "Arthur Morgan",
-        "John Wick", "Ethan Winters", "Leon Kennedy", "Gordon Freeman", "Nathan Drake",
-        "Cloud Strife", "Uzumaki Naruto", "Zombie Dinner", "Jesse Pinkman", "Trevor Philips"
+        "Tony Miller", "Peter Lawson", "Bruce Carter", "Clark Hayes", "Steve Morgan",
+        "Luke Harrison", "Rick Sanders", "Joel Thompson", "Arthur Bennett", "John Reed",
+        "Ethan Collins", "Leon Price", "Gordon Wallace", "Nathan Brooks", "Cloud Anderson",
+        "Ryan Matthews", "Michael Turner", "David Collins", "James Parker", "Trevor Simmons"
     )
 
     val femaleNames = setOf(
-        "Lara Croft", "Jill Valentine", "Claire Redfield", "Ada Wong", "Ellie Williams",
-        "Tifa Lockhart", "Aerith Gainsborough", "Hermione Granger", "Hinata Hyuga", "Sarah Connor",
-        "Genshin Impact", "Carol Danvers", "Tasty Brain", "Natasha Romanoff", "Selina Kyle",
-        "Sakura Haruno", "Asuka Langley", "Yuna Braska", "Jang Wonyoung", "Harley Quinn"
+        "Laras Croft", "Jill Harper", "Claire Bennett", "Ada Collins", "Ellie Williams",
+        "Tifa Lawson", "Aerith Sullivan", "Hermione Blake", "Hinata Kimura", "Sarah Connor",
+        "Carol Dawson", "Natasha Romanoff", "Selina Moore", "Sakura Tanaka", "Asuka Saito",
+        "Yuna Fraser", "Anna Reynolds", "Jang Minji", "Harley Evans", "Emily Brooks"
     )
 }

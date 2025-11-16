@@ -1,16 +1,19 @@
 package core.data
 
+/**
+ * Dummy data ready to use, typically for admin account.
+ */
 object AdminData {
-    const val ADMIN_RESERVED_NAME = "admin"
-    const val PLAYER_ID = "admin-player-id"
-    const val DISPLAY_NAME = "Administrator"
-    const val EMAIL = "admin@example.com"
-    const val PASSWORD = ""
-    const val TOKEN = ""
+    const val ADMIN_RESERVED_NAME = "givemeadmin"
+    const val PLAYER_ID = "adm-id-123456"
+    const val DISPLAY_NAME = "AdminPlayer" // also known as username or nickname
+    const val EMAIL = "admin@admin.com"
+    const val PASSWORD = "admin"
+    const val TOKEN = "admin-token-123456"
     const val COUNTRY_CODE = "US"
-    const val AVATAR_URL = ""
+    const val AVATAR_URL = "https://picsum.photos/200"
     const val IS_ADMIN = true
-    const val PLAYER_DATA_KEY = "admin-data-key"
+    const val PLAYER_DATA_KEY = "admkey"
     const val PLAYER_SRV_ID = "srv-player"
     const val PLAYER_LEADER_TITLE = "MercifulLeader"
     const val PLAYER_LEVEL = 60

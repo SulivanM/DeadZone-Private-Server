@@ -1,5 +1,0 @@
-enum QuestAttributeCategory
-
-GOAL: String = "goal"
-REWARD: String = "reward"
-PENALTY: String = "penalty"

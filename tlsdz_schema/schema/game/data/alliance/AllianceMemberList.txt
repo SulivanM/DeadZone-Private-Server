@@ -1,3 +1,0 @@
-data AllianceMemberList
-
-list: List<AllianceMember>!

@@ -2,7 +2,7 @@ package server.handler.save.compound.task
 
 import context.requirePlayerContext
 import dev.deadzone.core.model.game.data.secondsLeftToEnd
-import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveHandlerContext
 import io.ktor.util.date.*
 import kotlinx.serialization.Serializable
 import server.handler.buildMsg
@@ -12,12 +12,12 @@ import server.protocol.PIOSerializer
 import server.tasks.TaskCategory
 import server.tasks.impl.JunkRemovalStopParameter
 import server.tasks.impl.JunkRemovalTask
-import utils.JSON
-import utils.LogConfigSocketToClient
-import utils.LogLevel
-import utils.Logger
-import utils.DataLogger
-import utils.SpeedUpCostCalculator
+import common.JSON
+import common.LogConfigSocketToClient
+import common.Logger
+import core.game.SpeedUpCostCalculator
+import core.model.game.data.type
+import core.model.game.data.level
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
@@ -36,7 +36,8 @@ data class JunkRemovalTaskInfo(
     val taskId: String,
     val playerId: String,
     val startTime: Long,
-    val durationSeconds: Int
+    val durationSeconds: Int,
+    val xpReward: Int = 0
 )
 
 @Serializable
@@ -71,16 +72,7 @@ class TaskSaveHandler : SaveSubHandler {
                 val survivors = data["survivors"] as? List<*>
                 val length = (data["length"] as? Number)?.toInt() ?: 0
 
-                DataLogger.event("TaskStarted")
-                    .prefixText("Task started")
-                    .playerId(connection.playerId)
-                    .data("taskType", taskType ?: "unknown")
-                    .data("buildingId", buildingId ?: "unknown")
-                    .data("taskId", taskId ?: "unknown")
-                    .data("length", length)
-                    .data("survivorCount", survivors?.size ?: 0)
-                    .record()
-                    .log(LogLevel.INFO)
+                Logger.info(LogConfigSocketToClient) { "Task started: type=$taskType, buildingId=$buildingId, taskId=$taskId, length=$length, survivors=${survivors?.size}" }
 
                 val items = when (taskType) {
                     "junk_removal" -> generateJunkRemovalItems()
@@ -103,34 +95,43 @@ class TaskSaveHandler : SaveSubHandler {
                         length.seconds
                     }
 
-                    DataLogger.event("JunkRemovalTaskConfig")
-                        .playerId(connection.playerId)
-                        .data("taskId", taskId)
-                        .data("buildingId", buildingId)
-                        .data("baseDurationSec", length)
-                        .data("survivorCount", numSurvivors)
-                        .data("actualDurationSec", actualDuration.inWholeSeconds)
-                        .record()
-                        .log(LogLevel.INFO)
+                    Logger.info(LogConfigSocketToClient) {
+                        "Junk removal task: base=$length seconds, survivors=$numSurvivors, actual duration=$actualDuration"
+                    }
 
                     val playerContext = serverContext.requirePlayerContext(connection.playerId)
                     val compoundService = playerContext.services.compound
+                    val survivorService = playerContext.services.survivor
+
+                    // Get XP reward from junk building definition
+                    val junkBuilding = compoundService.getBuilding(buildingId)
+                    val xpReward = if (junkBuilding != null) {
+                        val buildingDef = core.data.GameDefinition.findBuilding(junkBuilding.type)
+                        val levelDef = buildingDef?.getLevel(junkBuilding.level)
+                        levelDef?.xp ?: 10  // Default 10 XP for junk removal
+                    } else {
+                        10
+                    }
 
                     junkRemovalTasks[taskId] = JunkRemovalTaskInfo(
                         taskId = taskId,
                         playerId = connection.playerId,
                         startTime = getTimeMillis(),
-                        durationSeconds = actualDuration.inWholeSeconds.toInt()
+                        durationSeconds = actualDuration.inWholeSeconds.toInt(),
+                        xpReward = xpReward
                     )
 
                     serverContext.taskDispatcher.runTaskFor(
                         connection = connection,
                         taskToRun = JunkRemovalTask(
                             compoundService = compoundService,
+                            survivorService = survivorService,
+                            serverContext = serverContext,
                             taskInputBlock = {
                                 this.taskId = taskId
                                 this.buildingId = buildingId
                                 this.removalDuration = actualDuration
+                                this.xpReward = xpReward
                             },
                             stopInputBlock = {
                                 this.taskId = taskId
@@ -143,13 +144,7 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_CANCELLED -> {
                 val taskId = data["id"] as? String
                 val taskType = data["type"] as? String
-                DataLogger.event("TaskCancelled")
-                    .prefixText("Task cancelled")
-                    .playerId(connection.playerId)
-                    .data("taskId", taskId ?: "unknown")
-                    .data("taskType", taskType ?: "unknown")
-                    .record()
-                    .log(LogLevel.INFO)
+                Logger.info(LogConfigSocketToClient) { "Task cancelled: taskId=$taskId, type=$taskType" }
 
                 if (taskType == "junk_removal" && taskId != null) {
                     junkRemovalTasks.remove(taskId)
@@ -169,13 +164,7 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SURVIVOR_ASSIGNED -> {
                 val taskId = data["id"] as? String
                 val survivors = data["survivors"] as? List<*>
-                DataLogger.event("TaskSurvivorAssigned")
-                    .prefixText("Survivors assigned to task")
-                    .playerId(connection.playerId)
-                    .data("taskId", taskId ?: "unknown")
-                    .data("survivorCount", survivors?.size ?: 0)
-                    .record()
-                    .log(LogLevel.INFO)
+                Logger.info(LogConfigSocketToClient) { "Survivors assigned to task: taskId=$taskId, survivors=${survivors?.size}" }
 
                 send(PIOSerializer.serialize(buildMsg(saveId, "{}")))
             }
@@ -183,13 +172,7 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SURVIVOR_REMOVED -> {
                 val taskId = data["id"] as? String
                 val survivors = data["survivors"] as? List<*>
-                DataLogger.event("TaskSurvivorRemoved")
-                    .prefixText("Survivors removed from task")
-                    .playerId(connection.playerId)
-                    .data("taskId", taskId ?: "unknown")
-                    .data("survivorCount", survivors?.size ?: 0)
-                    .record()
-                    .log(LogLevel.INFO)
+                Logger.info(LogConfigSocketToClient) { "Survivors removed from task: taskId=$taskId, survivors=${survivors?.size}" }
 
                 send(PIOSerializer.serialize(buildMsg(saveId, "{}")))
             }
@@ -197,13 +180,7 @@ class TaskSaveHandler : SaveSubHandler {
             SaveDataMethod.TASK_SPEED_UP -> {
                 val taskId = data["id"] as? String
                 val option = data["option"] as? String
-                DataLogger.event("TaskSpeedUpRequest")
-                    .prefixText("Task speed up requested")
-                    .playerId(connection.playerId)
-                    .data("taskId", taskId ?: "unknown")
-                    .data("option", option ?: "unknown")
-                    .record()
-                    .log(LogLevel.INFO)
+                Logger.info(LogConfigSocketToClient) { "Task speed up: taskId=$taskId, option=$option" }
 
                 if (taskId == null || option == null) {
                     val errorResponse = TaskSpeedUpResponse(error = "Missing taskId or option", success = false)
@@ -213,13 +190,7 @@ class TaskSaveHandler : SaveSubHandler {
 
                 val taskInfo = junkRemovalTasks[taskId]
                 if (taskInfo == null) {
-                    DataLogger.event("TaskSpeedUpError")
-                        .prefixText("Task not found")
-                        .playerId(connection.playerId)
-                        .data("taskId", taskId)
-                        .data("errorReason", "task_not_found")
-                        .record()
-                        .log(LogLevel.WARN)
+                    Logger.warn(LogConfigSocketToClient) { "Task speed up: task not found with taskId=$taskId" }
                     val errorResponse = TaskSpeedUpResponse(error = "Task not found", success = false)
                     send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
                     return@with
@@ -229,29 +200,16 @@ class TaskSaveHandler : SaveSubHandler {
                 val elapsedSeconds = (elapsedTimeMs / 1000).toInt()
                 val secondsRemaining = maxOf(0, taskInfo.durationSeconds - elapsedSeconds)
 
-                DataLogger.event("TaskSpeedUpCalculation")
-                    .playerId(connection.playerId)
-                    .data("taskId", taskId)
-                    .data("elapsedSec", elapsedSeconds)
-                    .data("remainingSec", secondsRemaining)
-                    .data("totalDurationSec", taskInfo.durationSeconds)
-                    .record()
-                    .log(LogLevel.VERBOSE)
+                Logger.info(LogConfigSocketToClient) { 
+                    "Task speed up: elapsed=$elapsedSeconds, remaining=$secondsRemaining, total=${taskInfo.durationSeconds}" 
+                }
 
                 val cost = SpeedUpCostCalculator.calculateCost(option, secondsRemaining)
                 val svc = serverContext.requirePlayerContext(connection.playerId).services
                 val currentCash = svc.compound.getResources().cash
 
                 if (currentCash < cost) {
-                    DataLogger.event("TaskSpeedUpError")
-                        .prefixText("Not enough cash")
-                        .playerId(connection.playerId)
-                        .data("taskId", taskId)
-                        .data("cost", cost)
-                        .data("currentCash", currentCash)
-                        .data("errorReason", "insufficient_cash")
-                        .record()
-                        .log(LogLevel.WARN)
+                    Logger.warn(LogConfigSocketToClient) { "Task speed up: not enough cash for playerId=${connection.playerId}" }
                     val errorResponse = TaskSpeedUpResponse(error = "55", success = false, cost = cost)
                     send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
                     return@with

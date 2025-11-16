@@ -1,4 +1,0 @@
-data ResearchState
-
-active: List<Research>?
-levels: Map<String, Int>?

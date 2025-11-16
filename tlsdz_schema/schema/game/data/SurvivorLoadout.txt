@@ -1,8 +1,0 @@
-data SurvivorLoadout
-
-type: String!
-survivor: Survivor!
-weapon: SurvivorLoadoutData!
-gearPassive: SurvivorLoadoutData!
-gearActive: SurvivorLoadoutData!
-supressChanges: Boolean = false

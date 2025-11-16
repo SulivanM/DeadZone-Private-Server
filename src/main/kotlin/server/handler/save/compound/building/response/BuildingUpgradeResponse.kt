@@ -12,4 +12,6 @@ data class BuildingUpgradeResponse(
     val xp: Int = 0,
     val level: Int? = null,
     val levelPts: Int? = null,
+    val error: String = "",       // error code (e.g., "55" for not enough coins)
+    val cost: Int = 0,            // cash cost for instant purchase
 ): BaseResponse()

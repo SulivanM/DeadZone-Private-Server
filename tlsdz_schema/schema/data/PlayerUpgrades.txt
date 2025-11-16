@@ -1,5 +1,0 @@
-enum PlayerUpgrades
-
-DeathMobileUpgrade: Int = 0
-TradeSlotUpgrade: Int = 1
-InventoryUpgrade1_UNUSED: Int = 2

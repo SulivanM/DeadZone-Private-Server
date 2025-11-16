@@ -64,3 +64,81 @@ data class MissionStats(
     val killData: Map<String, Int> = mapOf(),
     val customData: Map<String, Int> = mapOf()
 )
+
+/**
+ * Combine two MissionStats by adding all their values together
+ */
+fun MissionStats.plus(other: MissionStats): MissionStats {
+    return MissionStats(
+        zombieSpawned = this.zombieSpawned + other.zombieSpawned,
+        levelUps = this.levelUps + other.levelUps,
+        damageOutput = this.damageOutput + other.damageOutput,
+        damageTaken = this.damageTaken + other.damageTaken,
+        containersSearched = this.containersSearched + other.containersSearched,
+        survivorKills = this.survivorKills + other.survivorKills,
+        survivorsDowned = this.survivorsDowned + other.survivorsDowned,
+        survivorExplosiveKills = this.survivorExplosiveKills + other.survivorExplosiveKills,
+        humanKills = this.humanKills + other.humanKills,
+        humanExplosiveKills = this.humanExplosiveKills + other.humanExplosiveKills,
+        zombieKills = this.zombieKills + other.zombieKills,
+        zombieExplosiveKills = this.zombieExplosiveKills + other.zombieExplosiveKills,
+        hpHealed = this.hpHealed + other.hpHealed,
+        explosivesPlaced = this.explosivesPlaced + other.explosivesPlaced,
+        grenadesThrown = this.grenadesThrown + other.grenadesThrown,
+        grenadesSmokeThrown = this.grenadesSmokeThrown + other.grenadesSmokeThrown,
+        allianceFlagCaptured = this.allianceFlagCaptured + other.allianceFlagCaptured,
+        buildingsDestroyed = this.buildingsDestroyed + other.buildingsDestroyed,
+        buildingsLost = this.buildingsLost + other.buildingsLost,
+        buildingsExplosiveDestroyed = this.buildingsExplosiveDestroyed + other.buildingsExplosiveDestroyed,
+        trapsTriggered = this.trapsTriggered + other.trapsTriggered,
+        trapDisarmTriggered = this.trapDisarmTriggered + other.trapDisarmTriggered,
+        cashFound = this.cashFound + other.cashFound,
+        woodFound = this.woodFound + other.woodFound,
+        metalFound = this.metalFound + other.metalFound,
+        clothFound = this.clothFound + other.clothFound,
+        foodFound = this.foodFound + other.foodFound,
+        waterFound = this.waterFound + other.waterFound,
+        ammunitionFound = this.ammunitionFound + other.ammunitionFound,
+        ammunitionUsed = this.ammunitionUsed + other.ammunitionUsed,
+        weaponsFound = this.weaponsFound + other.weaponsFound,
+        gearFound = this.gearFound + other.gearFound,
+        junkFound = this.junkFound + other.junkFound,
+        medicalFound = this.medicalFound + other.medicalFound,
+        craftingFound = this.craftingFound + other.craftingFound,
+        researchFound = this.researchFound + other.researchFound,
+        researchNoteFound = this.researchNoteFound + other.researchNoteFound,
+        clothingFound = this.clothingFound + other.clothingFound,
+        cratesFound = this.cratesFound + other.cratesFound,
+        schematicsFound = this.schematicsFound + other.schematicsFound,
+        effectFound = this.effectFound + other.effectFound,
+        rareWeaponFound = this.rareWeaponFound + other.rareWeaponFound,
+        rareGearFound = this.rareGearFound + other.rareGearFound,
+        uniqueWeaponFound = this.uniqueWeaponFound + other.uniqueWeaponFound,
+        uniqueGearFound = this.uniqueGearFound + other.uniqueGearFound,
+        greyWeaponFound = this.greyWeaponFound + other.greyWeaponFound,
+        greyGearFound = this.greyGearFound + other.greyGearFound,
+        whiteWeaponFound = this.whiteWeaponFound + other.whiteWeaponFound,
+        whiteGearFound = this.whiteGearFound + other.whiteGearFound,
+        greenWeaponFound = this.greenWeaponFound + other.greenWeaponFound,
+        greenGearFound = this.greenGearFound + other.greenGearFound,
+        blueWeaponFound = this.blueWeaponFound + other.blueWeaponFound,
+        blueGearFound = this.blueGearFound + other.blueGearFound,
+        purpleWeaponFound = this.purpleWeaponFound + other.purpleWeaponFound,
+        purpleGearFound = this.purpleGearFound + other.purpleGearFound,
+        premiumWeaponFound = this.premiumWeaponFound + other.premiumWeaponFound,
+        premiumGearFound = this.premiumGearFound + other.premiumGearFound,
+        killData = combineIntMaps(this.killData, other.killData),
+        customData = combineIntMaps(this.customData, other.customData)
+    )
+}
+
+/**
+ * Helper function to combine two maps of Int values
+ */
+private fun combineIntMaps(map1: Map<String, Int>, map2: Map<String, Int>): Map<String, Int> {
+    val result = map1.toMutableMap()
+    for ((key, value) in map2) {
+        result[key] = (result[key] ?: 0) + value
+    }
+    return result
+}

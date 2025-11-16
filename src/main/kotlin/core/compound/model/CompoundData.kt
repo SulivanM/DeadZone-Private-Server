@@ -12,6 +12,6 @@ data class CompoundData(
     val tasks: TaskCollection = TaskCollection(),
     val effects: EffectCollection = EffectCollection(),
     val globalEffects: EffectCollection = EffectCollection(),
-    val morale: Morale = Morale(),
+    val morale: Morale = emptyMap(),
     val moraleFilter: List<String> = listOf("food", "water", "security", "comfort")
 )

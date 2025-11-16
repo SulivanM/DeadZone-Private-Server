@@ -1,3 +1,0 @@
-data AllianceRank
-
-maps: Map<UInt, UInt> = {}

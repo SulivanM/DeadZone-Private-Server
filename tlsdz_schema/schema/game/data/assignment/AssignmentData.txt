@@ -1,9 +1,0 @@
-data AssignmentData
-
-name: String!
-id: String!
-started: Boolean!
-competed: Boolean!
-stageindex: Int!
-survivors: List<String> = [] // survivor ids
-stagelist: List<AssignmentStageData> = []

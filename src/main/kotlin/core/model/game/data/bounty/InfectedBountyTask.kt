@@ -6,5 +6,6 @@ import core.model.game.data.bounty.InfectedBountyTaskCondition
 @Serializable
 data class InfectedBountyTask(
     val suburb: String,
-    val conditions: List<InfectedBountyTaskCondition> = listOf()
+    val conditions: List<InfectedBountyTaskCondition> = listOf(),
+    val completed: Boolean = false
 )

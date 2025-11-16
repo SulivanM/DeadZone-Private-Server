@@ -1,5 +1,8 @@
 package server.broadcast
 
+/**
+ * Broadcast protocols matching the client-side BroadcastSystemProtocols
+ */
 enum class BroadcastProtocol(val code: String) {
     STATIC("static"),
     ADMIN("admin"),
@@ -20,7 +23,6 @@ enum class BroadcastProtocol(val code: String) {
     BOUNTY_COLLECTED("bcol"),
     ALLIANCE_RAID_SUCCESS("ars"),
     ALLIANCE_RANK("arank"),
-    ARENA_LEADER("arena_ldr"),
     ARENA_LEADERBOARD("arenalb"),
     RAIDMISSION_STARTED("rmstart"),
     RAIDMISSION_COMPLETE("rmcompl"),

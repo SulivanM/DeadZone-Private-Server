@@ -3,15 +3,15 @@ package server.handler.save.command
 import core.items.model.CrateItem
 import core.items.model.Item
 import core.items.model.SchematicItem
-import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.messaging.CommandMessage
 import server.protocol.PIOSerializer
-import utils.JSON
-import utils.LogConfigSocketToClient
-import utils.Logger
-import utils.UUID
+import common.JSON
+import common.LogConfigSocketToClient
+import common.Logger
+import common.UUID
 
 class CommandSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = CommandMessage.COMMAND_SAVES
@@ -25,7 +25,7 @@ class CommandSaveHandler : SaveSubHandler {
 
                 when (type) {
                     "schematic" -> {
-                        
+                        // not tested
                         val schem = data["schem"] as? String ?: return
                         val item = SchematicItem(type = type, schem = schem, new = true)
                         val response = JSON.encode(item)
@@ -33,7 +33,7 @@ class CommandSaveHandler : SaveSubHandler {
                     }
 
                     "crate" -> {
-                        
+                        // not tested
                         val series = data["series"] as? Int ?: return
                         val repeat = (data["repeat"] as? Int) ?: 1
                         repeat(repeat) {
@@ -48,7 +48,7 @@ class CommandSaveHandler : SaveSubHandler {
                     }
 
                     else -> {
-                        
+                        // not tested with mod
                         val level = data["level"] as? Int ?: return
                         val qty = data["qty"] as? Int ?: 1
                         val mod1 = data["mod1"] as? String?
@@ -67,6 +67,7 @@ class CommandSaveHandler : SaveSubHandler {
                     }
                 }
             }
+
 
             CommandMessage.GIVE_RARE -> {
                 val type = (data["type"] as String?) ?: return

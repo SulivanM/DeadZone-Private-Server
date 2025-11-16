@@ -35,7 +35,7 @@ class PlayerContextTracker {
     }
     
     private suspend fun initializeServices(playerId: String, db: BigDB): PlayerServices {
-        
+        // Récupérer la database Exposed depuis BigDB
         val database = (db as BigDBMariaImpl).database
         
         requireNotNull(db.loadPlayerAccount(playerId)) { 

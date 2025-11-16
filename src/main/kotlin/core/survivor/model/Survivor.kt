@@ -5,7 +5,7 @@ import core.model.game.data.SurvivorAppearance.Companion.toHumanAppearance
 import core.survivor.model.injury.Injury
 import core.survivor.model.injury.InjuryList
 import dev.deadzone.core.model.game.data.TimerData
-import utils.UUID
+import common.UUID
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -24,10 +24,10 @@ data class Survivor(
     val missionId: String? = null,
     val assignmentId: String? = null,
     val reassignTimer: TimerData? = null,
-    val appearance: HumanAppearance? = null,
+    val appearance: HumanAppearance? = null, // HumanAppearance > SurvivorAppearance
     val scale: Double = 1.22,
     val voice: String,
-    val accessories: Map<String, String> = emptyMap(),
+    val accessories: Map<String, String> = emptyMap(),  // key is parsed to int, string is accessory id
     val maxClothingAccessories: Int = 1
 ) {
     companion object {
@@ -40,9 +40,9 @@ data class Survivor(
                 gender = Gender_Constants.MALE.value,
                 portrait = null,
                 classId = SurvivorClassConstants_Constants.PLAYER.value,
-                morale = Morale().maps,
+                morale = emptyMap(),
                 injuries = InjuryList().list,
-                level = 59,
+                level = 0,
                 xp = 1000,
                 missionId = null,
                 assignmentId = null,
@@ -64,9 +64,9 @@ data class Survivor(
                 gender = Gender_Constants.FEMALE.value,
                 portrait = null,
                 classId = SurvivorClassConstants_Constants.RECON.value,
-                morale = Morale().maps,
+                morale = emptyMap(),
                 injuries = InjuryList().list,
-                level = 59,
+                level = 0,
                 xp = 1000,
                 missionId = null,
                 assignmentId = null,
@@ -88,9 +88,9 @@ data class Survivor(
                 gender = Gender_Constants.MALE.value,
                 portrait = null,
                 classId = SurvivorClassConstants_Constants.FIGHTER.value,
-                morale = Morale().maps,
+                morale = emptyMap(),
                 injuries = InjuryList().list,
-                level = 59,
+                level = 0,
                 xp = 1000,
                 missionId = null,
                 assignmentId = null,

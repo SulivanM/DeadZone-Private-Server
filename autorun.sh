@@ -11,4 +11,5 @@ else
     exit 1
 fi
 
-"$JAVA" -jar deadzone-server.jar
+# Launch with native access enabled to suppress Jansi warnings
+"$JAVA" --enable-native-access=ALL-UNNAMED -jar deadzone-server.jar

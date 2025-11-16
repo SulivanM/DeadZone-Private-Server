@@ -8,9 +8,15 @@ data class PlayerStatus(
     val onlineSince: Long,
 )
 
+/**
+ * Keeps track online players
+ */
 class OnlinePlayerRegistry {
     private val players = ConcurrentHashMap<String, PlayerStatus>()
 
+    /**
+     * Mark a player of [playerId] as online. Does nothing if player is already online
+     */
     fun markOnline(playerId: String) {
         players[playerId] = PlayerStatus(
             playerId = playerId,
@@ -18,10 +24,23 @@ class OnlinePlayerRegistry {
         )
     }
 
+    /**
+     * Mark a player of [playerId] as offline. Does nothing if player is already offline
+     */
     fun markOffline(playerId: String) {
         players.remove(playerId)
     }
 
+    /**
+     * Check if a player is currently online
+     */
+    fun isOnline(playerId: String): Boolean {
+        return players.containsKey(playerId)
+    }
+
+    /**
+     * Clear all players
+     */
     fun shutdown() {
         players.clear()
     }

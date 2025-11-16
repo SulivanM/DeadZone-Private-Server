@@ -16,18 +16,21 @@ data class Attributes(
     val injuryChance: Double = 0.0
 ) {
     companion object {
-        fun dummy(): Attributes {
+        /**
+         * Base attributes for a new player character
+         */
+        fun starter(): Attributes {
             return Attributes(
                 health = 100.0,
-                combatProjectile = 2.0,
-                combatMelee = 2.0,
-                combatImprovised = 2.0,
-                movement = 2.0,
-                scavenge = 2.0,
-                healing = 2.0,
-                trapSpotting = 2.0,
-                trapDisarming = 2.0,
-                injuryChance = 2.0,
+                combatProjectile = 1.0,
+                combatMelee = 1.0,
+                combatImprovised = 1.0,
+                movement = 1.0,
+                scavenge = 1.0,
+                healing = 1.0,
+                trapSpotting = 1.0,
+                trapDisarming = 1.0,
+                injuryChance = 1.0,
             )
         }
     }

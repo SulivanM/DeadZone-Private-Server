@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CooldownCollection(
-    val byteArray: Map<String, ByteArray> = mapOf(),
+    val byteArray: Map<String, ByteArray> = mapOf(),  // will be parsed to Cooldown
 )

@@ -1,3 +1,0 @@
-data HighActivity
-
-buildings: List<String>! // building ids

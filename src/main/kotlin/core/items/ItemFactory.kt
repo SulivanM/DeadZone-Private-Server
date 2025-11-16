@@ -4,7 +4,7 @@ import core.data.GameDefinition
 import core.data.resources.ItemResource
 import core.items.model.Item
 import core.items.model.ItemQualityType
-import utils.UUID
+import common.UUID
 
 object ItemFactory {
     fun getRandomItem(): Item {

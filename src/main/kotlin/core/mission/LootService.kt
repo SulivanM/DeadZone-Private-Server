@@ -4,7 +4,7 @@ import core.data.resources.ItemResource
 import core.data.GameDefinition
 import core.mission.model.LootContent
 import core.mission.model.LootParameter
-import utils.UUID
+import common.UUID
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.io.StringReader
@@ -42,8 +42,8 @@ class LootService(
     private fun buildIndexOfLootableItems() {
         ALL_LOCS.forEach { loc ->
             val lootableInLoc = GameDefinition.itemsByLootable[loc] ?: emptyList()
-            
-            
+            // create a binary search tree whose key is cumulative weight and value is the loot
+            // this will allow us to quickly search for an item based on a rolled double value just by seeing the cumulative weight
             val treeMap = TreeMap<Double, LootContent>()
             var cumulativeWeight = 0.0
 
@@ -100,6 +100,11 @@ class LootService(
         }
     }
 
+    /**
+     * Insert loots to the given scene XML from constructor.
+     *
+     * @return The updated XML with loots inserted and the list of [LootContent]s inserted.
+     */
     fun insertLoots(): Pair<String, List<LootContent>> {
         val docBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc: Document = docBuilder.parse(InputSource(StringReader(sceneXML)))
@@ -111,6 +116,7 @@ class LootService(
             val optNode = eNode.getElementsByTagName("opt").item(0) as? Element ?: continue
             val srchNode = optNode.getElementsByTagName("srch").item(0) ?: continue
 
+            // skip if the corresponding node has a predefined itms
             val hasItms = (0 until eNode.childNodes.length)
                 .map { eNode.childNodes.item(it) }
                 .any { it is Element && it.tagName == "itms" }
@@ -132,6 +138,7 @@ class LootService(
             }
         }
 
+        // Transform back to string
         val transformer = TransformerFactory.newInstance().newTransformer().apply {
             setOutputProperty(OutputKeys.INDENT, "yes")
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
@@ -143,19 +150,23 @@ class LootService(
     }
 
     private fun getRollsFromLocs(locs: List<String>): List<LootContent> {
-        
+        // roll 0-6 items per container
         val lootsAmount = (0..6).random()
         val lootResults: MutableList<LootContent> = mutableListOf()
 
+        // Filter to only locations that have loot available
         val availableLocs = locs.filter { cumulativeLootsPerLoc.containsKey(it) }
         
         if (availableLocs.isEmpty()) {
             return emptyList()
         }
 
+        // shuffle the list of locs, and pick one item per loc
+        // go back to start if still need more item
         val shuffledLocs = availableLocs.shuffled()
         var i = 0
 
+        // upperbound for potential infinite loop
         val maxAttempts = lootsAmount * shuffledLocs.size + 10
 
         while (lootResults.size < lootsAmount && i < maxAttempts) {
@@ -168,10 +179,10 @@ class LootService(
     }
 
     private fun weightedRandomTree(loc: String): LootContent? {
-        
-        
-        
-        
+        // use RNG to roll a double value within the total weight of a loc
+        // quickly find the loot with cumulative weight lower or equal than the roll
+        // e.g., for cumulative weight [1.5, 2.0, 3.0], or [0.0-1.5, 1.5-2.0, 2.0-3.0]
+        // if roll is 1.4, pick the first
         val possibleLoots = cumulativeLootsPerLoc[loc] ?: return null
         val totalWeight = totalWeightPerLoc[loc] ?: return null
         val roll = Random.nextDouble(0.0, totalWeight)

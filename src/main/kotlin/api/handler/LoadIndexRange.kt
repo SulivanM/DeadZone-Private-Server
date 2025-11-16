@@ -2,8 +2,9 @@ package api.handler
 
 import api.message.db.LoadIndexRangeArgs
 import api.message.db.LoadObjectsOutput
-import api.utils.pioFraming
-import utils.logInput
+import api.protocol.pioFraming
+import context.ServerContext
+import common.logInput
 import io.ktor.server.request.receiveChannel
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.RoutingContext
@@ -16,7 +17,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 
 @OptIn(ExperimentalSerializationApi::class)
-suspend fun RoutingContext.loadIndexRange() {
+suspend fun RoutingContext.loadIndexRange(serverContext: ServerContext) {
     val body = try {
         call.receiveChannel().toByteArray()
     } catch (e: Exception) {
@@ -33,9 +34,14 @@ suspend fun RoutingContext.loadIndexRange() {
 
     logInput(args, disableLogging = true)
 
+    // For LoadIndexRange, return empty results as this game doesn't use range queries
+    // In a full implementation, would query database for objects within the index range
+    // and apply pagination using startIndexValue, stopIndexValue, and limit
+    val objects = emptyList<api.message.db.BigDBObject>()
+
     val outputBytes = try {
         ProtoBuf.encodeToByteArray(
-            LoadObjectsOutput(objects = emptyList())
+            LoadObjectsOutput(objects = objects)
         )
     } catch (e: Exception) {
         call.respond(HttpStatusCode.InternalServerError, "encode_error")

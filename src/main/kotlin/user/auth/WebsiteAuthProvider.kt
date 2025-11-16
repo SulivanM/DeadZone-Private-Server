@@ -4,16 +4,16 @@ import user.model.PlayerSession
 import core.data.AdminData
 import data.db.BigDB
 import user.PlayerAccountRepository
-import utils.LogConfigAPIError
-import utils.Logger
+import common.LogConfigAPIError
+import common.Logger
 
 class WebsiteAuthProvider(
     private val db: BigDB,
     private val playerAccountRepository: PlayerAccountRepository,
     private val sessionManager: SessionManager
 ) : AuthProvider {
-    override suspend fun register(username: String, password: String): PlayerSession {
-        val pid = db.createUser(username, password)
+    override suspend fun register(username: String, password: String, email: String?, countryCode: String?): PlayerSession {
+        val pid = db.createUser(username, password, email, countryCode)
         return sessionManager.create(playerId = pid)
     }
 

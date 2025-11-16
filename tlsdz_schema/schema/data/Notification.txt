@@ -1,4 +1,0 @@
-data Notification
-
-type: String? // notification: type
-data: String?

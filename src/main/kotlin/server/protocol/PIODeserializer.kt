@@ -1,9 +1,9 @@
 package server.protocol
 
-import utils.LogConfigSocketError
-import utils.LogSource
-import utils.Logger
-import utils.parseJsonToMap
+import common.LogConfigSocketError
+import common.LogSource
+import common.Logger
+import common.parseJsonToMap
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -82,7 +82,7 @@ object PIODeserializer {
 
                             Pattern.BOOLEAN_TRUE_PATTERN -> onValue(true)
                             Pattern.BOOLEAN_FALSE_PATTERN -> onValue(false)
-                            else -> {}
+                            else -> {} // unsupported
                         }
                     }
 
@@ -148,7 +148,6 @@ object PIODeserializer {
 
             return message
         } catch (_: Exception) {
-            // Intentionally empty - fall through to JSON parsing fallback
         }
 
         val offset = data.indexOfFirst { it == '{'.code.toByte() }

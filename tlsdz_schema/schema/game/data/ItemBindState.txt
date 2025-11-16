@@ -1,5 +1,0 @@
-enum ItemBindState
-
-NotBindable: UInt = 0
-OnEquip: UInt = 1
-Bound: UInt = 2

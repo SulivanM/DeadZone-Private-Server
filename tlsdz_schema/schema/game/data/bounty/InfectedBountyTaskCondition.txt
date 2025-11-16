@@ -1,5 +1,0 @@
-data InfectedBountyTaskCondition
-
-zombieType: String!
-killsRequired: Int!
-kills: Int!

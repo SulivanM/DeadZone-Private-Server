@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ListRoomsOutput(
-    val rooms: List<RoomInfo> = emptyList(),
+    val rooms: List<RoomInfoMessage> = emptyList(),
 )

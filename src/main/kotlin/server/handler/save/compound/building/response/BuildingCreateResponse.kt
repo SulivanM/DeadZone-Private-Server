@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BuildingCreateResponse(
     val success: Boolean,
-    val items: Map<String, Int>,
-    val timer: TimerData?,
+    val items: Map<String, Int>, // item id to quantity
+    val timer: TimerData?,        // build timer
+    val error: String = "",       // error code (e.g., "55" for not enough coins)
+    val cost: Int = 0,            // cash cost for instant purchase
 )

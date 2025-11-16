@@ -2,15 +2,15 @@ package server.handler.save.crate
 
 import server.broadcast.BroadcastService
 import core.items.ItemFactory
-import dev.deadzone.socket.handler.save.SaveHandlerContext
+import server.handler.save.SaveHandlerContext
 import server.handler.buildMsg
 import server.handler.save.SaveSubHandler
 import server.handler.save.crate.response.CrateUnlockResponse
 import server.messaging.SaveDataMethod
 import server.protocol.PIOSerializer
-import utils.JSON
-import utils.LogConfigSocketToClient
-import utils.Logger
+import common.JSON
+import common.LogConfigSocketToClient
+import common.Logger
 
 class CrateSaveHandler : SaveSubHandler {
     override val supportedTypes: Set<String> = SaveDataMethod.CRATE_SAVES
@@ -34,8 +34,10 @@ class CrateSaveHandler : SaveSubHandler {
 
                 Logger.info(LogConfigSocketToClient) { "Opening crateId=$crateId with keyId=$keyId" }
 
+                // Broadcast item unboxed
                 try {
-                    val playerName = connection.playerId 
+                    val playerProfile = serverContext.playerAccountRepository.getProfileOfPlayerId(connection.playerId).getOrNull()
+                    val playerName = playerProfile?.displayName ?: connection.playerId
                     val itemName = item.name ?: "Unknown Item"
                     val quality = item.quality?.toString() ?: ""
 

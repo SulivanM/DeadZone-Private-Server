@@ -1,6 +1,6 @@
 package api.message.auth
 
-import api.message.utils.KeyValuePair
+import api.message.KeyValuePair
 import kotlinx.serialization.Serializable
 
 @Serializable

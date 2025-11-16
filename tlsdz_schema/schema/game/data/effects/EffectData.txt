@@ -1,4 +1,0 @@
-data EffectData
-
-type: UInt!
-value: Double!
