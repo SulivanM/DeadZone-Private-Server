@@ -44,63 +44,76 @@ suspend fun RoutingContext.loadObjects(serverContext: ServerContext) {
 
     val dbObjects = mutableListOf<BigDBObject>()
 
-    for (objId in loadObjectsArgs.objectIds) {
-        val playerId = objId.keys.firstOrNull() ?: continue
-        if (playerId.endsWith("-2")) continue
+    try {
+        for (objId in loadObjectsArgs.objectIds) {
+            val playerId = objId.keys.firstOrNull() ?: continue
+            if (playerId.endsWith("-2")) continue
 
-        val profile = serverContext.playerAccountRepository.getProfileOfPlayerId(playerId).getOrNull() ?: continue
-        val lastLogin = profile.lastLogin
+            val profile = serverContext.playerAccountRepository.getProfileOfPlayerId(playerId).getOrNull() ?: continue
+            val lastLogin = profile.lastLogin
 
-        val playerObjects = serverContext.db.loadPlayerObjects(playerId) ?: continue
-        val neighborHistory = serverContext.db.loadNeighborHistory(playerId)
-        val inventory = serverContext.db.loadInventory(playerId)
+            val playerObjects = serverContext.db.loadPlayerObjects(playerId) ?: continue
+            val neighborHistory = serverContext.db.loadNeighborHistory(playerId)
+            val inventory = serverContext.db.loadInventory(playerId)
 
-        val obj: BigDBObject? = when (objId.table) {
-            "PlayerObjects" -> {
-                val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
-                val updatedResources = LazyDataUpdater.depleteResources(lastLogin, playerObjects.resources)
-                val updatedSurvivors = playerObjects.survivors
+            val obj: BigDBObject? = try {
+                when (objId.table) {
+                    "PlayerObjects" -> {
+                        val updatedBuildings = LazyDataUpdater.removeBuildingTimerIfDone(playerObjects.buildings)
+                        val updatedResources = LazyDataUpdater.depleteResources(lastLogin, playerObjects.resources)
+                        val updatedSurvivors = playerObjects.survivors
 
-                val ctx = serverContext.getPlayerContextOrNull(playerId)
-                if (ctx != null) {
-                    runCatching { ctx.services.compound.updateAllBuildings(updatedBuildings) }
-                    runCatching { ctx.services.compound.updateResource { updatedResources } }
-                    runCatching { ctx.services.survivor.updateSurvivors(updatedSurvivors) }
-                } else {
-                    runCatching {
-                        val updatedPlayerObjects = playerObjects.copy(
-                            buildings = updatedBuildings,
-                            resources = updatedResources,
-                            survivors = updatedSurvivors
+                        val ctx = serverContext.getPlayerContextOrNull(playerId)
+                        if (ctx != null) {
+                            runCatching { ctx.services.compound.updateAllBuildings(updatedBuildings) }
+                                .onFailure { Logger.warn { "Failed to update buildings for $playerId: ${it.message}" } }
+                            runCatching { ctx.services.compound.updateResource { updatedResources } }
+                                .onFailure { Logger.warn { "Failed to update resources for $playerId: ${it.message}" } }
+                            runCatching { ctx.services.survivor.updateSurvivors(updatedSurvivors) }
+                                .onFailure { Logger.warn { "Failed to update survivors for $playerId: ${it.message}" } }
+                        } else {
+                            runCatching {
+                                val updatedPlayerObjects = playerObjects.copy(
+                                    buildings = updatedBuildings,
+                                    resources = updatedResources,
+                                    survivors = updatedSurvivors
+                                )
+                                serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
+                            }.onFailure {
+                                Logger.error(LogConfigSocketToClient) { "Failed to persist updates for $playerId: ${it.message}" }
+                            }
+                        }
+
+                        LoadObjectsOutput.fromData(
+                            playerObjects.copy(
+                                buildings = updatedBuildings,
+                                resources = updatedResources,
+                                survivors = updatedSurvivors
+                            )
                         )
-                        serverContext.db.updatePlayerObjectsJson(playerId, updatedPlayerObjects)
-                    }.onFailure {
-                        Logger.error(LogConfigSocketToClient) { "Failed to persist updates for $playerId: ${it.message}" }
+                    }
+
+                    "NeighborHistory" -> neighborHistory?.let {
+                        LoadObjectsOutput.fromData(NeighborHistory(playerId = playerId, map = it.map))
+                    }
+
+                    "Inventory" -> inventory?.let { LoadObjectsOutput.fromData(it) }
+
+                    else -> {
+                        Logger.error(LogConfigAPIError) { "Unimplemented table for ${objId.table}" }
+                        null
                     }
                 }
-
-                LoadObjectsOutput.fromData(
-                    playerObjects.copy(
-                        buildings = updatedBuildings,
-                        resources = updatedResources,
-                        survivors = updatedSurvivors
-                    )
-                )
-            }
-
-            "NeighborHistory" -> neighborHistory?.let {
-                LoadObjectsOutput.fromData(NeighborHistory(playerId = playerId, map = it.map))
-            }
-
-            "Inventory" -> inventory?.let { LoadObjectsOutput.fromData(it) }
-
-            else -> {
-                Logger.error(LogConfigAPIError) { "Unimplemented table for ${objId.table}" }
+            } catch (e: Exception) {
+                Logger.error(LogConfigAPIError) { "Error processing ${objId.table} for $playerId: ${e.message}" }
                 null
             }
-        }
 
-        if (obj != null) dbObjects.add(obj)
+            if (obj != null) dbObjects.add(obj)
+        }
+    } catch (e: Exception) {
+        Logger.error(LogConfigAPIError) { "Critical error in loadObjects: ${e.message}" }
+        e.printStackTrace()
     }
 
     val encoded = ProtoBuf.encodeToByteArray(LoadObjectsOutput(objects = dbObjects))

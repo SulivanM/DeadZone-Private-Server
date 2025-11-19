@@ -15,15 +15,27 @@ import data.db.BigDBMariaImpl
 import io.ktor.util.date.*
 import server.core.Connection
 import java.util.concurrent.ConcurrentHashMap
+import common.Logger
 
 class PlayerContextTracker {
     val players = ConcurrentHashMap<String, PlayerContext>()
     
     suspend fun createContext(playerId: String, connection: Connection, db: BigDB) {
-        val playerAccount = requireNotNull(db.loadPlayerAccount(playerId)) { 
-            "Missing PlayerAccount for playerid=$playerId" 
+        // Clean up existing context if player is reconnecting
+        val existingContext = players.remove(playerId)
+        if (existingContext != null) {
+            Logger.info { "Cleaning up existing context for reconnecting player: $playerId" }
+            try {
+                existingContext.connection.shutdown()
+            } catch (e: Exception) {
+                Logger.warn { "Error shutting down old connection for $playerId: ${e.message}" }
+            }
         }
-        
+
+        val playerAccount = requireNotNull(db.loadPlayerAccount(playerId)) {
+            "Missing PlayerAccount for playerid=$playerId"
+        }
+
         val context = PlayerContext(
             playerId = playerId,
             connection = connection,
@@ -60,11 +72,21 @@ class PlayerContextTracker {
             batchRecycleJobRepository = BatchRecycleJobRepositoryMaria(database)
         )
         
-        survivor.init(playerId).onFailure { "Failure during survivor service init: ${it.message}" }
-        inventory.init(playerId).onFailure { "Failure during inventory service init: ${it.message}" }
-        compound.init(playerId).onFailure { "Failure during compound service init: ${it.message}" }
-        playerObjectMetadata.init(playerId).onFailure { "Failure during playerObjectMetadata service init: ${it.message}" }
-        batchRecycleJob.init(playerId).onFailure { "Failure during batchRecycleJob service init: ${it.message}" }
+        survivor.init(playerId).onFailure {
+            Logger.error { "Failure during survivor service init for playerId=$playerId: ${it.message}" }
+        }
+        inventory.init(playerId).onFailure {
+            Logger.error { "Failure during inventory service init for playerId=$playerId: ${it.message}" }
+        }
+        compound.init(playerId).onFailure {
+            Logger.error { "Failure during compound service init for playerId=$playerId: ${it.message}" }
+        }
+        playerObjectMetadata.init(playerId).onFailure {
+            Logger.error { "Failure during playerObjectMetadata service init for playerId=$playerId: ${it.message}" }
+        }
+        batchRecycleJob.init(playerId).onFailure {
+            Logger.error { "Failure during batchRecycleJob service init for playerId=$playerId: ${it.message}" }
+        }
         
         return PlayerServices(
             survivor = survivor,
