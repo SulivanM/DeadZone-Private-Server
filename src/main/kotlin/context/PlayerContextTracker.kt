@@ -26,6 +26,8 @@ class PlayerContextTracker {
         if (existingContext != null) {
             Logger.info { "Cleaning up existing context for reconnecting player: $playerId" }
             try {
+                // Leave all rooms before shutting down connection
+                room.RoomManager.leaveAllRooms(playerId)
                 existingContext.connection.shutdown()
             } catch (e: Exception) {
                 Logger.warn { "Error shutting down old connection for $playerId: ${e.message}" }
