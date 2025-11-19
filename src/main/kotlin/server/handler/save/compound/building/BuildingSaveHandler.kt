@@ -808,7 +808,7 @@ class BuildingSaveHandler : SaveSubHandler {
 
                 if (playerCash < repairCost) {
                     Logger.warn(LogConfigSocketToClient) { "BUILDING_REPAIR_BUY: Not enough cash. Required=$repairCost, Available=$playerCash for playerId=$playerId" }
-                    val errorResponse = mapOf("success" to false, "error" to notEnoughCoinsErrorId)
+                    val errorResponse = mapOf("success" to "false", "error" to notEnoughCoinsErrorId)
                     send(PIOSerializer.serialize(buildMsg(saveId, JSON.encode(errorResponse))))
                     return
                 }

@@ -135,7 +135,7 @@ fun Route.authRoutes(serverContext: ServerContext) {
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, mapOf("success" to true, "message" to "User info updated successfully"))
+            call.respond(HttpStatusCode.OK, mapOf("success" to "true", "message" to "User info updated successfully"))
         } catch (e: Exception) {
             Logger.error { "Unexpected error updating user info for username=$username: ${e.message}" }
             call.respond(HttpStatusCode.InternalServerError, mapOf("reason" to "Unexpected error"))
